@@ -15,7 +15,7 @@ window.addEventListener('DOMContentLoaded',function(){
  const fmt=(n,d=1)=>Number.isFinite(n)?n.toFixed(d).replace('.',','):'—';
  const panel=document.createElement('section');
  panel.className='card';panel.id='emogasVQPanel';
- panel.innerHTML='<h2>Scenario clinico polmonare <small style="font-size:11px;color:#9db6c4">Sperimentale</small></h2>'+
+ panel.innerHTML='<h2>Emogasanalisi arteriosa · V/Q <small style="font-size:11px;color:#9db6c4">Sperimentale</small></h2>'+
  '<p style="font-size:12px;color:#9db6c4">Modello didattico esplorativo, non validato per decisioni cliniche. Prelievo virtuale oppure aggiornamento continuo.</p>'+
  (student?'':'<div class="row" style="flex-wrap:wrap;gap:8px"><label>Scenario <select id="egaScenario">'+
  Object.entries(profiles).map(([k,v])=>'<option value="'+k+'">'+v.label+'</option>').join('')+
@@ -177,49 +177,6 @@ window.addEventListener('DOMContentLoaded',function(){
   const p=profiles[$('egaScenario').value];
   $('egaShunt').value=Math.round(p.shunt*100);$('egaLow').value=Math.round(p.low*100);$('egaDead').value=Math.round(p.dead*100);
  };
- // Identical pulmonary scenario controls in Ventilazione and Emogas.
- // Only the instructor can edit them; both views share one model state.
- const sourceControls=$('egaScenario')?.closest('.row');
- const ventControls=sourceControls?.cloneNode(true);
- if(ventControls){
-  const heading=document.createElement('h3');
-  heading.textContent='Scenario clinico polmonare';
-  heading.style.margin='12px 0 8px';
-  ventControls.id='egaPulmonaryControlsVent';
-  const ids=['egaScenario','egaShunt','egaLow','egaDead','egaHb','egaHco3'];
-  ids.forEach(id=>{
-   const el=ventControls.querySelector('#'+id);
-   if(el){el.id=id+'Vent';el.removeAttribute('name')}
-  });
-  instructor.prepend(heading,ventControls);
-  let syncing=false;
-  function sync(from,to){
-   if(syncing||!to)return;
-   syncing=true;
-   to.value=from.value;
-   if(from.id==='egaScenarioVent'){
-    const p=profiles[from.value];
-    if(p){
-     $('egaShunt').value=Math.round(p.shunt*100);
-     $('egaLow').value=Math.round(p.low*100);
-     $('egaDead').value=Math.round(p.dead*100);
-    }
-   }
-   ids.forEach(id=>{const original=$(id),copy=$(id+'Vent');if(original&&copy)copy.value=original.value});
-   syncing=false;
-  }
-  ids.forEach(id=>{const original=$(id),copy=$(id+'Vent');if(original&&copy)copy.value=original.value});
-   syncing=false;
-  }
-  ids.forEach(id=>{
-   const original=$(id),copy=$(id+'Vent');
-   if(!original||!copy)return;
-   original.addEventListener('input',()=>sync(original,copy));
-   original.addEventListener('change',()=>sync(original,copy));
-   copy.addEventListener('input',()=>sync(copy,original));
-   copy.addEventListener('change',()=>sync(copy,original));
-  });
- }
  let last=0;
  setInterval(()=>{if($('egaLive')?.checked&&Date.now()-last>2500){last=Date.now();sample()}},1000);
 })();
