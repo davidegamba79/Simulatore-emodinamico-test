@@ -1,0 +1,52 @@
+/* V2.4 Dynamic Trends */
+.monitor{display:flex!important;flex-direction:column!important;gap:3px!important}.wave{height:88px!important;min-height:78px!important}.therapy-grid{display:grid;grid-template-columns:1fr;gap:8px}.therapy{border:1px solid #24414d;border-radius:8px;padding:9px;display:grid;grid-template-columns:1fr auto;gap:6px;align-items:center}.therapy small{grid-column:1/-1;color:var(--muted)}.therapy input{width:90px;margin-left:5px}.therapy button{min-width:110px;transition:.2s}.therapy button.active-therapy{background:#159447!important;border-color:#38e57b!important;color:white!important;font-weight:800}.therapy button.pulse-therapy{background:#b88712!important;border-color:#ffd34e!important;color:white!important}.trend-card{margin-top:8px}.trend-head{display:flex;justify-content:space-between;align-items:center}.trend-head #caseClock{font-size:22px;font-variant-numeric:tabular-nums}.trend-card canvas{width:100%;height:190px;display:block;background:#03090d;border:1px solid #18303b;border-radius:6px}.trend-legend{font-size:12px;color:var(--muted);padding-top:5px}.student .wave{height:90px!important}@media(max-width:900px){.wave{height:86px!important}.trend-card canvas{height:160px}}
+.trend-controls{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0 8px}.trend-controls select{min-width:150px}.trend-events{font-size:11px;color:var(--muted);padding-top:5px;white-space:normal}.trend-card canvas{height:210px!important}
+
+/* V2.5 integrated */
+#therapyV25 .therapy-grid{display:grid;grid-template-columns:1fr;gap:8px}
+#therapyV25 .therapy{grid-template-columns:minmax(0,1fr) minmax(95px,auto) auto}
+#therapyV25 .therapy label{min-width:105px}#therapyV25 .therapy input{width:100%}
+#trendV25{display:block!important;margin-top:8px}#trendV25 .trend-head h2{margin:0}#trendV25 .trend-controls label{min-width:150px;flex:1}#trendV25 canvas{height:210px!important}
+@media(max-width:620px){#therapyV25 .therapy{grid-template-columns:1fr 1fr}#therapyV25 .therapy>div{grid-column:1/-1}#therapyV25 .therapy button{min-height:44px}}
+
+/* V2.5.1 — therapy labels: iPad-safe */
+#therapyV25 .therapy{
+ display:grid!important;
+ grid-template-columns:minmax(0,1fr) minmax(118px,150px)!important;
+ grid-template-areas:"drug dose" "drug action"!important;
+ gap:7px 12px!important;
+ align-items:center!important;
+ overflow:hidden;
+}
+#therapyV25 .therapy>div{grid-area:drug;min-width:0}
+#therapyV25 .therapy>div b,#therapyV25 .therapy>div small{display:block;white-space:normal;overflow-wrap:anywhere}
+#therapyV25 .therapy>label{grid-area:dose;min-width:0!important;width:100%;white-space:normal}
+#therapyV25 .therapy>label input{display:block;width:100%!important;margin:4px 0 0!important;min-width:0}
+#therapyV25 .therapy>button{grid-area:action;width:100%;min-width:0!important;white-space:normal;line-height:1.15;min-height:42px}
+#therapyV25 .therapy:first-child{grid-template-areas:"drug action"!important}
+@media(max-width:520px){
+ #therapyV25 .therapy{grid-template-columns:1fr!important;grid-template-areas:"drug" "dose" "action"!important}
+ #therapyV25 .therapy:first-child{grid-template-areas:"drug" "action"!important}
+}
+
+/* V2.6 — simultaneous grouped trends */
+.v26-trend-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:8px}
+.v26-chart{min-width:0;background:#071116;border:1px solid #18303b;border-radius:8px;padding:8px}
+.v26-chart h3{font-size:13px;margin:0 0 5px;color:#dbeaf0}
+#trendV25 .v26-chart canvas{width:100%;height:165px!important;display:block;background:#03090d;border:1px solid #18303b;border-radius:6px}
+.v26-legend{font-size:10.5px;line-height:1.45;color:#b8c8cf;padding-top:5px;min-height:32px;overflow-wrap:anywhere}
+@media(max-width:760px){.v26-trend-grid{grid-template-columns:1fr}#trendV25 .v26-chart canvas{height:155px!important}}
+
+/* V2.8.60 — compact therapy overview, responsive to available panel width */
+#therapyV25{container-type:inline-size}
+#therapyV25 .therapy-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#therapyV25 .therapy{min-width:0;min-height:100px;padding:8px!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(76px,100px)!important;grid-template-areas:"drug dose" "drug action"!important;gap:4px 7px!important;align-content:center;align-items:center}
+#therapyV25 .therapy:first-child{grid-template-areas:"drug action"!important}
+#therapyV25 .therapy>div{grid-area:drug!important;grid-column:auto!important;min-width:0}
+#therapyV25 .therapy>div b{font-size:13px;line-height:1.2}
+#therapyV25 .therapy>div small{font-size:10px;line-height:1.25}
+#therapyV25 .therapy>label{grid-area:dose!important;min-width:0!important;font-size:10px}
+#therapyV25 .therapy>label input{width:100%!important;padding:5px 6px!important;margin:2px 0 0!important;font-size:13px}
+#therapyV25 .therapy>button{grid-area:action!important;min-width:0!important;width:100%;min-height:36px;padding:5px 4px;font-size:11px}
+@container (min-width:840px){#therapyV25 .therapy-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@container (max-width:460px){#therapyV25 .therapy-grid{grid-template-columns:1fr}}
