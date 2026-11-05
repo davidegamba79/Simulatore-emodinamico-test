@@ -216,7 +216,9 @@ window.addEventListener('DOMContentLoaded',function(){
  }
  $('egaSample').onclick=sample;
  $('egaScenario').onchange=()=>{
-  const p=profiles[$('egaScenario').value];
+  const key=$('egaScenario').value;
+  if(typeof window.simVentSetLungProfile==='function')window.simVentSetLungProfile(key);
+  const p=profiles[key];
   $('egaShunt').value=Math.round(p.shunt*100);$('egaLow').value=Math.round(p.low*100);$('egaDead').value=Math.round(p.dead*100);
  };
  let last=0;
