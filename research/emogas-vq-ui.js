@@ -33,7 +33,7 @@ window.addEventListener('DOMContentLoaded',function(){
  '<p style="font-size:11px;color:#9db6c4">Il valore PaCO₂ è una stima stazionaria da VCO₂/ventilazione alveolare, non una replica della dinamica dell’EtCO₂. Il modello non simula la compensazione renale.</p>';
  function draw(result,stamp){
   if(!result)return;
-  const entries=[['pH',fmt(result.ph,3)],['PaCO₂',fmt(result.paCO2)+' mmHg'],['PaO₂',fmt(result.paO2)+' mmHg'],['HCO₃⁻',fmt(result.hco3)+' mmol/L'],['SaO₂',fmt(result.saO2)+' %'],['P/F',fmt(result.pfRatio,0)],['A–a',fmt(result.aaGradient)+' mmHg']];
+  const entries=[['pH',fmt(result.ph,3)],['PaCO₂',fmt(result.paCO2)+' mmHg'],['PaO₂',fmt(result.paO2)+' mmHg'],['HCO₃⁻',fmt(result.hco3)+' mmol/L'],['SaO₂',fmt(result.saO2)+' %'],['P/F',fmt(result.pfRatio,0)],['A–a',fmt(result.aaGradient)+' mmHg'],['PaCO₂ − EtCO₂',result.paEtGradient==null?'Non disponibile':fmt(result.paEtGradient)+' mmHg']];
   $('egaMetrics').innerHTML=entries.map(([k,v])=>'<div style="border:1px solid #29404d;border-radius:8px;padding:8px"><small>'+k+'</small><div style="font-size:18px;font-weight:700">'+v+'</div></div>').join('');
   const parts=result.compartments;
   $('egaCompartments').innerHTML=[['Normale',parts.normal,'#3ca7cc'],['Basso V/Q',parts.lowVQ,'#f4b65b'],['Shunt',parts.shunt,'#ed6974']].map(([k,v,c])=>
@@ -55,7 +55,15 @@ window.addEventListener('DOMContentLoaded',function(){
   // Metabolic production must not be recalibrated at every breath/sample:
   // otherwise changes in ventilation would cancel out PaCO2 responses.
   const metabolicCO2=clamp(105*Math.pow(weight/25,.8),15,650);
+  // Disequilibrio V/Q: lo shunt e le unità a basso V/Q possono
+  // incrementare PaCO2 anche senza variazioni proporzionali di EtCO2.
+  // Correzione esplorativa, NON una legge clinicamente validata.
+  const shunt=clamp(+$('egaShunt').value/100,0,.8);
+  const lowVQ=clamp(+$('egaLow').value/100,0,1-shunt);
+  const baselinePaCO2=clamp(.863*metabolicCO2/actualVA,10,120);
+  const co2VqPenalty=30*Math.max(0,shunt-.02)+12*Math.max(0,lowVQ-.04);
   return window.EmogasVQ.calculate({
+   paCO2:clamp(baselinePaCO2+co2VqPenalty,10,120),
    fio2:vent?.intubated?vent.fio2:.21,
    alveolarVentilation:actualVA,metabolicCO2,
    cardiacOutput:typeof state!=='undefined'&&Number.isFinite(state.co)?state.co:3,
@@ -115,7 +123,8 @@ window.addEventListener('DOMContentLoaded',function(){
     respiratoryQuotient:target.inputs.rq
     // Keep the slowly equilibrating oxygen result distinct from its target.
    });
-   const displayed={...result,paO2:+gasState.paO2.toFixed(1),saO2:+(100/(1+Math.pow(26.8/Math.max(1,gasState.paO2),2.7))).toFixed(1),pfRatio:+(gasState.paO2/target.inputs.fio2).toFixed(0),aaGradient:+Math.max(0,result.idealPAO2-gasState.paO2).toFixed(1)};
+   const etco2=(typeof state!=='undefined'&&Number.isFinite(state.etco2)&&(typeof window.simVentCalc==='function'&&window.simVentCalc().intubated))?state.etco2:null;
+   const displayed={...result,paEtGradient:etco2==null?null:+(gasState.paCO2-etco2).toFixed(1),paO2:+gasState.paO2.toFixed(1),saO2:+(100/(1+Math.pow(26.8/Math.max(1,gasState.paO2),2.7))).toFixed(1),pfRatio:+(gasState.paO2/target.inputs.fio2).toFixed(0),aaGradient:+Math.max(0,result.idealPAO2-gasState.paO2).toFixed(1)};
    const stamp=new Date().toLocaleTimeString('it-IT');draw(displayed,stamp);
    localStorage.setItem(KEY,JSON.stringify({result:displayed,stamp}));
   }catch(err){$('egaStatus').textContent='Errore modello: '+err.message;console.error(err)}
