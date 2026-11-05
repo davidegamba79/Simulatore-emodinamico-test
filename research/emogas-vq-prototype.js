@@ -31,16 +31,22 @@
   const rq=clamp(+input.respiratoryQuotient||.8,.6,1.2);
   const pio2=fio2*(pb-47);
   const idealPAO2=clamp(pio2-paco2/rq,1,700);
-  // Three perfused units: normal, low V/Q, and true shunt.
-  // Mixed venous oxygen is a simplified delivery-dependent approximation.
-  // Approximate mixed venous content using Fick's principle.
-  // VO2 = 10 * Q(L/min) * (CaO2-CvO2), in mL/min.
+  // Three perfused compartments. Oxygen content, not partial pressure,
+  // is mixed. The mixed venous content must be calculated from the resulting
+  // arterial content (Fick), not from ideal end-capillary oxygen content.
+  // With fixed VO2 and cardiac output, solve the recirculation balance:
+  // Ca = (1-s-low)*Cc_normal + low*Cc_low + s*(Ca - VO2/(10*Q)).
+  // Therefore Ca*(1-s) = (1-s-low)*Cc_normal + low*Cc_low
+  //                        - s*VO2/(10*Q).
+  // This avoids an FiO2-dependent venous estimate anchored to ideal PAO2.
   const vo2=clamp(+input.metabolicO2||180,20,800);
-  const cvO2=clamp(content(idealPAO2,hb)-vo2/(10*q),.5,content(idealPAO2,hb));
   const normalO2=content(idealPAO2,hb);
   const lowPAO2=clamp(idealPAO2*(.22+.28*clamp(va/q,0,2)),8,idealPAO2);
   const lowO2=content(lowPAO2,hb);
-  const caO2=(1-shunt-low)*normalO2+low*lowO2+shunt*cvO2;
+  const extraction=vo2/(10*q);
+  const caO2=clamp(((1-shunt-low)*normalO2+low*lowO2-shunt*extraction)/
+    Math.max(.2,1-shunt),.5,normalO2);
+  const cvO2=clamp(caO2-extraction,.05,caO2);
   const pao2=inverse(caO2,hb);
   const ph=6.1+Math.log10(hco3/(.03*paco2));
   return Object.freeze({
