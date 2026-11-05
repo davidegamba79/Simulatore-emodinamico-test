@@ -28,6 +28,28 @@
    extraDeadspace:.48,deadspaceRecruit:.47,deadspaceOverdist:.20,
    etGradient:1.2,oxygenDeficit:6.8,oxygenRecruit:5.5,oxygenOverdist:1.6
   }),
+  hypoventilation:Object.freeze({
+   compliance:1,recruitability:.04,overdistension:.16,overdistStart:8,
+   extraDeadspace:0,deadspaceRecruit:.09,deadspaceOverdist:.24,
+   etGradient:1.6,oxygenDeficit:0,oxygenRecruit:.24,oxygenOverdist:.70
+  }),
+  bronchospasm:Object.freeze({
+   compliance:.94,recruitability:.04,overdistension:.20,overdistStart:9,
+   extraDeadspace:.65,deadspaceRecruit:.05,deadspaceOverdist:.30,
+   etGradient:2.8,oxygenDeficit:2.5,oxygenRecruit:.30,oxygenOverdist:.9,
+   resistanceMultiplier:3.0,expiratoryMultiplier:2.2
+  }),
+  embolism:Object.freeze({
+   compliance:.96,recruitability:.03,overdistension:.16,overdistStart:9,
+   extraDeadspace:2.1,deadspaceRecruit:.03,deadspaceOverdist:.3,
+   etGradient:7,oxygenDeficit:3,oxygenRecruit:.12,oxygenOverdist:.8
+  }),
+  edema:Object.freeze({
+   compliance:.48,recruitability:.25,overdistension:.22,overdistStart:10,
+   extraDeadspace:.65,deadspaceRecruit:.22,deadspaceOverdist:.3,
+   etGradient:3,oxygenDeficit:7,oxygenRecruit:3.5,oxygenOverdist:1.3,
+   resistanceMultiplier:1.3,expiratoryMultiplier:1.15
+  }),
   poorly_recruitable:Object.freeze({
    compliance:.55,recruitability:.10,overdistension:.28,overdistStart:7,
    extraDeadspace:.40,deadspaceRecruit:.10,deadspaceOverdist:.45,
@@ -348,7 +370,7 @@
   const raw=clamp(8*Math.pow(weight/25,-.28)*
    (morph==='brachy'?2.0:morph==='dolicho'?.78:1)*
    (bodyType==='brachy'?1.15:bodyType==='dolicho'?.90:1)*
-   (bcs>=7?1.12:1),1.5,100);
+   (bcs>=7?1.12:1)*(lung.resistanceMultiplier||1),1.5,100);
   const tau=raw*crs/1000;
   const curveShape=clamp(
    (morph==='brachy'?.18:morph==='dolicho'?-.10:0)+
@@ -358,7 +380,7 @@
   const expResistance=clamp(
    (morph==='brachy'?1.40:morph==='dolicho'?.80:1)*
    (bodyType==='brachy'?1.25:bodyType==='dolicho'?.83:1)*
-   (bcs>=7?1.08:1),.55,2.5);
+   (bcs>=7?1.08:1)*(lung.expiratoryMultiplier||1),.55,5);
   const expValveR=clamp(raw*.30*expResistance,1.1,12); // R (cmH2O/(L/s)) * C (L/cmH2O) = secondi
   const vtSet=clamp(n('ventVtKg',10),4,15)*weight;
   const pinsp=clamp(n('ventPinsp',12),4,30);
