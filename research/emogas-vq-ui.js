@@ -31,6 +31,47 @@ window.addEventListener('DOMContentLoaded',function(){
  '<h3 style="font-size:14px;margin:12px 0 6px">Distribuzione V/Q · quote di perfusione</h3>'+
  '<div id="egaCompartments"></div>'+
  '<p style="font-size:11px;color:#9db6c4">Il valore PaCO₂ è una stima stazionaria da VCO₂/ventilazione alveolare, non una replica della dinamica dell’EtCO₂. Il modello non simula la compensazione renale.</p>';
+ // Acid-base teaching chart: shown below PRAM only while the Emogas tab is selected.
+ const hemo=document.querySelector('.hemo-wrap');
+ const acidCard=document.createElement('section');
+ acidCard.className='card';
+ acidCard.id='egaAcidBaseCard';
+ acidCard.hidden=true;
+ acidCard.innerHTML='<h2>Equilibrio acido-base · pH / PaCO₂</h2>'+
+ '<p style="font-size:12px;color:#9db6c4">Diagramma didattico orientativo. Le alterazioni miste richiedono valutazione di HCO₃⁻ e compenso atteso.</p>'+
+ '<svg id="egaAcidSvg" viewBox="0 0 700 320" role="img" aria-label="Diagramma acido-base con pH in verticale e PaCO₂ in orizzontale" style="width:100%;height:auto;display:block"></svg>'+
+ '<div id="egaAcidSummary" style="font-size:12px;color:#b7cbd3">In attesa del prelievo arterioso</div>';
+ if(!student&&hemo)hemo.insertAdjacentElement('afterend',acidCard);
+ let previousGas=null;
+ function acidPlot(r){
+  if(!acidCard.isConnected||!r)return;
+  const svg=$('egaAcidSvg');if(!svg)return;
+  const X=v=>62+(Math.max(15,Math.min(100,v))-15)/85*610;
+  const Y=v=>282-(Math.max(6.9,Math.min(7.8,v))-6.9)/.9*246;
+  const rect=(x,y,w,h,fill)=>'<rect x="'+x+'" y="'+y+'" width="'+w+'" height="'+h+'" fill="'+fill+'"/>';
+  const line=(x1,y1,x2,y2,stroke='#476170',dash='')=>'<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="'+stroke+'" stroke-width="1" '+(dash?'stroke-dasharray="'+dash+'"':'')+'/>';
+  const txt=(x,y,t,sz=12,fill='#b9d2df')=>'<text x="'+x+'" y="'+y+'" font-size="'+sz+'" fill="'+fill+'" font-family="system-ui,sans-serif">'+t+'</text>';
+  let out=rect(0,0,700,320,'#0a1820');
+  out+=rect(X(15),Y(7.8),X(100)-X(15),Y(6.9)-Y(7.8),'#10222d');
+  // Bands are conceptual, not diagnostic boundaries.
+  out+='<polygon points="'+[[20,7.38],[40,7.38],[65,7.08],[100,6.98],[100,7.13],[65,7.24],[40,7.43],[20,7.55]].map(p=>X(p[0])+','+Y(p[1])).join(' ')+'" fill="#4c719d" fill-opacity=".30"/>';
+  out+='<polygon points="'+[[15,7.2],[40,7.2],[60,6.98],[60,6.9],[15,6.9]].map(p=>X(p[0])+','+Y(p[1])).join(' ')+'" fill="#b94c60" fill-opacity=".33"/>';
+  out+='<polygon points="'+[[40,7.55],[70,7.55],[100,7.75],[100,7.8],[40,7.8]].map(p=>X(p[0])+','+Y(p[1])).join(' ')+'" fill="#b94c60" fill-opacity=".26"/>';
+  for(let v=7;v<=7.8+.001;v+=.2){out+=line(62,Y(v),672,Y(v),'#27414f','3 5')+txt(9,Y(v)+4,v.toFixed(2),11)}
+  for(let v=20;v<=100;v+=20){out+=line(X(v),36,X(v),282,'#27414f','3 5')+txt(X(v)-9,300,String(v),11)}
+  out+=line(62,36,62,282)+line(62,282,672,282);
+  out+=line(X(40),36,X(40),282,'#6c8794','4 5')+line(62,Y(7.4),672,Y(7.4),'#6c8794','4 5');
+  out+=txt(270,316,'PaCO₂ (mmHg)',13)+txt(8,24,'pH',13);
+  out+=txt(78,60,'Alcalosi respiratoria',13,'#8fb8e8')+txt(435,65,'Alcalosi metabolica',13,'#ed9eaa');
+  out+=txt(78,266,'Acidosi metabolica',13,'#ed9eaa')+txt(445,265,'Acidosi respiratoria',13,'#8fb8e8');
+  if(previousGas&&Number.isFinite(previousGas.paCO2)&&Number.isFinite(previousGas.ph)){
+   out+='<circle cx="'+X(previousGas.paCO2)+'" cy="'+Y(previousGas.ph)+'" r="6" fill="none" stroke="#9aafbd" stroke-width="2" stroke-dasharray="3 2"/>';
+  }
+  out+='<circle cx="'+X(r.paCO2)+'" cy="'+Y(r.ph)+'" r="7" fill="#36d8f2" stroke="#fff" stroke-width="2"/>';
+  svg.innerHTML=out;
+  $('egaAcidSummary').textContent='Ultimo prelievo: pH '+fmt(r.ph,3)+' · PaCO₂ '+fmt(r.paCO2)+' mmHg · HCO₃⁻ '+fmt(r.hco3)+' mmol/L. Cerchio tratteggiato: prelievo precedente.';
+  previousGas={paCO2:r.paCO2,ph:r.ph};
+ }
  function draw(result,stamp){
   if(!result)return;
   const entries=[['pH',fmt(result.ph,3)],['PaCO₂',fmt(result.paCO2)+' mmHg'],['PaO₂',fmt(result.paO2)+' mmHg'],['HCO₃⁻',fmt(result.hco3)+' mmol/L'],['SaO₂',fmt(result.saO2)+' %'],['P/F',fmt(result.pfRatio,0)],['A–a',fmt(result.aaGradient)+' mmHg'],['PaCO₂ − EtCO₂',result.paEtGradient==null?'Non disponibile':fmt(result.paEtGradient)+' mmHg']];
@@ -39,6 +80,7 @@ window.addEventListener('DOMContentLoaded',function(){
   $('egaCompartments').innerHTML=[['Normale',parts.normal,'#3ca7cc'],['Basso V/Q',parts.lowVQ,'#f4b65b'],['Shunt',parts.shunt,'#ed6974']].map(([k,v,c])=>
    '<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:12px"><span>'+k+'</span><span>'+fmt(v*100,0)+'%</span></div><div style="height:12px;background:#21323d;border-radius:6px;overflow:hidden"><div style="width:'+Math.max(0,v*100)+'%;height:100%;background:'+c+'"></div></div></div>').join('');
   $('egaStatus').textContent='Campione virtuale · '+stamp;
+  acidPlot(result);
  }
  function data(){
   const vent=typeof window.simVentCalc==='function'?window.simVentCalc():null;
@@ -99,8 +141,9 @@ window.addEventListener('DOMContentLoaded',function(){
   aside.querySelectorAll('.instructor-tab-panel').forEach(p=>p.hidden=true);
   btn.setAttribute('aria-selected','true');btn.classList.add('active');tab.hidden=false;
   document.body.dataset.instructorTab='emogas';
+  acidCard.hidden=false;
  };
- nav?.querySelectorAll('button:not(:last-child)').forEach(b=>b.addEventListener('click',()=>{tab.hidden=true;btn.setAttribute('aria-selected','false')}));
+ nav?.querySelectorAll('button:not(:last-child)').forEach(b=>b.addEventListener('click',()=>{tab.hidden=true;acidCard.hidden=true;btn.setAttribute('aria-selected','false')}));
  let gasState=null;
  function sample(){
   try{
