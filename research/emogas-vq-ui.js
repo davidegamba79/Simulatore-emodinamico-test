@@ -45,7 +45,11 @@ window.addEventListener('DOMContentLoaded',function(){
   const dead=Math.min(.85,Math.max(0,+$('egaDead').value/100));
   const scenario=profiles[$('egaScenario').value]||profiles.healthy;
   const rr=vent?.rate||12,weight=vent?.weight||25;
-  const minute=vent?.minute||Math.max(.1,rr*weight*.01);
+  const minute=vent?.controlled?vent.minute:Math.max(.1,weight*.12);
+  // Spontaneous breathing: the ventilator's calculated tidal volume is a
+  // mechanical placeholder, not a measured spontaneous minute ventilation.
+  // Use a weight-scaled physiological teaching baseline (~120 mL/kg/min)
+  // until spontaneous ventilation is explicitly modeled or measured.
   // Use the active ventilator's minute volume; dead-space control changes VA.
   const actualVA=Math.max(.05,minute*(1-dead)*(scenario.ventFactor||1));
   // Metabolic production must not be recalibrated at every breath/sample:
