@@ -191,7 +191,7 @@ window.addEventListener('DOMContentLoaded',function(){
    const el=ventControls.querySelector('#'+id);
    if(el){el.id=id+'Vent';el.removeAttribute('name')}
   });
-  instructor.append(heading,ventControls);
+  instructor.prepend(heading,ventControls);
   let syncing=false;
   function sync(from,to){
    if(syncing||!to)return;
