@@ -15,7 +15,7 @@ window.addEventListener('DOMContentLoaded',function(){
  const fmt=(n,d=1)=>Number.isFinite(n)?n.toFixed(d).replace('.',','):'—';
  const panel=document.createElement('section');
  panel.className='card';panel.id='emogasVQPanel';
- panel.innerHTML='<h2>Emogasanalisi arteriosa · V/Q <small style="font-size:11px;color:#9db6c4">Sperimentale</small></h2>'+
+ panel.innerHTML='<h2>Scenario clinico polmonare <small style="font-size:11px;color:#9db6c4">Sperimentale</small></h2>'+
  '<p style="font-size:12px;color:#9db6c4">Modello didattico esplorativo, non validato per decisioni cliniche. Prelievo virtuale oppure aggiornamento continuo.</p>'+
  (student?'':'<div class="row" style="flex-wrap:wrap;gap:8px"><label>Scenario <select id="egaScenario">'+
  Object.entries(profiles).map(([k,v])=>'<option value="'+k+'">'+v.label+'</option>').join('')+
@@ -144,6 +144,48 @@ window.addEventListener('DOMContentLoaded',function(){
   acidCard.hidden=false;
  };
  nav?.querySelectorAll('button:not(:last-child)').forEach(b=>b.addEventListener('click',()=>{tab.hidden=true;acidCard.hidden=true;btn.setAttribute('aria-selected','false')}));
+ // Second set of controls in Ventilazione; original Emogas controls remain the single source of truth.
+ const ventCard=document.createElement('section');
+ ventCard.className='card';
+ ventCard.id='egaVentControls';
+ ventCard.innerHTML='<h2>Scenario clinico polmonare <small style="font-size:11px;color:#9db6c4">Sperimentale</small></h2>'+
+ '<p style="font-size:12px;color:#9db6c4">Stessi parametri della scheda Emogas. Le modifiche si applicano a entrambe le schede.</p>';
+ const controlRows=panel.querySelectorAll('.row');
+ const ids=['egaScenario','egaShunt','egaLow','egaDead','egaHb','egaHco3','egaSample','egaLive'];
+ controlRows.forEach(row=>{
+  const copy=row.cloneNode(true);
+  copy.querySelectorAll('[id]').forEach(el=>{el.id+='Vent'});
+  ventCard.append(copy);
+ });
+ const ventHost=$('ventilationPanel');
+ if(ventHost)ventHost.append(ventCard);
+ function refreshVentControls(){
+  ids.forEach(id=>{
+   const source=$(id),copy=$(id+'Vent');
+   if(!source||!copy)return;
+   if(source.type==='checkbox')copy.checked=source.checked;
+   else if(source.tagName!=='BUTTON')copy.value=source.value;
+  });
+ }
+ ids.forEach(id=>{
+  const source=$(id),copy=$(id+'Vent');
+  if(!source||!copy)return;
+  if(id==='egaSample'){
+   copy.addEventListener('click',()=>source.click());
+   return;
+  }
+  const eventName=source.type==='checkbox'||source.tagName==='SELECT'?'change':'input';
+  copy.addEventListener(eventName,()=>{
+   if(source.type==='checkbox')source.checked=copy.checked;
+   else source.value=copy.value;
+   source.dispatchEvent(new Event(eventName,{bubbles:true}));
+   refreshVentControls();
+  });
+  source.addEventListener(eventName,refreshVentControls);
+ });
+ // Scenario selection updates its dependent shunt/VQ/dead-space inputs.
+ $('egaScenario')?.addEventListener('change',refreshVentControls);
+ refreshVentControls();
  let gasState=null;
  function sample(){
   try{
