@@ -158,7 +158,7 @@ window.addEventListener('DOMContentLoaded',function(){
   ventCard.append(copy);
  });
  const ventHost=$('ventilationPanel');
- if(ventHost)ventHost.append(ventCard);
+ if(ventHost)ventHost.insertAdjacentElement('beforebegin',ventCard);
  function refreshVentControls(){
   ids.forEach(id=>{
    const source=$(id),copy=$(id+'Vent');
