@@ -197,8 +197,18 @@ window.addEventListener('DOMContentLoaded',function(){
    if(syncing||!to)return;
    syncing=true;
    to.value=from.value;
-   if(from.id==='egaScenarioVent')$('egaScenario').dispatchEvent(new Event('change',{bubbles:true}));
+   if(from.id==='egaScenarioVent'){
+    const p=profiles[from.value];
+    if(p){
+     $('egaShunt').value=Math.round(p.shunt*100);
+     $('egaLow').value=Math.round(p.low*100);
+     $('egaDead').value=Math.round(p.dead*100);
+    }
+   }
    ids.forEach(id=>{const original=$(id),copy=$(id+'Vent');if(original&&copy)copy.value=original.value});
+   syncing=false;
+  }
+  ids.forEach(id=>{const original=$(id),copy=$(id+'Vent');if(original&&copy)copy.value=original.value});
    syncing=false;
   }
   ids.forEach(id=>{
