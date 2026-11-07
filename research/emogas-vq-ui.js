@@ -287,6 +287,7 @@ window.addEventListener('DOMContentLoaded',function(){
     cardiacOutput:target.inputs.q,metabolicO2:target.inputs.vo2,
     alveolarVentilation:target.inputs.va,metabolicCO2:target.inputs.vco2,
     shunt:target.inputs.shunt,lowVQFraction:target.inputs.low,
+    deadSpaceFraction:target.inputs.dead,
     respiratoryQuotient:target.inputs.rq
     // Keep the slowly equilibrating oxygen result distinct from its target.
    });
