@@ -698,16 +698,17 @@
     const endEffective=d.te-valveTime*(1-Math.exp(-d.te/valveTime));
     const tail=Math.exp(-endEffective/tauE);
     const decay=Math.exp(-effective/tauE),den=Math.max(.00001,1-tail);
-    if(d.trappedVolume>0){
-     // Relative tidal volume remains continuous between consecutive breaths.
-     volume=(d.vt+d.trappedVolume)*decay-d.trappedVolume;
-     flow=-(d.vt+d.trappedVolume)/1000*decay*
-      (1-Math.exp(-expSeconds/valveTime))/tauE;
-    }else{
-     volume=d.vt*clamp((decay-tail)/den,0,1);
-     flow=expSeconds>=d.te?0:
-      -d.vt/1000*decay*(1-Math.exp(-expSeconds/valveTime))/(tauE*den);
-    }
+    // Volume relativo al livello tele-espiratorio: il ciclo si chiude
+    // a zero, senza un salto artificiale fra due respiri. Il flusso
+    // e' la derivata ESATTA del medesimo volume espiratorio.
+    // In presenza di intrappolamento, il flusso al termine di Te
+    // resta negativo: e' interrotto dal respiro successivo, non
+    // azzerato artificialmente. Il volume intrappolato assoluto
+    // e l'auto-PEEP sono rappresentati separatamente nei parametri.
+    volume=d.vt*clamp((decay-tail)/den,0,1);
+    const expiratoryRate=-(d.vt/1000)*decay*
+     (1-Math.exp(-expSeconds/valveTime))/(tauE*den);
+    flow=(d.trappedVolume>0||expSeconds<d.te)?expiratoryRate:0;
     // All'inizio dell'espirazione la pressione e' quella realmente
     // raggiunta a fine inspirazione, anche se c'e' stata una pausa.
     const release=d.hold?
