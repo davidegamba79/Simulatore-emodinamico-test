@@ -11,6 +11,39 @@
  const sat=po2=>1/(1+Math.pow(26.8/Math.max(1,po2),2.7));
  const content=(po2,hb)=>1.34*hb*sat(po2)+.0031*po2;
  const inverse=(c,hb)=>{let a=0,b=700;for(let i=0;i<48;i++){const m=(a+b)/2;if(content(m,hb)<c)a=m;else b=m;}return (a+b)/2;};
+ // PEEP response: qualitative recruitment and overdistension, shared by
+ // effective perfusion fractions and effective physiological dead space.
+ // Baseline values are the instructor-selected fractions at PEEP=0.
+ function peepResponse(input={}){
+  const peep=clamp(Number(input.peep)||0,0,18);
+  const scenario=String(input.scenario||'healthy');
+  const controlled=input.controlled===true;
+  const baselineShunt=clamp(Number(input.shunt)||0,0,.8);
+  const baselineLow=clamp(Number(input.lowVQFraction)||0,0,1-baselineShunt);
+  const baselineDead=clamp(Number(input.deadSpaceFraction)||0,0,.85);
+  if(!controlled)return Object.freeze({shunt:baselineShunt,lowVQFraction:baselineLow,
+   deadSpaceFraction:baselineDead,recruitment:0,overdistension:0});
+  const cfg={
+   healthy:[.06,.04,.01,7,7],
+   hypoventilation:[.06,.04,.01,7,7],
+   atelectasis:[.67,.38,.10,10,5],
+   bronchospasm:[.10,.08,.06,7,6],
+   embolism:[.04,.04,.12,6,5],
+   edema:[.46,.30,.12,9,5.5]
+  }[scenario]||[.06,.04,.01,7,7];
+  const recruitment=1-Math.exp(-peep/(scenario==='atelectasis'?4.8:5.2));
+  const overdistension=Math.pow(Math.max(0,peep-cfg[3])/cfg[4],2);
+  // Opening previously perfused but unventilated units decreases shunt;
+  // excessive distension can worsen V/Q without requiring SpO2 to fall.
+  const shunt=clamp(baselineShunt*(1-cfg[0]*recruitment)+
+   cfg[2]*.22*overdistension,0,.8);
+  const lowVQFraction=clamp(baselineLow*(1-cfg[1]*recruitment)+
+   cfg[2]*.28*overdistension,0,1-shunt);
+  const deadSpaceFraction=clamp(baselineDead-
+   (scenario==='atelectasis'?.055:scenario==='edema'?.035:.008)*recruitment+
+   cfg[2]*overdistension,0,.85);
+  return Object.freeze({shunt,lowVQFraction,deadSpaceFraction,recruitment,overdistension});
+ }
  function calculate(input={}){
   const fio2=clamp(+input.fio2||.21,.21,1);
   const pb=clamp(+input.barometricPressure||760,400,800);
@@ -64,5 +97,5 @@
    warning:'Modello didattico esplorativo: V/Q, equilibrio venoso e acido-base semplificati; PaCO2 stazionaria, non validato clinicamente.'
   });
  }
- root.EmogasVQ=Object.freeze({calculate});
+ root.EmogasVQ=Object.freeze({calculate,peepResponse});
 })(typeof window!=='undefined'?window:globalThis);
