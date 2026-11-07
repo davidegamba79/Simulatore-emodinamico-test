@@ -156,7 +156,7 @@ function pulmonaryCap(q,vent){
  const obstruction=key==='bronchospasm';
  const slope=obstruction?1:key==='edema'?.38:key==='atelectasis'?.23:key==='embolism'?.13:0;
  if(!slope)return null;
- // q in 0.08..0.83 during controlled expiration; maintain zero during inspiration.
+ // q maps the actual controlled expiratory interval to 0.08..0.83.
  const x=C((q-.08)/.75,0,1);
  const te=vent?.te||3;
  const resistance=vent?.raw||8;
@@ -165,12 +165,21 @@ function pulmonaryCap(q,vent){
  const k=C(slope*severity*limitedExpiration,0,1.5);
  const onset=.025,fall=.955;
  if(x<=onset||x>=1)return 0;
+ if(obstruction){
+  // Didactic shark fin: continuously rising phase II/III without a
+  // horizontal plateau, with a sharp inspiratory washout at the end.
+  // More resistance or shorter Te exaggerates the ascending slope.
+  const z=C((x-onset)/(fall-onset),0,1);
+  const exponent=C(1.15+.48*k,1.25,2.05);
+  const ascending=Math.pow(z,exponent);
+  if(x<fall)return C(1.03*ascending,0,1.03);
+  const wash=C((x-fall)/(1-fall),0,1);
+  return 1.03*(1-wash*wash*(3-2*wash));
+ }
  if(x<fall){
   const z=C((x-onset)/(fall-onset),0,1);
-  // Normal: rapid phase II and flat phase III.
-  // Obstruction: delayed alveolar mixing and steep phase III (shark-fin).
-  const rise=obstruction?.56:.19;
-  const base=z<rise?Math.pow(z/rise,obstruction?1.45:1.05):1;
+  const rise=.19;
+  const base=z<rise?Math.pow(z/rise,1.05):1;
   const ramp=z<rise?0:(z-rise)/(1-rise);
   return C((1-k*.50)*base+k*.50*Math.pow(z,.80)+k*.22*ramp,0,1.03);
  }
