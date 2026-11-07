@@ -634,6 +634,9 @@ body:not(.student)[data-instructor-tab="anesthesia"] #instructorInhaledCard inpu
   <div><small>Compliance statica (Cstat)</small><b id="ventCstat">—</b><small>mL/cmH₂O</small></div>
   <div><small>Compliance dinamica (Cdyn)</small><b id="ventCdyn">—</b><small>mL/cmH₂O</small></div>
   <div><small>Resistenza vie aeree (Raw)</small><b id="ventRaw">—</b><small>cmH₂O/(L/s)</small></div>
+  <div><small>Auto-PEEP stimata</small><b id="ventAutoPeep">—</b><small>cmH₂O</small></div>
+  <div><small>Volume intrappolato stimato</small><b id="ventTrappedVolume">—</b><small>mL</small></div>
+  <div><small>Costante espiratoria τE</small><b id="ventTauE">—</b><small>s</small></div>
  </div>
 
  </section>
@@ -1153,7 +1156,7 @@ window.addEventListener('DOMContentLoaded',()=>{
  }catch(err){console.warn('Ripristino riepilogo terapie studenti:',err)}
 });
 </script>
-<script src="./ventilation-v291.js?v=29345"></script>
+<script src="./ventilation-v291.js?v=29347"></script>
 <!-- Solo ramo sperimentale: modulo EGA/VQ, nessuna modifica al motore principale -->
 <script src="./research/emogas-vq-prototype.js?v=2"></script>
 <script src="./research/emogas-vq-ui.js?v=9"></script>
