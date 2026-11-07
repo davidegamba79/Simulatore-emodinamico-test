@@ -223,7 +223,30 @@ window.addEventListener('DOMContentLoaded',function(){
     // Keep the slowly equilibrating oxygen result distinct from its target.
    });
    const etco2=(typeof state!=='undefined'&&Number.isFinite(state.etco2)&&(typeof window.simVentCalc==='function'&&window.simVentCalc().intubated))?state.etco2:null;
-   const displayed={...result,paEtGradient:etco2==null?null:+(gasState.paCO2-etco2).toFixed(1),paO2:+gasState.paO2.toFixed(1),saO2:+(100/(1+Math.pow(26.8/Math.max(1,gasState.paO2),2.7))).toFixed(1),pfRatio:+(gasState.paO2/target.inputs.fio2).toFixed(0),aaGradient:+Math.max(0,result.idealPAO2-gasState.paO2).toFixed(1)};
+   // All oxygen metrics must derive from the SAME time-lagged arterial PO2.
+   // Previously PaO2/SaO2 were lagged but CaO2, CvO2, DO2 and SvO2
+   // remained at steady state, producing mutually inconsistent readings.
+   const oxygenSat=po2=>1/(1+Math.pow(26.8/Math.max(1,po2),2.7));
+   const arterialSat=oxygenSat(gasState.paO2);
+   const caO2=1.34*target.inputs.hb*arterialSat+.0031*gasState.paO2;
+   const extraction=target.inputs.vo2/(10*target.inputs.q);
+   const cvO2=Math.max(.05,caO2-extraction);
+   const venousPo2=(()=>{let lo=0,hi=700;for(let i=0;i<45;i++){
+    const mid=(lo+hi)/2;
+    const c=1.34*target.inputs.hb*oxygenSat(mid)+.0031*mid;
+    if(c<cvO2)lo=mid;else hi=mid;
+   }return (lo+hi)/2})();
+   const do2=10*target.inputs.q*caO2;
+   const extractionRatio=100*target.inputs.vo2/Math.max(1,do2);
+   const displayed={...result,
+    paEtGradient:etco2==null?null:+(gasState.paCO2-etco2).toFixed(1),
+    paO2:+gasState.paO2.toFixed(1),saO2:+(100*arterialSat).toFixed(1),
+    caO2:+caO2.toFixed(2),cvO2:+cvO2.toFixed(2),
+    do2:+do2.toFixed(0),svO2:+(100*oxygenSat(venousPo2)).toFixed(1),
+    oxygenExtractionRatio:+extractionRatio.toFixed(1),
+    oxygenSupplyWarning:extractionRatio>=60?'Estrazione O₂ elevata: VO₂ fissato; limite di estrazione non simulato.':null,
+    pfRatio:+(gasState.paO2/target.inputs.fio2).toFixed(0),
+    aaGradient:+Math.max(0,result.idealPAO2-gasState.paO2).toFixed(1)};
    const stamp=new Date().toLocaleTimeString('it-IT');draw(displayed,stamp);
    localStorage.setItem(KEY,JSON.stringify({result:displayed,stamp}));
   }catch(err){$('egaStatus').textContent='Errore modello: '+err.message;console.error(err)}
