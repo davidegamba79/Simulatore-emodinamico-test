@@ -415,7 +415,8 @@ function v25PerfusionEt(dt,ventData){
  const ageFactor=age<1?1.10:age>10?clamp(1-.015*(age-10),.82,1):1;
  const bcsFactor=bcs>=7?clamp(1-.025*(bcs-6),.90,1):1;
  const referenceGradient=2.8;
- const alveolar=clamp(vent.alveolarMinute,.05,25); // L/min
+ const alveolar=clamp(typeof window.simEgaAlveolarMinute==='function'?
+  window.simEgaAlveolarMinute(vent):vent.alveolarMinute,.05,25); // L/min; shared EGA effective dead space
  // La produzione metabolica viene calibrata all'equilibrio iniziale con
  // la ventilazione alveolare effettiva, evitando una deriva spontanea.
  const conductance=10*clamp(perf,.20,1.6);
