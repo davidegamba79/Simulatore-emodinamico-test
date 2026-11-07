@@ -201,18 +201,33 @@ window.addEventListener('DOMContentLoaded',function(){
  $('egaScenario')?.addEventListener('change',refreshVentControls);
  refreshVentControls();
  let gasState=null;
+ // One oxygen pool is shared by the continuous pulse oximeter and EGA samples.
+ // Advance only with simulated time: pause, fast-forward and sample agree.
+ function advanceGas(target){
+  const now=typeof window.simVirtualNow==='function'?window.simVirtualNow():performance.now();
+  if(!gasState||now<gasState.time)gasState={time:now,paCO2:target.paCO2,paO2:target.paO2};
+  else{
+   const dt=Math.min(3600,Math.max(0,(now-gasState.time)/1000));
+   gasState.paCO2+=(target.paCO2-gasState.paCO2)*(1-Math.exp(-dt/65));
+   gasState.paO2+=(target.paO2-gasState.paO2)*(1-Math.exp(-dt/18));
+   gasState.time=now;
+  }
+  return gasState;
+ }
+ // Called by the monitor engine at each simulated step, independently of
+ // whether the Emogas tab is open or continuous EGA sampling is enabled.
+ window.simEgaOxygenSaturation=function(){
+  try{
+   if(!window.EmogasVQ||!$('egaScenario'))return null;
+   const target=data();
+   const gas=advanceGas(target);
+   return Math.max(0,Math.min(100,100/(1+Math.pow(26.8/Math.max(1,gas.paO2),2.7))));
+  }catch(err){console.warn('SpO2 V/Q:',err);return null}
+ };
  function sample(){
   try{
    const target=data();
-   const now=typeof window.simVirtualNow==='function'?window.simVirtualNow():performance.now();
-   if(!gasState||now<gasState.time){gasState={time:now,paCO2:target.paCO2,paO2:target.paO2}}
-   else{
-    const dt=Math.min(3600,Math.max(0,(now-gasState.time)/1000));
-    // Didactic response times; simulation clock (pause freezes the gases).
-    gasState.paCO2+=(target.paCO2-gasState.paCO2)*(1-Math.exp(-dt/65));
-    gasState.paO2+=(target.paO2-gasState.paO2)*(1-Math.exp(-dt/18));
-    gasState.time=now;
-   }
+   advanceGas(target);
    const result=window.EmogasVQ.calculate({
     fio2:target.inputs.fio2,barometricPressure:target.inputs.pb,
     paCO2:gasState.paCO2,bicarbonate:target.hco3,hb:target.inputs.hb,
