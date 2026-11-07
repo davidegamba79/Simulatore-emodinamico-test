@@ -105,7 +105,11 @@ window.addEventListener('DOMContentLoaded',function(){
   const baselinePaCO2=clamp(.863*metabolicCO2/actualVA,10,120);
   const co2VqPenalty=30*Math.max(0,shunt-.02)+12*Math.max(0,lowVQ-.04);
   return window.EmogasVQ.calculate({
-   paCO2:clamp(baselinePaCO2+co2VqPenalty,10,120),
+   // Use the same dynamic arterial CO2 pool that drives the monitor
+   // whenever controlled ventilation is active; otherwise use EGA steady state.
+   paCO2:vent?.controlled&&Number.isFinite(window.simDynamicPaCO2)?
+    clamp(window.simDynamicPaCO2+co2VqPenalty,10,120):
+    clamp(baselinePaCO2+co2VqPenalty,10,120),
    fio2:vent?.intubated?vent.fio2:.21,
    alveolarVentilation:actualVA,metabolicCO2,
    cardiacOutput:typeof state!=='undefined'&&Number.isFinite(state.co)?state.co:3,
