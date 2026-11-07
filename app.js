@@ -590,6 +590,18 @@ function simAdvancePhysics(seconds){
     $('spo2').value=clamp(v25.oxygenEffective,80,100).toFixed(0);
    }
   }
+  // Experimental V/Q module is the single oxygen source for SpO2 and EGA.
+  // Preserve instructor manual lock and the existing pulseless-rhythm display.
+  if(typeof window.simEgaOxygenSaturation==='function'){
+   const egaSat=window.simEgaOxygenSaturation();
+   if(Number.isFinite(egaSat)){
+    if(manualLocks.spo2)v25.oxygenEffective=+$('spo2').value||98;
+    else{
+     v25.oxygenEffective=egaSat;
+     $('spo2').value=clamp(egaSat,0,100).toFixed(0);
+    }
+   }
+  }
   render();v25.applying=false;
   const sec=(simClock.virtual-v25.start)/1000;
   if(sec-v25.lastSample>=1){v25.lastSample=sec;v25Sample(sec)}
