@@ -79,13 +79,23 @@ window.addEventListener('DOMContentLoaded',function(){
   const parts=result.compartments;
   $('egaCompartments').innerHTML=[['Normale',parts.normal,'#3ca7cc'],['Basso V/Q',parts.lowVQ,'#f4b65b'],['Shunt',parts.shunt,'#ed6974']].map(([k,v,c])=>
    '<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:12px"><span>'+k+'</span><span>'+fmt(v*100,0)+'%</span></div><div style="height:12px;background:#21323d;border-radius:6px;overflow:hidden"><div style="width:'+Math.max(0,v*100)+'%;height:100%;background:'+c+'"></div></div></div>').join('');
-  $('egaStatus').textContent='Campione virtuale · '+stamp;
+  const d=result.inputs;
+  const effectiveInfo=' · quote V/Q effettive alla PEEP: shunt '+fmt(d.shunt*100,1)+'%, basso V/Q '+fmt(d.low*100,1)+'%, spazio morto '+fmt(d.dead*100,1)+'%';
+  $('egaStatus').textContent='Campione virtuale · '+stamp+effectiveInfo;
   acidPlot(result);
  }
  function data(){
   const vent=typeof window.simVentCalc==='function'?window.simVentCalc():null;
-  const dead=Math.min(.85,Math.max(0,+$('egaDead').value/100));
-  const scenario=profiles[$('egaScenario').value]||profiles.healthy;
+  const scenarioKey=$('egaScenario').value;
+  const scenario=profiles[scenarioKey]||profiles.healthy;
+  const baselineDead=clamp(+$('egaDead').value/100,0,.85);
+  const effective=window.EmogasVQ.peepResponse({
+   scenario:scenarioKey,controlled:Boolean(vent?.controlled),peep:vent?.peep||0,
+   shunt:clamp(+$('egaShunt').value/100,0,.8),
+   lowVQFraction:clamp(+$('egaLow').value/100,0,.8),
+   deadSpaceFraction:baselineDead
+  });
+  const dead=effective.deadSpaceFraction;
   const rr=vent?.rate||12,weight=vent?.weight||25;
   const minute=vent?.controlled?vent.minute:Math.max(.1,weight*.12);
   // Spontaneous breathing: the ventilator's calculated tidal volume is a
@@ -100,8 +110,8 @@ window.addEventListener('DOMContentLoaded',function(){
   // Disequilibrio V/Q: lo shunt e le unità a basso V/Q possono
   // incrementare PaCO2 anche senza variazioni proporzionali di EtCO2.
   // Correzione esplorativa, NON una legge clinicamente validata.
-  const shunt=clamp(+$('egaShunt').value/100,0,.8);
-  const lowVQ=clamp(+$('egaLow').value/100,0,1-shunt);
+  const shunt=effective.shunt;
+  const lowVQ=effective.lowVQFraction;
   const baselinePaCO2=clamp(.863*metabolicCO2/actualVA,10,120);
   const co2VqPenalty=30*Math.max(0,shunt-.02)+12*Math.max(0,lowVQ-.04);
   return window.EmogasVQ.calculate({
@@ -114,7 +124,7 @@ window.addEventListener('DOMContentLoaded',function(){
    alveolarVentilation:actualVA,metabolicCO2,
    cardiacOutput:typeof state!=='undefined'&&Number.isFinite(state.co)?state.co:3,
    hb:+$('egaHb').value||14,bicarbonate:+$('egaHco3').value||24,
-   shunt:+$('egaShunt').value/100,lowVQFraction:+$('egaLow').value/100,
+   shunt,lowVQFraction:lowVQ,
    deadSpaceFraction:dead
   });
  }
