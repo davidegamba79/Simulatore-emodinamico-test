@@ -148,8 +148,37 @@ function spontaneousCap(q,vent,breath){
  const z=C((exp-fallStart)/(fallEnd-fallStart),0,1);
  return .90*(1-z*z*(3-2*z));
 }
+// Integrated pulmonary teaching scenarios: preserve manual capnography patterns
+// and use the same lung profile on instructor and student displays.
+function pulmonaryCap(q,vent){
+ const key=vent?.lungProfile||window.simVentLungProfile||'healthy';
+ if(key==='healthy'||key==='hypoventilation')return null;
+ const obstruction=key==='bronchospasm';
+ const slope=obstruction?1:key==='edema'?.38:key==='atelectasis'?.23:key==='embolism'?.13:0;
+ if(!slope)return null;
+ // q in 0.08..0.83 during controlled expiration; maintain zero during inspiration.
+ const x=C((q-.08)/.75,0,1);
+ const te=vent?.te||3;
+ const resistance=vent?.raw||8;
+ const severity=obstruction?C((resistance-8)/25,.55,1.25):1;
+ const limitedExpiration=obstruction?C(2.5/Math.max(.4,te),.65,1.7):1;
+ const k=C(slope*severity*limitedExpiration,0,1.5);
+ const onset=.025,fall=.955;
+ if(x<=onset||x>=1)return 0;
+ if(x<fall){
+  const z=C((x-onset)/(fall-onset),0,1);
+  // Normal: rapid phase II and flat phase III.
+  // Obstruction: delayed alveolar mixing and steep phase III (shark-fin).
+  const rise=obstruction?.56:.19;
+  const base=z<rise?Math.pow(z/rise,obstruction?1.45:1.05):1;
+  const ramp=z<rise?0:(z-rise)/(1-rise);
+  return C((1-k*.50)*base+k*.50*Math.pow(z,.80)+k*.22*ramp,0,1.03);
+ }
+ const z=C((x-fall)/(1-fall),0,1);
+ return (1-z*z*(3-2*z));
+}
 function cap(q,vent,breath){let m=E("capnoPattern")?.value||"Normale";
- if(m==="Normale"&&vent?.intubated&&!vent.controlled)return spontaneousCap(q,vent,breath);if(m.includes("Disconnessione"))return 0;let b=m.includes("Rebreathing")?.18:0,v=0;if(m.includes("Broncospasmo")){if(q<.07)v=0;else if(q<.42)v=C((q-.07)/.35,0,1)**1.8;else if(q<.69)v=.96+.06*(q-.42)/.27;else if(q<.82){let z=(q-.69)/.13;v=1.02*(1-z*z*(3-2*z))}}else{if(q<.08)v=0;else if(q<.14){let z=(q-.08)/.06;v=.94*(z*z*(3-2*z))}else if(q<.72){let z=(q-.14)/.58;v=.94+.09*z+.010*Math.sin(Math.PI*z)}else if(q<.78){let z=(q-.72)/.06;v=1.03*(1-(z*z*(3-2*z)))}else v=0;if(m.includes("Oscillazioni"))v+=.045*Math.sin(q*42)*C((q-.14)*4,0,1)*C((.78-q)*8,0,1)}return b+(1-b)*C(v,0,1.1)}
+ if(m==="Normale"&&vent?.controlled){const pathological=pulmonaryCap(q,vent);if(pathological!==null)return pathological;}if(m==="Normale"&&vent?.intubated&&!vent.controlled)return spontaneousCap(q,vent,breath);if(m.includes("Disconnessione"))return 0;let b=m.includes("Rebreathing")?.18:0,v=0;if(m.includes("Broncospasmo")){if(q<.07)v=0;else if(q<.42)v=C((q-.07)/.35,0,1)**1.8;else if(q<.69)v=.96+.06*(q-.42)/.27;else if(q<.82){let z=(q-.69)/.13;v=1.02*(1-z*z*(3-2*z))}}else{if(q<.08)v=0;else if(q<.14){let z=(q-.08)/.06;v=.94*(z*z*(3-2*z))}else if(q<.72){let z=(q-.14)/.58;v=.94+.09*z+.010*Math.sin(Math.PI*z)}else if(q<.78){let z=(q-.72)/.06;v=1.03*(1-(z*z*(3-2*z)))}else v=0;if(m.includes("Oscillazioni"))v+=.045*Math.sin(q*42)*C((q-.14)*4,0,1)*C((.78-q)*8,0,1)}return b+(1-b)*C(v,0,1.1)}
 // Oscillazione respiratoria SPV calcolata una volta per frame, non per pixel.
 let waveDrawFailures=0;
 function draw(){
