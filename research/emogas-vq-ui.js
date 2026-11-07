@@ -74,14 +74,14 @@ window.addEventListener('DOMContentLoaded',function(){
  }
  function draw(result,stamp){
   if(!result)return;
-  const entries=[['pH',fmt(result.ph,3)],['PaCO₂',fmt(result.paCO2)+' mmHg'],['PaO₂',fmt(result.paO2)+' mmHg'],['HCO₃⁻',fmt(result.hco3)+' mmol/L'],['SaO₂',fmt(result.saO2)+' %'],['P/F',fmt(result.pfRatio,0)],['A–a',fmt(result.aaGradient)+' mmHg'],['PaCO₂ − EtCO₂',result.paEtGradient==null?'Non disponibile':fmt(result.paEtGradient)+' mmHg']];
+  const entries=[['pH',fmt(result.ph,3)],['PaCO₂',fmt(result.paCO2)+' mmHg'],['PaO₂',fmt(result.paO2)+' mmHg'],['HCO₃⁻',fmt(result.hco3)+' mmol/L'],['SaO₂',fmt(result.saO2)+' %'],['DO₂',fmt(result.do2,0)+' mL/min'],['CaO₂',fmt(result.caO2,2)+' mL/dL'],['CvO₂',fmt(result.cvO2,2)+' mL/dL'],['SvO₂ stimata',fmt(result.svO2)+' %'],['Estrazione O₂',fmt(result.oxygenExtractionRatio)+' %'],['P/F',fmt(result.pfRatio,0)],['A–a',fmt(result.aaGradient)+' mmHg'],['PaCO₂ − EtCO₂',result.paEtGradient==null?'Non disponibile':fmt(result.paEtGradient)+' mmHg']];
   $('egaMetrics').innerHTML=entries.map(([k,v])=>'<div style="border:1px solid #29404d;border-radius:8px;padding:8px"><small>'+k+'</small><div style="font-size:18px;font-weight:700">'+v+'</div></div>').join('');
   const parts=result.compartments;
   $('egaCompartments').innerHTML=[['Normale',parts.normal,'#3ca7cc'],['Basso V/Q',parts.lowVQ,'#f4b65b'],['Shunt',parts.shunt,'#ed6974']].map(([k,v,c])=>
    '<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:12px"><span>'+k+'</span><span>'+fmt(v*100,0)+'%</span></div><div style="height:12px;background:#21323d;border-radius:6px;overflow:hidden"><div style="width:'+Math.max(0,v*100)+'%;height:100%;background:'+c+'"></div></div></div>').join('');
   const d=result.inputs;
   const effectiveInfo=' · quote V/Q effettive alla PEEP: shunt '+fmt(d.shunt*100,1)+'%, basso V/Q '+fmt(d.low*100,1)+'%, spazio morto '+fmt(d.dead*100,1)+'%';
-  $('egaStatus').textContent='Campione virtuale · '+stamp+effectiveInfo;
+  $('egaStatus').textContent='Campione virtuale · '+stamp+effectiveInfo+(result.oxygenSupplyWarning?' · '+result.oxygenSupplyWarning:'');
   acidPlot(result);
  }
  function data(){
