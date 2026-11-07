@@ -92,7 +92,7 @@
   // e funzioni esponenziali ripetute durante la pausa inspiratoria.
   const key=[d.mode,d.controlled,d.rate,d.ti,d.te,d.flowTi,d.tau,
    d.crs,d.raw,d.vt,d.pip,d.plateau,d.peep,d.pinsp,d.hold,d.holdSeconds,
-   d.pcvRiseTime,d.pcvFillEnd,d.curveShape,d.expResistance,d.expValveR,d.weight].join('|');
+   d.pcvRiseTime,d.pcvFillEnd,d.curveShape,d.expResistance,d.expValveR,d.weight,d.trappedVolume].join('|');
   if(key===loopPointsCacheKey&&loopPointsCacheValue)return loopPointsCacheValue;
   const N=180,phaseEnd=d.ti/(60/d.rate);
   const point=phase=>({
@@ -382,6 +382,10 @@
    (bodyType==='brachy'?1.25:bodyType==='dolicho'?.83:1)*
    (bcs>=7?1.08:1)*(lung.expiratoryMultiplier||1),.55,5);
   const expValveR=clamp(raw*.30*expResistance,1.1,12); // R (cmH2O/(L/s)) * C (L/cmH2O) = secondi
+  const tauE=Math.max(.12,tau*(1.35+.32*expResistance));
+  const valveTime=clamp(.065+.025*expResistance+.08*tau,.07,.22);
+  const endEffective=te-valveTime*(1-Math.exp(-te/valveTime));
+  const expTail=Math.exp(-endEffective/tauE);
   const vtSet=clamp(n('ventVtKg',10),4,15)*weight;
   const pinsp=clamp(n('ventPinsp',12),4,30);
   // Dopo una vera induzione EV la ventilazione spontanea e' depressa:
@@ -397,7 +401,12 @@
   const pcvPeakFlow=mode==='PCV'?
    vt/1000*pcvSmoothFill(pcvRiseTime,flowTi,tau,pcvRiseTime).rate/
    Math.max(.001,pcvFillEnd):0;
-  const plateau=controlled?peep+elasticRecoil({crs,curveShape,weight},vt):null;
+  // Only obstructive scenarios accumulate end-expiratory gas.
+  const trapping=controlled&&lungProfile==='bronchospasm'?
+   clamp((expTail-.04)/.96,0,.90):0;
+  const trappedVolume=trapping>0?Math.min(vt*3,vt*trapping/Math.max(.1,1-trapping)):0;
+  const autoPeep=trappedVolume/Math.max(.45,crs);
+  const plateau=controlled?peep+elasticRecoil({crs,curveShape,weight},vt)+autoPeep:null;
   const vcvPeakFlow=mode==='VCV'?vt/1000*vcvFill(flowTi*.5,flowTi).rate:0;
   const flow=controlled?(mode==='VCV'?vcvPeakFlow:vt/1000/Math.max(.1,flowTi)):0;
   const pip=controlled?(mode==='VCV'?plateau+raw*vcvPeakFlow:peep+pinsp):null;
@@ -438,7 +447,7 @@
   const pmean=controlled?peep+(plateau-peep)*ti/(ti+te)*.60:0;
   const preloadSensitivity=clamp(1+Math.max(0,100-(typeof phys!=='undefined'?phys.preload:100))*.012,1,1.9);
   const preloadFactor=controlled?clamp(1-.011*Math.max(0,pmean-2)*preloadSensitivity-.005*Math.max(0,(plateau||0)-19),.68,1):1;
-  return {mode,chosen,intubated,postInduction,controlled,rate,peep,ie,ti,te,flowTi,pcvRiseTime,pcvPeakFlow,pcvFillEnd,vcvPeakFlow,pinsp,hold,holdSeconds,fio2,weight,age,bcs,morph,breed,bodyType,lungProfile,recruitment,overdistension,compliancePeepFactor,crs,raw,tau,curveShape,expResistance,expValveR,vt,pip,plateau,driving,plateauMeasured,drivingMeasured,cdyn,cstat,rawMeasured,minute,alveolarMinute,deadspaceMlKg,etco2Gradient,oxygenPeepEffect,pmean,preloadFactor};
+  return {tauE,valveTime,expTail,trappedVolume,autoPeep,trapping,mode,chosen,intubated,postInduction,controlled,rate,peep,ie,ti,te,flowTi,pcvRiseTime,pcvPeakFlow,pcvFillEnd,vcvPeakFlow,pinsp,hold,holdSeconds,fio2,weight,age,bcs,morph,breed,bodyType,lungProfile,recruitment,overdistension,compliancePeepFactor,crs,raw,tau,curveShape,expResistance,expValveR,vt,pip,plateau,driving,plateauMeasured,drivingMeasured,cdyn,cstat,rawMeasured,minute,alveolarMinute,deadspaceMlKg,etco2Gradient,oxygenPeepEffect,pmean,preloadFactor};
  }
  window.simVentCalc=calc;
  window.simVentValid=()=>{
@@ -674,7 +683,7 @@
     }else{
      pressure=d.mode==='PCV'?
       d.peep+d.pinsp*Math.min(1,t/d.pcvRiseTime):
-      d.peep+elasticRecoil(d,volume)+d.raw*flow;
+      d.peep+elasticRecoil(d,volume)+d.autoPeep+d.raw*flow;
     }
    }else{
     // Il ventilatore scarica Paw rapidamente verso la PEEP, mentre
@@ -682,16 +691,23 @@
     // lievemente piu' lenta. Paw NON e' la pressione alveolare:
     // il polmone continua a svuotarsi a Paw pressoche' costante (PEEP).
     // Volume e flusso restano derivata/integrale della stessa funzione.
-    const valveTime=clamp(.065+.025*d.expResistance+.08*d.tau,.07,.22);
+    const valveTime=d.valveTime;
     const pressureReleaseTime=clamp(.075+.12*d.tau+.012*d.expResistance,.075,.22);
-    const tauE=Math.max(.12,d.tau*(1.35+.32*d.expResistance));
+    const tauE=d.tauE;
     const effective=expSeconds-valveTime*(1-Math.exp(-expSeconds/valveTime));
     const endEffective=d.te-valveTime*(1-Math.exp(-d.te/valveTime));
     const tail=Math.exp(-endEffective/tauE);
     const decay=Math.exp(-effective/tauE),den=Math.max(.00001,1-tail);
-    volume=d.vt*clamp((decay-tail)/den,0,1);
-    flow=expSeconds>=d.te?0:
-     -d.vt/1000*decay*(1-Math.exp(-expSeconds/valveTime))/(tauE*den);
+    if(d.trappedVolume>0){
+     // Relative tidal volume remains continuous between consecutive breaths.
+     volume=(d.vt+d.trappedVolume)*decay-d.trappedVolume;
+     flow=-(d.vt+d.trappedVolume)/1000*decay*
+      (1-Math.exp(-expSeconds/valveTime))/tauE;
+    }else{
+     volume=d.vt*clamp((decay-tail)/den,0,1);
+     flow=expSeconds>=d.te?0:
+      -d.vt/1000*decay*(1-Math.exp(-expSeconds/valveTime))/(tauE*den);
+    }
     // All'inizio dell'espirazione la pressione e' quella realmente
     // raggiunta a fine inspirazione, anche se c'e' stata una pausa.
     const release=d.hold?
