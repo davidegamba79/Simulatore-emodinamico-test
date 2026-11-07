@@ -444,10 +444,26 @@
   const oxygenPeepEffect=controlled?
    -lung.oxygenDeficit+lung.oxygenRecruit*recruitment-
     lung.oxygenOverdist*overdistension:0;
-  const pmean=controlled?peep+(plateau-peep)*ti/(ti+te)*.60:0;
+  // PEEP totale: pressione esterna e componente intrinseca contribuiscono
+  // entrambe alla pressione di fine espirazione. La trasmissione pleurica
+  // dipende dal profilo polmonare e non equivale alla pressione alveolare.
+  const totalPeep=controlled?peep+autoPeep:0;
+  const pmean=controlled?totalPeep+Math.max(0,plateau-totalPeep)*ti/(ti+te)*.60:0;
   const preloadSensitivity=clamp(1+Math.max(0,100-(typeof phys!=='undefined'?phys.preload:100))*.012,1,1.9);
-  const preloadFactor=controlled?clamp(1-.011*Math.max(0,pmean-2)*preloadSensitivity-.005*Math.max(0,(plateau||0)-19),.68,1):1;
-  return {tauE,valveTime,expTail,trappedVolume,autoPeep,trapping,mode,chosen,intubated,postInduction,controlled,rate,peep,ie,ti,te,flowTi,pcvRiseTime,pcvPeakFlow,pcvFillEnd,vcvPeakFlow,pinsp,hold,holdSeconds,fio2,weight,age,bcs,morph,breed,bodyType,lungProfile,recruitment,overdistension,compliancePeepFactor,crs,raw,tau,curveShape,expResistance,expValveR,vt,pip,plateau,driving,plateauMeasured,drivingMeasured,cdyn,cstat,rawMeasured,minute,alveolarMinute,deadspaceMlKg,etco2Gradient,oxygenPeepEffect,pmean,preloadFactor};
+  // Effetto emodinamico didattico: la quota reclutante puo' migliorare
+  // l'ossigenazione, ma la pressione trasmessa riduce il ritorno venoso;
+  // la sovradistensione aumenta inoltre il carico ventricolare destro.
+  // Nell'ostruzione, l'auto-PEEP aggiunge pressione alveolare anche
+  // quando la PEEP impostata e' nulla.
+  const pleuralTransmission=lungProfile==='edema'?.68:
+   lungProfile==='atelectasis'?.58:lungProfile==='bronchospasm'?.38:.48;
+  const transmittedPressure=pmean*pleuralTransmission;
+  const rvAfterloadPenalty=.014*Math.max(0,overdistension)+
+   (lungProfile==='embolism'?.006*Math.max(0,totalPeep-4):0);
+  const preloadFactor=controlled?clamp(
+   1-.020*Math.max(0,transmittedPressure-1)*preloadSensitivity-
+   rvAfterloadPenalty-.003*Math.max(0,(plateau||0)-19),.60,1):1;
+  return {tauE,valveTime,expTail,trappedVolume,autoPeep,trapping,mode,chosen,intubated,postInduction,controlled,rate,peep,ie,ti,te,flowTi,pcvRiseTime,pcvPeakFlow,pcvFillEnd,vcvPeakFlow,pinsp,hold,holdSeconds,fio2,weight,age,bcs,morph,breed,bodyType,lungProfile,recruitment,overdistension,compliancePeepFactor,crs,raw,tau,curveShape,expResistance,expValveR,vt,pip,plateau,driving,plateauMeasured,drivingMeasured,cdyn,cstat,rawMeasured,minute,alveolarMinute,deadspaceMlKg,etco2Gradient,oxygenPeepEffect,totalPeep,transmittedPressure,pmean,preloadFactor};
  }
  window.simVentCalc=calc;
  window.simVentValid=()=>{
