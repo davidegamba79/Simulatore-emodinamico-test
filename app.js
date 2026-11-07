@@ -426,15 +426,19 @@ function v25PerfusionEt(dt,ventData){
  if(!v25.co2Pools||!Number.isFinite(v25.co2Pools.arterial)||
     !Number.isFinite(v25.co2Pools.tissue)||v25.co2Pools.ref!==v25.etRef||
     v25.co2Pools.weight!==weight){
-  const arterial=clamp(v25.etRef+gradient,4,120);
-  const vco2=clamp(alveolar*arterial/.863,15,650);
+  // One fixed metabolic production model, shared with experimental EGA.
+  // Do not calibrate VCO2 from the current ventilator setting: doing so
+  // makes transient ventilator changes permanently bias CO2 equilibrium.
+  const vco2=clamp(105*Math.pow(weight/25,.8),15,650);
+  const arterial=clamp(.863*vco2/alveolar,10,120);
   v25.co2Pools={arterial,tissue:clamp(arterial+vco2/conductance,4,160),
    ref:v25.etRef,weight,vco2};
  }
- if(!Number.isFinite(v25.co2Pools.vco2))
-  v25.co2Pools.vco2=clamp(alveolar*v25.co2Pools.arterial/.863,15,650);
+ // Keep VCO2 consistent even when an old simulator state is reused.
+ v25.co2Pools.vco2=clamp(105*Math.pow(weight/25,.8),15,650);
  const vco2=v25.co2Pools.vco2;
  const pool=v25.co2Pools,seconds=clamp(dt,0,1);
+ window.simDynamicPaCO2=pool.arterial;
  const transfer=conductance*(pool.tissue-pool.arterial); // mL/min
  const elimination=alveolar*pool.arterial/.863; // mL/min
  // d(mL CO2 immagazzinati)/dt = ingresso - uscita.
@@ -442,6 +446,7 @@ function v25PerfusionEt(dt,ventData){
  // risposta (rapido circolatorio e lento tissutale).
  pool.arterial=clamp(pool.arterial+(transfer-elimination)*seconds/(60*4.5),4,160);
  pool.tissue=clamp(pool.tissue+(vco2-transfer)*seconds/(60*18),4,160);
+ window.simDynamicPaCO2=pool.arterial;
  if(cpr)return 12;
  if(arrest)return 3;
  const tachyDrop=rhythm==='Tachicardia ventricolare con polso'?
