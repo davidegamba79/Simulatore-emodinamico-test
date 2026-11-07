@@ -19,39 +19,39 @@
  // e NON soglie cliniche o predizioni di gas ematici.
  const lungProfiles=Object.freeze({
   healthy:Object.freeze({
-   compliance:1,recruitability:.04,overdistension:.16,overdistStart:8,
+   compliance:1,recruitability:.04,overdistension:.24,overdistStart:6,
    extraDeadspace:0,deadspaceRecruit:.09,deadspaceOverdist:.24,
    etGradient:1.6,oxygenDeficit:0,oxygenRecruit:.24,oxygenOverdist:.70
   }),
   atelectasis:Object.freeze({
-   compliance:.67,recruitability:.43,overdistension:.14,overdistStart:12,
+   compliance:.67,recruitability:.43,overdistension:.23,overdistStart:9,
    extraDeadspace:.48,deadspaceRecruit:.47,deadspaceOverdist:.20,
    etGradient:1.2,oxygenDeficit:6.8,oxygenRecruit:5.5,oxygenOverdist:1.6
   }),
   hypoventilation:Object.freeze({
-   compliance:1,recruitability:.04,overdistension:.16,overdistStart:8,
+   compliance:1,recruitability:.04,overdistension:.24,overdistStart:6,
    extraDeadspace:0,deadspaceRecruit:.09,deadspaceOverdist:.24,
    etGradient:1.6,oxygenDeficit:0,oxygenRecruit:.24,oxygenOverdist:.70
   }),
   bronchospasm:Object.freeze({
-   compliance:.94,recruitability:.04,overdistension:.20,overdistStart:9,
+   compliance:.94,recruitability:.04,overdistension:.26,overdistStart:7,
    extraDeadspace:.65,deadspaceRecruit:.05,deadspaceOverdist:.30,
    etGradient:2.8,oxygenDeficit:2.5,oxygenRecruit:.30,oxygenOverdist:.9,
    resistanceMultiplier:3.0,expiratoryMultiplier:2.2
   }),
   embolism:Object.freeze({
-   compliance:.96,recruitability:.03,overdistension:.16,overdistStart:9,
+   compliance:.96,recruitability:.03,overdistension:.27,overdistStart:6,
    extraDeadspace:2.1,deadspaceRecruit:.03,deadspaceOverdist:.3,
    etGradient:7,oxygenDeficit:3,oxygenRecruit:.12,oxygenOverdist:.8
   }),
   edema:Object.freeze({
-   compliance:.48,recruitability:.25,overdistension:.22,overdistStart:10,
+   compliance:.48,recruitability:.25,overdistension:.30,overdistStart:9,
    extraDeadspace:.65,deadspaceRecruit:.22,deadspaceOverdist:.3,
    etGradient:3,oxygenDeficit:7,oxygenRecruit:3.5,oxygenOverdist:1.3,
    resistanceMultiplier:1.3,expiratoryMultiplier:1.15
   }),
   poorly_recruitable:Object.freeze({
-   compliance:.55,recruitability:.10,overdistension:.28,overdistStart:7,
+   compliance:.55,recruitability:.10,overdistension:.34,overdistStart:6,
    extraDeadspace:.40,deadspaceRecruit:.10,deadspaceOverdist:.45,
    etGradient:2.8,oxygenDeficit:5.0,oxygenRecruit:1.2,oxygenOverdist:2.0
   })
@@ -339,8 +339,15 @@
   const lung=lungProfiles[lungProfile];
   // Reclutamento cresce e si satura con la PEEP; la sovradistensione
   // compare oltre una soglia dipendente dalla reclutabilita' polmonare.
-  const recruitment=controlled?1-Math.exp(-peep/3.8):0;
-  const overdistension=controlled?Math.pow(Math.max(0,peep-lung.overdistStart)/8,2):0;
+  // Bilancio scenario-specifico: reclutamento saturabile e sovradistensione
+  // progressiva. La PEEP intrinseca, quando presente, contribuisce alla
+  // pressione alveolare nel bilancio meccanico (calcolata più sotto).
+  // Queste curve sono didattiche e non soglie terapeutiche validate.
+  const recruitment=controlled?1-Math.exp(-peep/
+   (lungProfile==='atelectasis'?4.8:lungProfile==='edema'?5.2:3.8)):0;
+  const overdistension=controlled?
+   Math.pow(Math.max(0,peep-lung.overdistStart)/
+    (lungProfile==='atelectasis'?5.0:lungProfile==='edema'?5.5:6.0),2):0;
   // Il rapporto I:E selezionato riguarda il ventilatore. In spontanea
   // l'inspirazione e' piu' breve, coerente con il tracciato di riferimento.
   const cycle=60/rate,ti=controlled?cycle/(1+ie):cycle*.22,te=cycle-ti;
@@ -458,8 +465,8 @@
   const pleuralTransmission=lungProfile==='edema'?.68:
    lungProfile==='atelectasis'?.58:lungProfile==='bronchospasm'?.38:.48;
   const transmittedPressure=pmean*pleuralTransmission;
-  const rvAfterloadPenalty=.014*Math.max(0,overdistension)+
-   (lungProfile==='embolism'?.006*Math.max(0,totalPeep-4):0);
+  const rvAfterloadPenalty=.022*Math.max(0,overdistension)+
+   (lungProfile==='embolism'?.008*Math.max(0,totalPeep-4):0);
   const preloadFactor=controlled?clamp(
    1-.020*Math.max(0,transmittedPressure-1)*preloadSensitivity-
    rvAfterloadPenalty-.003*Math.max(0,(plateau||0)-19),.60,1):1;
