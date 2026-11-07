@@ -166,12 +166,22 @@ function pulmonaryCap(q,vent){
  const onset=.025,fall=.955;
  if(x<=onset||x>=1)return 0;
  if(obstruction){
-  // Didactic shark fin: continuously rising phase II/III without a
-  // horizontal plateau, with a sharp inspiratory washout at the end.
-  // More resistance or shorter Te exaggerates the ascending slope.
+  // Continuous shark-fin phase II/III, with a rounded apical transition.
+  // Preserve a rising alveolar phase: only the last 9% of expiration is
+  // eased towards the peak; the inspiratory downstroke remains rapid.
   const z=C((x-onset)/(fall-onset),0,1);
   const exponent=C(1.15+.48*k,1.25,2.05);
-  const ascending=Math.pow(z,exponent);
+  const roundStart=.91;
+  let ascending;
+  if(z<roundStart)ascending=Math.pow(z,exponent);
+  else{
+   const t=(z-roundStart)/(1-roundStart);
+   const y0=Math.pow(roundStart,exponent);
+   const m0=exponent*Math.pow(roundStart,exponent-1)*(1-roundStart);
+   // Cubic Hermite: continuous value/slope at the join, zero slope at peak.
+   ascending=(2*t*t*t-3*t*t+1)*y0+
+    (t*t*t-2*t*t+t)*m0+(-2*t*t*t+3*t*t);
+  }
   if(x<fall)return C(1.03*ascending,0,1.03);
   const wash=C((x-fall)/(1-fall),0,1);
   return 1.03*(1-wash*wash*(3-2*wash));
