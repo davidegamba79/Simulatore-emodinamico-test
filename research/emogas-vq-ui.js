@@ -4,6 +4,7 @@ window.addEventListener('DOMContentLoaded',function(){
  const $=id=>document.getElementById(id);
  const student=document.body.classList.contains('student');
  const KEY='simEmogasVQExperimental';
+ const SETTINGS_KEY='simEmogasVQActiveSettings';
  const profiles={
   healthy:{label:'Polmone sano',shunt:.02,low:.04,dead:.25},
   hypoventilation:{label:'Ipoventilazione',shunt:.02,low:.04,dead:.25,ventFactor:.6},
@@ -81,7 +82,7 @@ window.addEventListener('DOMContentLoaded',function(){
    '<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:12px"><span>'+k+'</span><span>'+fmt(v*100,0)+'%</span></div><div style="height:12px;background:#21323d;border-radius:6px;overflow:hidden"><div style="width:'+Math.max(0,v*100)+'%;height:100%;background:'+c+'"></div></div></div>').join('');
   const d=result.inputs;
   const effectiveInfo=' · quote V/Q effettive alla PEEP: shunt '+fmt(d.shunt*100,1)+'%, basso V/Q '+fmt(d.low*100,1)+'%, spazio morto alveolare '+fmt(d.dead*100,1)+'%';
-  $('egaStatus').textContent='Campione virtuale · '+stamp+effectiveInfo+(result.oxygenSupplyWarning?' · '+result.oxygenSupplyWarning:'');
+  $('egaStatus').textContent='Ultimo campione arterioso · '+stamp+effectiveInfo+(result.oxygenSupplyWarning?' · '+result.oxygenSupplyWarning:'');
   acidPlot(result);
  }
  // Shared effective alveolar minute ventilation for the CO2 pool and EGA.
@@ -164,9 +165,18 @@ window.addEventListener('DOMContentLoaded',function(){
    btn.onclick=()=>{nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected','false'));host.querySelectorAll('.student-tab-panel').forEach(p=>p.hidden=true);btn.setAttribute('aria-selected','true');panel.hidden=false};
    nav.querySelectorAll('button:not(:last-child)').forEach(b=>b.addEventListener('click',()=>{panel.hidden=true;btn.setAttribute('aria-selected','false')}));
   }
-  function receive(e){try{const x=JSON.parse(e);draw(x.result,x.stamp)}catch(_){}}
-  window.addEventListener('storage',e=>{if(e.key===KEY&&e.newValue)receive(e.newValue)});
-  try{const x=localStorage.getItem(KEY);if(x)receive(x)}catch(_){}
+  let latestSettings=null;
+  function showSettings(){
+   if(!latestSettings)return;
+   let line=$('egaActiveSettings');
+   if(!line){line=document.createElement('div');line.id='egaActiveSettings';line.style.cssText='font-size:12px;color:#86d9ef;margin:8px 0';$('egaStatus').before(line)}
+   const d=latestSettings;
+   line.textContent='Scenario attivo · shunt '+fmt(d.shunt*100,1)+'% · basso V/Q '+fmt(d.low*100,1)+'% · spazio morto alveolare '+fmt(d.dead*100,1)+'%';
+  }
+  function receiveSettings(raw){try{latestSettings=JSON.parse(raw);showSettings()}catch(_){}}
+  function receive(e){try{const x=JSON.parse(e);draw(x.result,x.stamp);showSettings()}catch(_){}}
+  window.addEventListener('storage',e=>{if(e.key===KEY&&e.newValue)receive(e.newValue);if(e.key===SETTINGS_KEY&&e.newValue)receiveSettings(e.newValue)});
+  try{const x=localStorage.getItem(KEY);if(x)receive(x);const settings=localStorage.getItem(SETTINGS_KEY);if(settings)receiveSettings(settings)}catch(_){}
   return;
  }
  const instructor=document.querySelector('#instructor-panel-ventilation');
@@ -226,6 +236,23 @@ window.addEventListener('DOMContentLoaded',function(){
  // Scenario selection updates its dependent shunt/VQ/dead-space inputs.
  $('egaScenario')?.addEventListener('change',refreshVentControls);
  refreshVentControls();
+ // Synchronize CURRENT settings separately from the time-stamped arterial
+ // sample. A previous sample must never be presented as the active scenario.
+ function publishActiveSettings(){
+  try{
+   const vent=typeof window.simVentCalc==='function'?window.simVentCalc():null;
+   const d=typeof window.simEgaGasFractions==='function'?window.simEgaGasFractions(vent):null;
+   if(!d)return;
+   const active={shunt:d.shunt,low:d.lowVQFraction,dead:d.deadSpaceFraction};
+   const serialized=JSON.stringify(active);
+   if(serialized!==publishActiveSettings.last){
+    publishActiveSettings.last=serialized;
+    localStorage.setItem(SETTINGS_KEY,serialized);
+   }
+  }catch(err){console.warn('Sincronizzazione scenario studenti:',err)}
+ }
+ publishActiveSettings();
+ setInterval(publishActiveSettings,500);
  let gasState=null;
  // One oxygen pool is shared by the continuous pulse oximeter and EGA samples.
  // Advance only with simulated time: pause, fast-forward and sample agree.
