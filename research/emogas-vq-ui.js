@@ -21,7 +21,7 @@ window.addEventListener('DOMContentLoaded',function(){
  Object.entries(profiles).map(([k,v])=>'<option value="'+k+'">'+v.label+'</option>').join('')+
  '</select></label><label>Shunt (%) <input id="egaShunt" type="number" min="0" max="80" value="2" step="1"></label>'+
  '<label>Basso V/Q (%) <input id="egaLow" type="number" min="0" max="80" value="4" step="1"></label>'+
- '<label>Spazio morto (%) <input id="egaDead" type="number" min="0" max="85" value="25" step="1"></label>'+
+ '<label>Spazio morto alveolare (%) <input id="egaDead" type="number" min="0" max="85" value="25" step="1"></label>'+
  '<label>Hb (g/dL) <input id="egaHb" type="number" min="3" max="25" value="14" step=".5"></label>'+
  '<label>HCO₃⁻ (mmol/L) <input id="egaHco3" type="number" min="4" max="60" value="24" step="1"></label></div>'+
  '<div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0"><button id="egaSample" type="button">Esegui prelievo arterioso</button>'+
@@ -80,12 +80,24 @@ window.addEventListener('DOMContentLoaded',function(){
   $('egaCompartments').innerHTML=[['Normale',parts.normal,'#3ca7cc'],['Basso V/Q',parts.lowVQ,'#f4b65b'],['Shunt',parts.shunt,'#ed6974']].map(([k,v,c])=>
    '<div style="margin:6px 0"><div style="display:flex;justify-content:space-between;font-size:12px"><span>'+k+'</span><span>'+fmt(v*100,0)+'%</span></div><div style="height:12px;background:#21323d;border-radius:6px;overflow:hidden"><div style="width:'+Math.max(0,v*100)+'%;height:100%;background:'+c+'"></div></div></div>').join('');
   const d=result.inputs;
-  const effectiveInfo=' · quote V/Q effettive alla PEEP: shunt '+fmt(d.shunt*100,1)+'%, basso V/Q '+fmt(d.low*100,1)+'%, spazio morto '+fmt(d.dead*100,1)+'%';
+  const effectiveInfo=' · quote V/Q effettive alla PEEP: shunt '+fmt(d.shunt*100,1)+'%, basso V/Q '+fmt(d.low*100,1)+'%, spazio morto alveolare '+fmt(d.dead*100,1)+'%';
   $('egaStatus').textContent='Campione virtuale · '+stamp+effectiveInfo+(result.oxygenSupplyWarning?' · '+result.oxygenSupplyWarning:'');
   acidPlot(result);
  }
  // Shared effective alveolar minute ventilation for the CO2 pool and EGA.
  // Read the same instructor controls; no dependency on the current tab.
+ // Shares the effective V/Q settings with the terminal-gas CO2 model.
+ // These are alveolar dead-space and perfusion fractions; no separate
+ // anatomical dead-space control is introduced.
+ window.simEgaGasFractions=function(vent){
+  const key=$('egaScenario')?.value||'healthy';
+  return window.EmogasVQ.peepResponse({
+   scenario:key,controlled:Boolean(vent?.controlled),peep:vent?.peep||0,
+   shunt:clamp(+$('egaShunt')?.value/100||0,0,.8),
+   lowVQFraction:clamp(+$('egaLow')?.value/100||0,0,.8),
+   deadSpaceFraction:clamp(+$('egaDead')?.value/100||0,0,.85)
+  });
+ };
  window.simEgaAlveolarMinute=function(vent){
   if(!vent||!$('egaScenario'))return vent?.alveolarMinute||3;
   const key=$('egaScenario').value;
