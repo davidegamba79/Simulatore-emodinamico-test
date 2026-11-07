@@ -84,6 +84,21 @@ window.addEventListener('DOMContentLoaded',function(){
   $('egaStatus').textContent='Campione virtuale · '+stamp+effectiveInfo+(result.oxygenSupplyWarning?' · '+result.oxygenSupplyWarning:'');
   acidPlot(result);
  }
+ // Shared effective alveolar minute ventilation for the CO2 pool and EGA.
+ // Read the same instructor controls; no dependency on the current tab.
+ window.simEgaAlveolarMinute=function(vent){
+  if(!vent||!$('egaScenario'))return vent?.alveolarMinute||3;
+  const key=$('egaScenario').value;
+  const scenario=profiles[key]||profiles.healthy;
+  const effective=window.EmogasVQ.peepResponse({
+   scenario:key,controlled:Boolean(vent.controlled),peep:vent.peep||0,
+   shunt:clamp(+$('egaShunt').value/100,0,.8),
+   lowVQFraction:clamp(+$('egaLow').value/100,0,.8),
+   deadSpaceFraction:clamp(+$('egaDead').value/100,0,.85)
+  });
+  const minute=vent.controlled?vent.minute:Math.max(.1,(vent.weight||25)*.12);
+  return Math.max(.05,minute*(1-effective.deadSpaceFraction)*(scenario.ventFactor||1));
+ };
  function data(){
   const vent=typeof window.simVentCalc==='function'?window.simVentCalc():null;
   const scenarioKey=$('egaScenario').value;
@@ -103,7 +118,7 @@ window.addEventListener('DOMContentLoaded',function(){
   // Use a weight-scaled physiological teaching baseline (~120 mL/kg/min)
   // until spontaneous ventilation is explicitly modeled or measured.
   // Use the active ventilator's minute volume; dead-space control changes VA.
-  const actualVA=Math.max(.05,minute*(1-dead)*(scenario.ventFactor||1));
+  const actualVA=window.simEgaAlveolarMinute(vent);
   // Metabolic production must not be recalibrated at every breath/sample:
   // otherwise changes in ventilation would cancel out PaCO2 responses.
   const metabolicCO2=clamp(105*Math.pow(weight/25,.8),15,650);
