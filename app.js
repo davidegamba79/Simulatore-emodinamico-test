@@ -414,16 +414,23 @@ function v25PerfusionEt(dt,ventData){
  const age=clamp(vent.age||6,.1,22),bcs=clamp(vent.bcs||5,1,9);
  const ageFactor=age<1?1.10:age>10?clamp(1-.015*(age-10),.82,1):1;
  const bcsFactor=bcs>=7?clamp(1-.025*(bcs-6),.90,1):1;
- const referenceGradient=2.8;
  const alveolar=clamp(typeof window.simEgaAlveolarMinute==='function'?
-  window.simEgaAlveolarMinute(vent):vent.alveolarMinute,.05,25); // L/min; shared EGA effective dead space
- // La produzione metabolica viene calibrata all'equilibrio iniziale con
- // la ventilazione alveolare effettiva, evitando una deriva spontanea.
+  window.simEgaAlveolarMinute(vent):vent.alveolarMinute,.05,25);
  const conductance=10*clamp(perf,.20,1.6);
- const profileGradient=vent.lungProfile==='atelectasis'?3:
-  vent.lungProfile==='poorly_recruitable'?5:0;
- const gradient=clamp(referenceGradient+profileGradient+
-  (vent.etco2Gradient||0)+11*Math.max(0,1-perf),1,30);
+ // Experimental terminal-expiratory gas mixing, NOT PaCO2 minus a fixed
+ // gradient. Dead-space fraction denotes poorly perfused ALVEOLAR units only.
+ // Perfusion fractions (low V/Q) and ventilated fractions (alveolar dead space)
+ // are deliberately separate; shunt does not contribute expired gas.
+ const ega=typeof window.simEgaGasFractions==='function'?
+  window.simEgaGasFractions(vent):null;
+ const dead=clamp(ega?.deadSpaceFraction??0,0,.85);
+ const low=clamp(ega?.lowVQFraction??0,0,.8);
+ const perfusedLow=low/(Math.max(.05,1-(ega?.shunt??0)));
+ // Late expiration preferentially samples perfused alveoli. These teaching
+ // weights represent regional emptying, not a measured volumetric capnogram.
+ const deadTerminal=clamp(dead*(.14+.14*(1-clamp(perf,0,1))),0,.65);
+ const lowTerminal=clamp((1-deadTerminal)*perfusedLow*.30,0,1-deadTerminal);
+ const normalTerminal=Math.max(0,1-deadTerminal-lowTerminal);
  if(!v25.co2Pools||!Number.isFinite(v25.co2Pools.arterial)||
     !Number.isFinite(v25.co2Pools.tissue)||v25.co2Pools.ref!==v25.etRef||
     v25.co2Pools.weight!==weight){
@@ -450,9 +457,15 @@ function v25PerfusionEt(dt,ventData){
  window.simDynamicPaCO2=pool.arterial;
  if(cpr)return 12;
  if(arrest)return 3;
- const tachyDrop=rhythm==='Tachicardia ventricolare con polso'?
-  2*clamp(((+$('hr').value||180)-120)/120,0,1):0;
- return clamp(pool.arterial-gradient-tachyDrop,3,80);
+ // Regional end-alveolar PCO2: poorly perfused units contain little CO2,
+ // while low V/Q units have a modestly higher alveolar PCO2. The resulting
+ // EtCO2 is the weighted terminal gas concentration, not an imposed offset.
+ const normalGas=pool.arterial;
+ const lowGas=pool.arterial*1.08;
+ const deadGas=pool.arterial*.10;
+ const terminalGas=normalTerminal*normalGas+
+  lowTerminal*lowGas+deadTerminal*deadGas;
+ return clamp(terminalGas,3,80);
 }
 // La SpO2 dipende qualitativamente da FiO2, reclutamento, sovradistensione
 // e perfusione. In spontanea post-induzione mantiene la precedente risposta;
