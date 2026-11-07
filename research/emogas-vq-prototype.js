@@ -56,7 +56,7 @@
   const paco2=clamp(input.paCO2!=null?+input.paCO2:.863*vco2/va,10,120);
   const hco3=clamp(+input.bicarbonate||24,4,60);
   const hb=clamp(+input.hb||14,3,25);
-  const q=clamp(+input.cardiacOutput||3,.1,30);
+  const q=clamp(Number.isFinite(+input.cardiacOutput)&&+input.cardiacOutput>0?+input.cardiacOutput:3,.1,30);
   
   const shunt=clamp(+input.shunt||0,0,.8);
   const low=clamp(+input.lowVQFraction||0,0,1-shunt);
@@ -81,11 +81,20 @@
     Math.max(.2,1-shunt),.5,normalO2);
   const cvO2=clamp(caO2-extraction,.05,caO2);
   const pao2=inverse(caO2,hb);
+  // Oxygen delivery is flow times arterial oxygen content (mL/min).
+  // Mixed venous oxygen is a Fick-derived teaching estimate at fixed VO2.
+  const do2=10*q*caO2;
+  const svo2=100*sat(inverse(cvO2,hb));
+  const extractionRatio=vo2/Math.max(1,do2);
   const ph=6.1+Math.log10(hco3/(.03*paco2));
   return Object.freeze({
    ph:+ph.toFixed(3),paCO2:+paco2.toFixed(1),
    paO2:+pao2.toFixed(1),hco3:+hco3.toFixed(1),
    saO2:+(100*sat(pao2)).toFixed(1),
+   caO2:+caO2.toFixed(2),cvO2:+cvO2.toFixed(2),
+   do2:+do2.toFixed(0),svO2:+svo2.toFixed(1),
+   oxygenExtractionRatio:+(100*extractionRatio).toFixed(1),
+   oxygenSupplyWarning:extractionRatio>=.6?'Estrazione O₂ elevata: VO₂ fissato; il modello non rappresenta il limite di estrazione tissutale.':null,
    pfRatio:+(pao2/fio2).toFixed(0),
    aaGradient:+Math.max(0,idealPAO2-pao2).toFixed(1),
    idealPAO2:+idealPAO2.toFixed(1),
