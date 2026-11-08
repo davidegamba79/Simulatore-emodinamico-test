@@ -63,6 +63,15 @@ window.addEventListener('DOMContentLoaded',function(){
   out+=line(62,36,62,282)+line(62,282,672,282);
   out+=line(X(40),36,X(40),282,'#6c8794','4 5')+line(62,Y(7.4),672,Y(7.4),'#6c8794','4 5');
   out+=txt(270,316,'PaCO₂ (mmHg)',13)+txt(8,24,'pH',13);
+  // Expected acute respiratory compensation curve (not a mixed-disorder band).
+  const acuteCurve=[];
+  for(let p=15;p<=100;p+=1){
+   const bicar=24+(p>=40?.1:.2)*(p-40);
+   const ph=6.1+Math.log10(bicar/(.03*p));
+   acuteCurve.push(X(p).toFixed(1)+','+Y(ph).toFixed(1));
+  }
+  out+='<polyline points="'+acuteCurve.join(' ')+'" fill="none" stroke="#55e0a8" stroke-width="3" stroke-linejoin="round"/>';
+  out+=txt(315,101,'Compenso acuto atteso',12,'#55e0a8');
   out+=txt(78,60,'Alcalosi respiratoria',13,'#8fb8e8')+txt(435,65,'Alcalosi metabolica',13,'#ed9eaa');
   out+=txt(78,266,'Acidosi metabolica',13,'#ed9eaa')+txt(445,265,'Acidosi respiratoria',13,'#8fb8e8');
   if(previousGas&&Number.isFinite(previousGas.paCO2)&&Number.isFinite(previousGas.ph)){
