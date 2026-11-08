@@ -42,7 +42,7 @@ window.addEventListener('DOMContentLoaded',function(){
  '<p style="font-size:12px;color:#9db6c4">Curva del compenso respiratorio acuto atteso: punto azzurro = paziente, cerchio tratteggiato = riferimento prima dell’ultima modifica.</p>'+
  '<svg id="egaAcidSvg" viewBox="0 0 700 320" role="img" aria-label="Diagramma acido-base con pH in verticale e PaCO₂ in orizzontale" style="width:100%;height:auto;display:block"></svg>'+
  '<div id="egaAcidSummary" style="font-size:12px;color:#b7cbd3">In attesa del prelievo arterioso</div>';
- if(student){panel.append(acidCard);acidCard.hidden=false;acidCard.style.marginTop='16px';}
+ if(student){panel.querySelector('#egaMetrics').before(acidCard);acidCard.hidden=false;acidCard.style.cssText='margin:12px 0;max-width:100%;';acidCard.querySelector('svg').style.maxWidth='850px';}
  else if(hemo)hemo.insertAdjacentElement('afterend',acidCard);
  let referenceGas=null;
  let latestGas=null;
@@ -99,7 +99,7 @@ window.addEventListener('DOMContentLoaded',function(){
   }
   out+='<polyline points="'+acuteCurve.join(' ')+'" fill="none" stroke="#55e0a8" stroke-width="3" stroke-linejoin="round"/>';
   out+=txt(315,101,'Compenso acuto atteso',12,'#55e0a8');
-  out+=txt(90,115,'Alcalosi respiratoria',13,'#8fb8e8');
+  out+=txt(90,215,'Alcalosi respiratoria',13,'#8fb8e8');
   out+=txt(475,260,'Acidosi respiratoria',13,'#8fb8e8');
   if(referenceGas&&Number.isFinite(referenceGas.paCO2)&&Number.isFinite(referenceGas.ph)){
    out+='<circle cx="'+X(referenceGas.paCO2)+'" cy="'+Y(referenceGas.ph)+'" r="6" fill="none" stroke="#9aafbd" stroke-width="2" stroke-dasharray="3 2"/>';
