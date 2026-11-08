@@ -39,7 +39,7 @@ window.addEventListener('DOMContentLoaded',function(){
  acidCard.id='egaAcidBaseCard';
  acidCard.hidden=true;
  acidCard.innerHTML='<h2>Equilibrio acido-base · pH / PaCO₂</h2>'+
- '<p style="font-size:12px;color:#9db6c4">Diagramma didattico orientativo. È rappresentato soltanto il compenso acuto atteso dei disturbi respiratori semplici, senza disturbi misti.</p>'+
+ '<p style="font-size:12px;color:#9db6c4">Curva del compenso respiratorio acuto atteso: il punto indica il paziente, il cerchio tratteggiato il prelievo precedente.</p>'+
  '<svg id="egaAcidSvg" viewBox="0 0 700 320" role="img" aria-label="Diagramma acido-base con pH in verticale e PaCO₂ in orizzontale" style="width:100%;height:auto;display:block"></svg>'+
  '<div id="egaAcidSummary" style="font-size:12px;color:#b7cbd3">In attesa del prelievo arterioso</div>';
  if(!student&&hemo)hemo.insertAdjacentElement('afterend',acidCard);
@@ -54,10 +54,6 @@ window.addEventListener('DOMContentLoaded',function(){
   const txt=(x,y,t,sz=12,fill='#b9d2df')=>'<text x="'+x+'" y="'+y+'" font-size="'+sz+'" fill="'+fill+'" font-family="system-ui,sans-serif">'+t+'</text>';
   let out=rect(0,0,700,320,'#0a1820');
   out+=rect(X(15),Y(7.8),X(100)-X(15),Y(6.9)-Y(7.8),'#10222d');
-  // Bands are conceptual, not diagnostic boundaries.
-  out+='<polygon points="'+[[20,7.38],[40,7.38],[65,7.08],[100,6.98],[100,7.13],[65,7.24],[40,7.43],[20,7.55]].map(p=>X(p[0])+','+Y(p[1])).join(' ')+'" fill="#4c719d" fill-opacity=".30"/>';
-  out+='<polygon points="'+[[15,7.2],[40,7.2],[60,6.98],[60,6.9],[15,6.9]].map(p=>X(p[0])+','+Y(p[1])).join(' ')+'" fill="#b94c60" fill-opacity=".33"/>';
-  out+='<polygon points="'+[[40,7.55],[70,7.55],[100,7.75],[100,7.8],[40,7.8]].map(p=>X(p[0])+','+Y(p[1])).join(' ')+'" fill="#b94c60" fill-opacity=".26"/>';
   for(let v=7;v<=7.8+.001;v+=.2){out+=line(62,Y(v),672,Y(v),'#27414f','3 5')+txt(9,Y(v)+4,v.toFixed(2),11)}
   for(let v=20;v<=100;v+=20){out+=line(X(v),36,X(v),282,'#27414f','3 5')+txt(X(v)-9,300,String(v),11)}
   out+=line(62,36,62,282)+line(62,282,672,282);
@@ -72,8 +68,8 @@ window.addEventListener('DOMContentLoaded',function(){
   }
   out+='<polyline points="'+acuteCurve.join(' ')+'" fill="none" stroke="#55e0a8" stroke-width="3" stroke-linejoin="round"/>';
   out+=txt(315,101,'Compenso acuto atteso',12,'#55e0a8');
-  out+=txt(78,60,'Alcalosi respiratoria',13,'#8fb8e8')+txt(435,65,'Alcalosi metabolica',13,'#ed9eaa');
-  out+=txt(78,266,'Acidosi metabolica',13,'#ed9eaa')+txt(445,265,'Acidosi respiratoria',13,'#8fb8e8');
+  out+=txt(85,75,'Alcalosi respiratoria',13,'#8fb8e8');
+  out+=txt(475,260,'Acidosi respiratoria',13,'#8fb8e8');
   if(previousGas&&Number.isFinite(previousGas.paCO2)&&Number.isFinite(previousGas.ph)){
    out+='<circle cx="'+X(previousGas.paCO2)+'" cy="'+Y(previousGas.ph)+'" r="6" fill="none" stroke="#9aafbd" stroke-width="2" stroke-dasharray="3 2"/>';
   }
