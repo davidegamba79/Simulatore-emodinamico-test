@@ -241,13 +241,15 @@ function draw(){
   for(let j=0;j<=100;j++)contourPeak=Math.max(contourPeak,art(j/100));
   contourPeak=Math.max(.05,contourPeak);
  }
- // Absolute arterial-pressure scale, identical on teacher and student screens.
- // A fixed zero and stable pressure span make SAP, DAP and pulse pressure
- // visibly meaningful; the upper bound expands only for hypertensive values.
- const artY=pressure=>{
-  const sap=Math.max(0,N('sap')),dap=Math.max(0,N('dap'));
-  const upper=Math.max(180,sap+25,dap+40);
-  return .94-C(pressure/upper,0,1.15)*.86;
+ // Pixel-calibrated pressure excursions: the same 27 mmHg pulse
+ // occupies the same number of CSS pixels in teacher and student views,
+ // even though their canvas heights differ. Diastolic pressure shifts the
+ // baseline vertically; SAP-DAP controls the pulse amplitude.
+ const artY=(pressure,height)=>{
+  const dap=Math.max(0,N('dap'));
+  const baseline=.73*height-(dap-60)*.28;
+  const pixelY=baseline-(pressure-dap)*.48;
+  return C(pixelY/Math.max(1,height),.035,.965);
  };
  // Pleth amplitude is more sensitive to respiratory pulse modulation than
  // the pressure pulse contour. Use the identical beat/respiratory phase as ART,
@@ -300,7 +302,7 @@ function draw(){
       const sap=N("sap"),dap=N("dap"),pulse=Math.max(1,sap-dap);
       const shape=q<=1?art(q)/contourPeak:0;
       const pressure=beatPressure(ts-phase-delay,shape,sap,dap);
-      y=artY(pressure);
+      y=artY(pressure,h);
      }else{
       y=.84-(q<=1?pleth(q):0)*.48*plethBeatAmplitude(ts-phase-delay);
      }
@@ -314,7 +316,7 @@ function draw(){
     }else if(id==="art"){
      const sap=N("sap"),dap=N("dap"),pulse=Math.max(1,sap-dap),shape=art(q)/contourPeak;
      const pressure=rh==="Artefatto massaggio cardiaco 120/min"?15+40*shape:(rh==="Fibrillazione ventricolare"||rh==="Tachicardia ventricolare senza polso"||rh==="PEA / attività elettrica"||rh==="Asistolia")?0:beatPressure(ts-q*(60/rate)-delay,shape,sap,dap);
-     y=artY(pressure);
+     y=artY(pressure,h);
     }else y=.84-pleth(q)*.48*plethBeatAmplitude(ts-q*(60/rate)-delay);
    }
    x?g.lineTo(x,C(y,.035,.965)*h):g.moveTo(x,C(y,.035,.965)*h);
