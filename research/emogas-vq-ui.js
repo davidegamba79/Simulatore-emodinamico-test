@@ -24,14 +24,14 @@ window.addEventListener('DOMContentLoaded',function(){
  '<label>Basso V/Q (%) <input id="egaLow" type="number" min="0" max="80" value="4" step="1"></label>'+
  '<label>Spazio morto alveolare (%) <input id="egaDead" type="number" min="0" max="85" value="25" step="1"></label>'+
  '<label>Hb (g/dL) <input id="egaHb" type="number" min="3" max="25" value="14" step=".5"></label>'+
- '<label>HCO₃⁻ (mmol/L) <input id="egaHco3" type="number" min="4" max="60" value="24" step="1"></label></div>'+
+ '</div>'+
  '<div class="row" style="gap:8px;flex-wrap:wrap;margin:8px 0"><button id="egaSample" type="button">Esegui prelievo arterioso</button>'+
  '<label><input id="egaLive" type="checkbox"> Monitoraggio continuo</label></div>')+
  '<div id="egaStatus" style="font-size:12px;color:#b7cbd3;margin:8px 0">In attesa del primo prelievo</div>'+
  '<div id="egaMetrics" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:7px"></div>'+
  '<h3 style="font-size:14px;margin:12px 0 6px">Distribuzione V/Q · quote di perfusione</h3>'+
  '<div id="egaCompartments"></div>'+
- '<p style="font-size:11px;color:#9db6c4">Il valore PaCO₂ è una stima stazionaria da VCO₂/ventilazione alveolare, non una replica della dinamica dell’EtCO₂. Il modello non simula la compensazione renale.</p>';
+ '<p style="font-size:11px;color:#9db6c4">Il valore PaCO₂ è una stima stazionaria da VCO₂/ventilazione alveolare, non una replica della dinamica dell’EtCO₂. HCO₃⁻ segue automaticamente il compenso acuto atteso della PaCO₂; nessun disturbo misto o compenso renale.</p>';
  // Acid-base teaching chart: shown below PRAM only while the Emogas tab is selected.
  const hemo=document.querySelector('.hemo-wrap');
  const acidCard=document.createElement('section');
@@ -39,7 +39,7 @@ window.addEventListener('DOMContentLoaded',function(){
  acidCard.id='egaAcidBaseCard';
  acidCard.hidden=true;
  acidCard.innerHTML='<h2>Equilibrio acido-base · pH / PaCO₂</h2>'+
- '<p style="font-size:12px;color:#9db6c4">Diagramma didattico orientativo. Le alterazioni miste richiedono valutazione di HCO₃⁻ e compenso atteso.</p>'+
+ '<p style="font-size:12px;color:#9db6c4">Diagramma didattico orientativo. È rappresentato soltanto il compenso acuto atteso dei disturbi respiratori semplici, senza disturbi misti.</p>'+
  '<svg id="egaAcidSvg" viewBox="0 0 700 320" role="img" aria-label="Diagramma acido-base con pH in verticale e PaCO₂ in orizzontale" style="width:100%;height:auto;display:block"></svg>'+
  '<div id="egaAcidSummary" style="font-size:12px;color:#b7cbd3">In attesa del prelievo arterioso</div>';
  if(!student&&hemo)hemo.insertAdjacentElement('afterend',acidCard);
@@ -150,7 +150,7 @@ window.addEventListener('DOMContentLoaded',function(){
    fio2:vent?.intubated?vent.fio2:.21,
    alveolarVentilation:actualVA,metabolicCO2,
    cardiacOutput:typeof state!=='undefined'&&Number.isFinite(state.co)?state.co:3,
-   hb:+$('egaHb').value||14,bicarbonate:+$('egaHco3').value||24,
+   hb:+$('egaHb').value||14,
    shunt,lowVQFraction:lowVQ,
    deadSpaceFraction:dead
   });
@@ -201,7 +201,7 @@ window.addEventListener('DOMContentLoaded',function(){
  ventCard.innerHTML='<h2>Scenario clinico polmonare <small style="font-size:11px;color:#9db6c4">Sperimentale</small></h2>'+
  '<p style="font-size:12px;color:#9db6c4">Stessi parametri della scheda Emogas. Le modifiche si applicano a entrambe le schede.</p>';
  const controlRows=panel.querySelectorAll('.row');
- const ids=['egaScenario','egaShunt','egaLow','egaDead','egaHb','egaHco3','egaSample','egaLive'];
+ const ids=['egaScenario','egaShunt','egaLow','egaDead','egaHb','egaSample','egaLive'];
  controlRows.forEach(row=>{
   const copy=row.cloneNode(true);
   copy.querySelectorAll('[id]').forEach(el=>{el.id+='Vent'});
@@ -283,7 +283,7 @@ window.addEventListener('DOMContentLoaded',function(){
    advanceGas(target);
    const result=window.EmogasVQ.calculate({
     fio2:target.inputs.fio2,barometricPressure:target.inputs.pb,
-    paCO2:gasState.paCO2,bicarbonate:target.hco3,hb:target.inputs.hb,
+    paCO2:gasState.paCO2,hb:target.inputs.hb,
     cardiacOutput:target.inputs.q,metabolicO2:target.inputs.vo2,
     alveolarVentilation:target.inputs.va,metabolicCO2:target.inputs.vco2,
     shunt:target.inputs.shunt,lowVQFraction:target.inputs.low,
