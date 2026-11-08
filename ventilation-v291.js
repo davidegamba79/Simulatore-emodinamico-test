@@ -328,7 +328,7 @@
   const morph=el('patientMorph')?.value||'meso';
   const breed=el('patientBreed')?.value||'Meticcio';
   const chosen=el('ventMode')?.value||'SPONT';
-  const intubated=typeof v25!=='undefined'&&v25.induction.phase==='maintenance';
+  const intubated=typeof window.simAirwayIntubated==='boolean'?window.simAirwayIntubated:(typeof v25!=='undefined'&&v25.induction.phase==='maintenance');
   const postInduction=typeof v25!=='undefined'&&v25.induction.startedAt>0&&
    ['induction','maintenance'].includes(v25.induction.phase);
   const controlled=intubated&&chosen!=='SPONT',mode=controlled?chosen:'SPONT';
@@ -571,6 +571,7 @@
   // I tracciati Paw, flusso, volume e i loop richiedono un tubo
   // endotracheale; la condizione e' condivisa con il monitor studenti.
   document.body.dataset.respIntubated=String(d.intubated);
+   if(typeof window.simAirwaySyncControl==='function')window.simAirwaySyncControl();
   syncPatientCopies();
   // RR e' la frequenza del ventilatore (o spontanea, se non intubato).
   if(el('rr')&&Number(el('rr').value)!==d.rate)el('rr').value=d.rate;
@@ -615,6 +616,7 @@
  // Richiamato nel momento esatto dell'intubazione, prima di pubblicare
  // lo stato alla finestra studenti: nessuna VCV/PCV implicita.
  window.simVentOnIntubation=()=>{
+  window.simAirwayIntubated=true;
   const mode=el('ventMode'),rate=el('ventRate');
   if(mode)mode.value='SPONT';
   // La FR dell'esempio (5 respiri in 15 s) e' ~20/min.
@@ -975,6 +977,23 @@
   if(e.type==='change'&&typeof v25Event==='function'&&e.target.id.startsWith('vent'))v25Event('Ventilazione: '+(el('ventMode')?.value||'SPONT')+' · FR '+n('ventRate',12)+'/min · Vt '+n('ventVtKg',10)+' mL/kg · PEEP '+n('ventPeep',0)+' cmH₂O');
  }
  window.addEventListener('DOMContentLoaded',()=>{
+  // Independent instructor airway control; never infer extubation from phase changes.
+  const modeField=el('ventMode');
+  if(modeField&&!el('simAirwayControl')){
+   const label=document.createElement('label');
+   label.id='simAirwayControl';
+   label.style.cssText='display:flex;align-items:center;gap:8px;padding:8px;border:1px solid #35505c;border-radius:8px;margin-bottom:8px';
+   const checkbox=document.createElement('input');
+   checkbox.type='checkbox';checkbox.id='simAirwayCheckbox';checkbox.style.width='auto';
+   const text=document.createElement('span');text.textContent='Paziente intubato (controllo istruttore)';
+   label.append(checkbox,text);
+   const parent=modeField.closest('label');
+   if(parent?.parentNode)parent.parentNode.insertBefore(label,parent);
+   const update=()=>{checkbox.checked=Boolean(window.simAirwayIntubated);label.style.display=document.body.classList.contains('student')?'none':'flex'};
+   checkbox.addEventListener('change',()=>{if(typeof window.simSetAirwayIntubated==='function')window.simSetAirwayIntubated(checkbox.checked,'controllo vie aeree');else window.simAirwayIntubated=checkbox.checked;refresh()});
+   window.simAirwaySyncControl=update;
+   update();
+  }
   studentPanel();
   previousVentMode=el('ventMode')?.value||'SPONT';
   createPatientMirror();
