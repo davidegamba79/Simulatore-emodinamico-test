@@ -218,8 +218,23 @@ function draw(){
  window.simWaveFrameTimestamp=performance.now();
  const vent=typeof window.simVentCalc==='function'?window.simVentCalc():null;
  const respActive=typeof window.simVentValid==='function'&&window.simVentValid();
- const respPulse=Math.max(1,N('sap')-N('dap')),respSpv=C(N('spv'),0,35),respRate=Math.max(1,N('rr')||12);
- const respiratoryPulse=ts=>respActive?C(1+respSpv/(2*respPulse)*Math.sin(2*Math.PI*ts*respRate/60-.3),.7,1.3):1;
+ const respPulse=Math.max(1,N('sap')-N('dap')),respSpv=C(N('spv'),0,35),respPpv=C(N('ppv'),0,35);
+ const respRate=Math.max(1,vent?.controlled?(vent.rate||N('rr')||12):(N('rr')||12));
+ // Sample respiratory modulation once per cardiac beat, not per pixel.
+ // PPV varies pulse pressure, SPV varies systolic pressure.
+ const respiratoryBeat=beatStart=>{
+  if(!respActive||!vent?.controlled)return {pulse:1,dia:0};
+  const swing=Math.sin(2*Math.PI*beatStart*respRate/60-.3);
+  const pulseFactor=1+C(respPpv/200,0,.175)*swing;
+  const systolicOffset=C(respSpv/2,0,17.5)*swing;
+  return {pulse:pulseFactor,dia:systolicOffset-respPulse*(pulseFactor-1)};
+ };
+ const beatPressure=(beatStart,shape,sap,dap)=>{
+  const m=respiratoryBeat(beatStart);
+  return dap+m.dia+(sap-dap)*m.pulse*shape;
+ };
+ const respiratoryPulse=ts=>respActive&&vent?.controlled?
+  C(1+respPpv/200*Math.sin(2*Math.PI*ts*respRate/60-.3),.8,1.2):1;
  [["ecg","#39ef8b"],["pleth","#3bd6ff"],["capno","#f8fbff"],["art","#ff5364"]].forEach(([id,col])=>{
   const c=E(id);if(!c||c.offsetParent===null)return;
   const [g,w,h]=fit(c);g.clearRect(0,0,w,h);g.strokeStyle=col;g.lineWidth=2;g.beginPath();
@@ -261,7 +276,7 @@ function draw(){
      if(id==="art"){
       const sap=N("sap"),dap=N("dap"),pulse=Math.max(1,sap-dap);
       const shape=q<=1?art(q)/C(pulse/60,.12,1.75):0;
-      const pressure=dap+pulse*shape*respiratoryPulse(ts);
+      const pressure=beatPressure(ts-phase,shape,sap,dap);
       y=.93-(pressure-30)/(145-30)*.91;
      }else{
       y=.84-(q<=1?pleth(q):0)*.48*respiratoryPulse(ts);
@@ -275,7 +290,7 @@ function draw(){
      y=.58-ecg(q,rh)*.76;
     }else if(id==="art"){
      const sap=N("sap"),dap=N("dap"),pulse=Math.max(1,sap-dap),shape=art(q)/C(pulse/60,.12,1.75);
-     const pressure=rh==="Artefatto massaggio cardiaco 120/min"?15+40*shape:(rh==="Fibrillazione ventricolare"||rh==="Tachicardia ventricolare senza polso"||rh==="PEA / attività elettrica"||rh==="Asistolia")?0:dap+pulse*shape*respiratoryPulse(ts);
+     const pressure=rh==="Artefatto massaggio cardiaco 120/min"?15+40*shape:(rh==="Fibrillazione ventricolare"||rh==="Tachicardia ventricolare senza polso"||rh==="PEA / attività elettrica"||rh==="Asistolia")?0:beatPressure(ts-q*(60/rate),shape,sap,dap);
      y=.93-(pressure-30)/(145-30)*.91;
     }else y=.84-pleth(q)*.48*respiratoryPulse(ts);
    }
