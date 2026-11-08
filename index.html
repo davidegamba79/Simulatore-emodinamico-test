@@ -426,7 +426,8 @@ body.student[data-student-tab="ventilation"][data-resp-intubated="false"] .stude
 @media(max-width:1100px){
  body.student header>div:first-child{gap:8px}
  body.student header h1{font-size:13px}
- body.student header .student-tabs-nav button{font-size:11px;padding:6px 8px}
+ body.student header .student-tabs-nav button{white-space:nowrap!important;overflow-wrap:normal!important;word-break:normal!important;
+font-size:11px;padding:6px 8px}
 }
 @media(max-width:850px){
  body.student header{flex-wrap:wrap}
@@ -937,12 +938,13 @@ window.addEventListener('DOMContentLoaded',()=>{
   {id:'patient',label:'Paziente'},
   {id:'anesthesia',label:'Anestesia'},
   {id:'ventilation',label:'Ventilazione'},
-  {id:'therapy',label:'Terapie'},
+  {id:'therapy',label:'Emodinamica'},
   {id:'trends',label:'Trend'}
  ];
  const panels={};
+ nav.style.flexWrap='wrap';
  for(const group of groups){
-  const b=document.createElement('button');b.type='button';b.textContent=group.label;
+  const b=document.createElement('button');b.type='button';b.textContent=group.label;b.style.whiteSpace='nowrap';b.style.wordBreak='normal';b.style.flexShrink='0';
   if(group.id==='ventilation')b.title='Ventilazione';
   b.id='instructor-tab-'+group.id;b.setAttribute('role','tab');
   b.setAttribute('aria-controls','instructor-panel-'+group.id);
@@ -1063,13 +1065,16 @@ window.addEventListener('DOMContentLoaded',()=>{
  // Navigazione accanto a «Monitor studenti» nell'intestazione, non piu' sotto i tracciati.
  header?.querySelector('h1')?.after(nav);
  const panels={};
- for(const [key,title] of [['trends','Trend'],['meds','Farmaci e terapie'],['ventilation','Ventilazione']]){
+ for(const [key,title] of [['patient','Paziente'],['anesthesia','Anestesia'],['ventilation','Ventilazione'],['meds','Emodinamica'],['trends','Trend']]){
   const b=document.createElement('button');b.type='button';b.id='student-tab-'+key;b.textContent=title;
   b.setAttribute('role','tab');b.setAttribute('aria-controls','student-panel-'+key);nav.append(b);
   const panel=document.createElement('div');panel.className='student-tab-panel';panel.id='student-panel-'+key;
   panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby',b.id);shell.append(panel);
   panels[key]=panel;b.addEventListener('click',()=>selectTab(key));
  }
+ const patientInfo=document.getElementById('studentPatient')?.closest('.card');
+ if(patientInfo){const copy=patientInfo.cloneNode(true);copy.removeAttribute('id');copy.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));panels.patient.append(copy);}
+ const patientHint=document.createElement('p');patientHint.textContent='Dati anagrafici del paziente e monitoraggio condiviso con la console docente.';panels.patient.append(patientHint);
  const trend=document.getElementById('trendV25');if(trend)panels.trends.append(trend);
  const windowSelect=document.getElementById('v25Window');if(windowSelect)windowSelect.disabled=true;
  const current=document.createElement('div');current.className='student-active-therapy';current.textContent='In attesa dei dati terapeutici della console docente.';
@@ -1081,7 +1086,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   const heading=document.createElement('h3');heading.textContent=title;group.append(heading);
   if(key==='anesthesia'){const inhaled=document.createElement('div');inhaled.id='studentIsofluraneStatus';inhaled.className='student-inhaled-status';inhaled.hidden=true;group.append(inhaled)}
   const list=document.createElement('div');list.className='student-meds-list';group.append(list);
-  summary.append(group);containers[key]=list;
+  (key==='anesthesia'?panels.anesthesia:summary).append(group);containers[key]=list;
  }
  monitor.append(shell);
  function selectTab(key){
