@@ -233,6 +233,22 @@ function draw(){
   const m=respiratoryBeat(beatStart);
   return dap+m.dia+(sap-dap)*m.pulse*shape;
  };
+ // Normalize the pressure contour so the respiratory systolic swing is
+ // calibrated to the displayed SPV, independent of contour morphology.
+ let contourPeak=1;
+ if(respActive&&vent?.controlled){
+  contourPeak=0;
+  for(let j=0;j<=100;j++)contourPeak=Math.max(contourPeak,art(j/100));
+  contourPeak=Math.max(.05,contourPeak);
+ }
+ // Stable pressure-based scaling, shared by instructor and student displays.
+ const artY=pressure=>{
+  if(!respActive||!vent?.controlled)return .93-(pressure-30)/115*.91;
+  const sap=N('sap'),dap=N('dap'),pulse=Math.max(1,sap-dap);
+  const low=dap-Math.max(6,respSpv/2+pulse*respPpv/200+3);
+  const high=sap+Math.max(6,respSpv/2+3);
+  return .91-(pressure-low)/Math.max(20,high-low)*.81;
+ };
  // Pleth amplitude is more sensitive to respiratory pulse modulation than
  // the pressure pulse contour. Use the identical beat/respiratory phase as ART,
  // but amplify the visual modulation for teaching (not a calibrated PVI).
@@ -282,9 +298,9 @@ function draw(){
      q=phase/.75;
      if(id==="art"){
       const sap=N("sap"),dap=N("dap"),pulse=Math.max(1,sap-dap);
-      const shape=q<=1?art(q)/C(pulse/60,.12,1.75):0;
+      const shape=q<=1?art(q)/(respActive&&vent?.controlled?contourPeak:C(pulse/60,.12,1.75)):0;
       const pressure=beatPressure(ts-phase-delay,shape,sap,dap);
-      y=.93-(pressure-30)/(145-30)*.91;
+      y=artY(pressure);
      }else{
       y=.84-(q<=1?pleth(q):0)*.48*plethBeatAmplitude(ts-phase-delay);
      }
@@ -296,9 +312,9 @@ function draw(){
      if(rh.includes("Artefatto massaggio"))window.__cprWaveTime=Math.floor((ts-delay)*2);
      y=.58-ecg(q,rh)*.76;
     }else if(id==="art"){
-     const sap=N("sap"),dap=N("dap"),pulse=Math.max(1,sap-dap),shape=art(q)/C(pulse/60,.12,1.75);
+     const sap=N("sap"),dap=N("dap"),pulse=Math.max(1,sap-dap),shape=art(q)/(respActive&&vent?.controlled?contourPeak:C(pulse/60,.12,1.75));
      const pressure=rh==="Artefatto massaggio cardiaco 120/min"?15+40*shape:(rh==="Fibrillazione ventricolare"||rh==="Tachicardia ventricolare senza polso"||rh==="PEA / attività elettrica"||rh==="Asistolia")?0:beatPressure(ts-q*(60/rate)-delay,shape,sap,dap);
-     y=.93-(pressure-30)/(145-30)*.91;
+     y=artY(pressure);
     }else y=.84-pleth(q)*.48*plethBeatAmplitude(ts-q*(60/rate)-delay);
    }
    x?g.lineTo(x,C(y,.035,.965)*h):g.moveTo(x,C(y,.035,.965)*h);
