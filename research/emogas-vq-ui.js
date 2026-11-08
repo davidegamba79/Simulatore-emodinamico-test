@@ -39,10 +39,11 @@ window.addEventListener('DOMContentLoaded',function(){
  acidCard.id='egaAcidBaseCard';
  acidCard.hidden=true;
  acidCard.innerHTML='<h2>Equilibrio acido-base · pH / PaCO₂</h2>'+
- '<p style="font-size:12px;color:#9db6c4">Curva del compenso respiratorio acuto atteso: il punto indica il paziente, il cerchio tratteggiato il prelievo precedente.</p>'+
+ '<p style="font-size:12px;color:#9db6c4">Curva del compenso respiratorio acuto atteso: punto azzurro = paziente, cerchio tratteggiato = riferimento prima dell’ultima modifica.</p>'+
  '<svg id="egaAcidSvg" viewBox="0 0 700 320" role="img" aria-label="Diagramma acido-base con pH in verticale e PaCO₂ in orizzontale" style="width:100%;height:auto;display:block"></svg>'+
  '<div id="egaAcidSummary" style="font-size:12px;color:#b7cbd3">In attesa del prelievo arterioso</div>';
- if(!student&&hemo)hemo.insertAdjacentElement('afterend',acidCard);
+ if(student){panel.append(acidCard);acidCard.hidden=false;acidCard.style.marginTop='16px';}
+ else if(hemo)hemo.insertAdjacentElement('afterend',acidCard);
  let referenceGas=null;
  let latestGas=null;
  // Reference remains fixed during continuous EGA sampling.
@@ -50,6 +51,8 @@ window.addEventListener('DOMContentLoaded',function(){
   if(!latestGas)return;
   referenceGas={paCO2:latestGas.paCO2,ph:latestGas.ph};
   acidPlot(latestGas);
+  // Publish the new baseline immediately to the read-only student monitor.
+  try{const raw=localStorage.getItem(KEY);if(raw){const payload=JSON.parse(raw);payload.referenceGas=referenceGas;localStorage.setItem(KEY,JSON.stringify(payload));}}catch(_){}
  }
  const activeEdits=new WeakSet();
  function isClinicalSetting(el){
@@ -96,7 +99,7 @@ window.addEventListener('DOMContentLoaded',function(){
   }
   out+='<polyline points="'+acuteCurve.join(' ')+'" fill="none" stroke="#55e0a8" stroke-width="3" stroke-linejoin="round"/>';
   out+=txt(315,101,'Compenso acuto atteso',12,'#55e0a8');
-  out+=txt(85,75,'Alcalosi respiratoria',13,'#8fb8e8');
+  out+=txt(90,115,'Alcalosi respiratoria',13,'#8fb8e8');
   out+=txt(475,260,'Acidosi respiratoria',13,'#8fb8e8');
   if(referenceGas&&Number.isFinite(referenceGas.paCO2)&&Number.isFinite(referenceGas.ph)){
    out+='<circle cx="'+X(referenceGas.paCO2)+'" cy="'+Y(referenceGas.ph)+'" r="6" fill="none" stroke="#9aafbd" stroke-width="2" stroke-dasharray="3 2"/>';
@@ -106,7 +109,8 @@ window.addEventListener('DOMContentLoaded',function(){
   $('egaAcidSummary').textContent='Ultimo prelievo: pH '+fmt(r.ph,3)+' · PaCO₂ '+fmt(r.paCO2)+' mmHg · HCO₃⁻ '+fmt(r.hco3)+' mmol/L. Cerchio tratteggiato: riferimento prima dell’ultima modifica.';
 
  }
- function draw(result,stamp){
+ function draw(result,stamp,remoteReference){
+  if(student&&remoteReference!==undefined)referenceGas=remoteReference;
   if(!result)return;
   const entries=[['pH',fmt(result.ph,3)],['PaCO₂',fmt(result.paCO2)+' mmHg'],['PaO₂',fmt(result.paO2)+' mmHg'],['HCO₃⁻',fmt(result.hco3)+' mmol/L'],['SaO₂',fmt(result.saO2)+' %'],['DO₂',fmt(result.do2,0)+' mL/min'],['CaO₂',fmt(result.caO2,2)+' mL/dL'],['CvO₂',fmt(result.cvO2,2)+' mL/dL'],['SvO₂ stimata',fmt(result.svO2)+' %'],['Estrazione O₂',fmt(result.oxygenExtractionRatio)+' %'],['P/F',fmt(result.pfRatio,0)],['A–a',fmt(result.aaGradient)+' mmHg'],['PaCO₂ − EtCO₂',result.paEtGradient==null?'Non disponibile':fmt(result.paEtGradient)+' mmHg']];
   $('egaMetrics').innerHTML=entries.map(([k,v])=>'<div style="border:1px solid #29404d;border-radius:8px;padding:8px"><small>'+k+'</small><div style="font-size:18px;font-weight:700">'+v+'</div></div>').join('');
@@ -208,7 +212,7 @@ window.addEventListener('DOMContentLoaded',function(){
    line.textContent='Scenario attivo · shunt '+fmt(d.shunt*100,1)+'% · basso V/Q '+fmt(d.low*100,1)+'% · spazio morto alveolare '+fmt(d.dead*100,1)+'%';
   }
   function receiveSettings(raw){try{latestSettings=JSON.parse(raw);showSettings()}catch(_){}}
-  function receive(e){try{const x=JSON.parse(e);draw(x.result,x.stamp);showSettings()}catch(_){}}
+  function receive(e){try{const x=JSON.parse(e);draw(x.result,x.stamp,x.referenceGas??null);showSettings()}catch(_){}}
   window.addEventListener('storage',e=>{if(e.key===KEY&&e.newValue)receive(e.newValue);if(e.key===SETTINGS_KEY&&e.newValue)receiveSettings(e.newValue)});
   try{const x=localStorage.getItem(KEY);if(x)receive(x);const settings=localStorage.getItem(SETTINGS_KEY);if(settings)receiveSettings(settings)}catch(_){}
   return;
@@ -352,7 +356,7 @@ window.addEventListener('DOMContentLoaded',function(){
     pfRatio:+(gasState.paO2/target.inputs.fio2).toFixed(0),
     aaGradient:+Math.max(0,result.idealPAO2-gasState.paO2).toFixed(1)};
    const stamp=new Date().toLocaleTimeString('it-IT');draw(displayed,stamp);
-   localStorage.setItem(KEY,JSON.stringify({result:displayed,stamp}));
+   localStorage.setItem(KEY,JSON.stringify({result:displayed,stamp,referenceGas}));
   }catch(err){$('egaStatus').textContent='Errore modello: '+err.message;console.error(err)}
  }
  $('egaSample').onclick=sample;
