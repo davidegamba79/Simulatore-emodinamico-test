@@ -42,7 +42,29 @@ window.addEventListener('DOMContentLoaded',function(){
  '<p style="font-size:12px;color:#9db6c4">Curva del compenso respiratorio acuto atteso: punto azzurro = paziente, cerchio tratteggiato = riferimento prima dell’ultima modifica.</p>'+
  '<svg id="egaAcidSvg" viewBox="0 0 700 320" role="img" aria-label="Diagramma acido-base con pH in verticale e PaCO₂ in orizzontale" style="width:100%;height:auto;display:block"></svg>'+
  '<div id="egaAcidSummary" style="font-size:12px;color:#b7cbd3">In attesa del prelievo arterioso</div>';
- if(student){panel.querySelector('#egaMetrics').before(acidCard);acidCard.hidden=false;acidCard.style.cssText='margin:12px 0;max-width:100%;';acidCard.querySelector('svg').style.maxWidth='850px';}
+ if(student){
+  // Student Emogas mirrors the side-by-side ventilation loop layout:
+  // EGA values on the left, acid-base graph on the right.
+  const metrics=panel.querySelector('#egaMetrics');
+  const layout=document.createElement('div');
+  layout.id='egaStudentSplit';
+  layout.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start;margin:12px 0;width:100%';
+  const left=document.createElement('div');
+  left.style.cssText='min-width:0';
+  const right=document.createElement('div');
+  right.style.cssText='min-width:0';
+  metrics.before(layout);
+  layout.append(left,right);
+  left.append(metrics);
+  right.append(acidCard);
+  metrics.style.gridTemplateColumns='repeat(auto-fit,minmax(105px,1fr))';
+  acidCard.hidden=false;
+  acidCard.style.cssText='margin:0;width:100%;min-width:0;box-sizing:border-box';
+  acidCard.querySelector('svg').style.cssText='width:100%;height:auto;display:block';
+  const responsive=document.createElement('style');
+  responsive.textContent='@media(max-width:850px){#egaStudentSplit{grid-template-columns:minmax(0,1fr)!important}}';
+  document.head.append(responsive);
+ }
  else if(hemo)hemo.insertAdjacentElement('afterend',acidCard);
  let referenceGas=null;
  let latestGas=null;
