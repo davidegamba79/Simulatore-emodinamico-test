@@ -784,7 +784,7 @@ body:not(.student)[data-instructor-tab="anesthesia"] #instructorInhaledCard inpu
 </div>
 </main>
 
-<script src="./app.js?v=29348"></script>
+<script src="./app.js?v=29361"></script>
 <script src="./ui-v2.4.js"></script>
 <script src="./wave-v2.js?v=29344"></script>
 <script>
@@ -892,6 +892,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(!['Propofol','Alfaxalone'].includes(drug)||!Number.isFinite(dose)||dose<.1||dose>12||!Number.isFinite(seconds)||seconds<10||seconds>300||!Number.isInteger(minutes)||minutes<1||minutes>30){$p('inductionStatus').textContent='Verificare dose (0,1–12 mg/kg), somministrazione (10–300 s) e finestra (1–30 min).';return}
   v25.induction={phase:'induction',startedAt:window.simVirtualNow(),drug,dose,administrationSeconds:seconds,windowMinutes:minutes,premedicated:administrations.length>0,
    pk:{central:0,fast:0,slow:0,ce:0,cv:0},effects:{preload:0,tone:0,contractility:0,hr:0,active:false},apneaRisk:'—'};
+  window.simAirwayIntubated=false;
   inductionStartReport();
   $p('inductionStart').disabled=true;
   if(typeof v25Event==='function')v25Event('Induzione EV: '+drug+' '+dose+' mg/kg in '+seconds+' s; finestra '+minutes+' min');
@@ -1156,7 +1157,7 @@ window.addEventListener('DOMContentLoaded',()=>{
  }catch(err){console.warn('Ripristino riepilogo terapie studenti:',err)}
 });
 </script>
-<script src="./ventilation-v291.js?v=29350"></script>
+<script src="./ventilation-v291.js?v=29361"></script>
 <!-- Solo ramo sperimentale: modulo EGA/VQ, nessuna modifica al motore principale -->
 <script src="./research/emogas-vq-prototype.js?v=4"></script>
 <script src="./research/emogas-vq-ui.js?v=17"></script>
