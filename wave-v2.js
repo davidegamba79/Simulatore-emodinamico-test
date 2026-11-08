@@ -233,8 +233,9 @@ function draw(){
   const m=respiratoryBeat(beatStart);
   return dap+m.dia+(sap-dap)*m.pulse*shape;
  };
- const respiratoryPulse=ts=>respActive&&vent?.controlled?
-  C(1+respPpv/200*Math.sin(2*Math.PI*ts*respRate/60-.3),.8,1.2):1;
+ // The plethysmographic pulse follows the same beat-level stroke-volume
+ // modulation as ART, with its existing peripheral transit delay.
+ const plethBeatAmplitude=beatStart=>respiratoryBeat(beatStart).pulse;
  [["ecg","#39ef8b"],["pleth","#3bd6ff"],["capno","#f8fbff"],["art","#ff5364"]].forEach(([id,col])=>{
   const c=E(id);if(!c||c.offsetParent===null)return;
   const [g,w,h]=fit(c);g.clearRect(0,0,w,h);g.strokeStyle=col;g.lineWidth=2;g.beginPath();
@@ -276,10 +277,10 @@ function draw(){
      if(id==="art"){
       const sap=N("sap"),dap=N("dap"),pulse=Math.max(1,sap-dap);
       const shape=q<=1?art(q)/C(pulse/60,.12,1.75):0;
-      const pressure=beatPressure(ts-phase,shape,sap,dap);
+      const pressure=beatPressure(ts-phase-delay,shape,sap,dap);
       y=.93-(pressure-30)/(145-30)*.91;
      }else{
-      y=.84-(q<=1?pleth(q):0)*.48*respiratoryPulse(ts);
+      y=.84-(q<=1?pleth(q):0)*.48*plethBeatAmplitude(ts-phase-delay);
      }
     }
    }else{
@@ -290,9 +291,9 @@ function draw(){
      y=.58-ecg(q,rh)*.76;
     }else if(id==="art"){
      const sap=N("sap"),dap=N("dap"),pulse=Math.max(1,sap-dap),shape=art(q)/C(pulse/60,.12,1.75);
-     const pressure=rh==="Artefatto massaggio cardiaco 120/min"?15+40*shape:(rh==="Fibrillazione ventricolare"||rh==="Tachicardia ventricolare senza polso"||rh==="PEA / attività elettrica"||rh==="Asistolia")?0:beatPressure(ts-q*(60/rate),shape,sap,dap);
+     const pressure=rh==="Artefatto massaggio cardiaco 120/min"?15+40*shape:(rh==="Fibrillazione ventricolare"||rh==="Tachicardia ventricolare senza polso"||rh==="PEA / attività elettrica"||rh==="Asistolia")?0:beatPressure(ts-q*(60/rate)-delay,shape,sap,dap);
      y=.93-(pressure-30)/(145-30)*.91;
-    }else y=.84-pleth(q)*.48*respiratoryPulse(ts);
+    }else y=.84-pleth(q)*.48*plethBeatAmplitude(ts-q*(60/rate)-delay);
    }
    x?g.lineTo(x,C(y,.035,.965)*h):g.moveTo(x,C(y,.035,.965)*h);
   }
