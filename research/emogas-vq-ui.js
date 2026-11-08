@@ -52,6 +52,25 @@ window.addEventListener('DOMContentLoaded',function(){
    acidCard.style.cssText='margin:0;min-width:0;width:100%;box-sizing:border-box;align-self:start';
    acidCard.querySelector('svg').style.cssText='width:100%;height:auto;display:block';
   }
+  // Pin EGA values directly beneath waves/graph and above PRAM.
+  // Only the PRAM section may scroll; EGA values remain visible.
+  const fixed=document.querySelector('.student-fixed-monitor');
+  const pram=fixed?.querySelector(':scope > .hemo-wrap');
+  if(fixed&&pram){
+   const egaReadouts=document.createElement('section');
+   egaReadouts.id='egaStudentPinnedResults';
+   egaReadouts.className='card';
+   egaReadouts.style.cssText='display:none;flex:0 0 auto;margin:0;min-width:0;padding:8px 10px';
+   const heading=document.createElement('h2');
+   heading.textContent='Emogasanalisi · risultati';
+   heading.style.cssText='font-size:13px;margin:0 0 5px';
+   egaReadouts.append(heading);
+   const status=document.getElementById('egaStatus');
+   const metrics=document.getElementById('egaMetrics');
+   if(status)egaReadouts.append(status);
+   if(metrics)egaReadouts.append(metrics);
+   fixed.insertBefore(egaReadouts,pram);
+  }
   const responsive=document.createElement('style');
   responsive.textContent=`
    body.student #studentVentLayout>#egaAcidBaseCard{display:none!important}
@@ -60,7 +79,16 @@ window.addEventListener('DOMContentLoaded',function(){
    body.student[data-student-tab="emogas"] #studentVentLayout>#egaAcidBaseCard{display:block!important}
    body.student[data-student-tab="emogas"] .student-vent-wave-column{min-width:0}
    body.student[data-student-tab="emogas"] .student-vent-wave-column .wave{height:58px!important;min-height:58px!important}
-   body.student[data-student-tab="emogas"] .student-fixed-monitor>.hemo-wrap{flex:1 1 0;min-height:60px;overflow-y:auto!important;overscroll-behavior:contain}
+   body.student[data-student-tab="emogas"] #egaStudentPinnedResults{display:block!important}
+   body.student[data-student-tab="emogas"] #egaStudentPinnedResults #egaStatus{margin:2px 0 5px!important;font-size:10px!important}
+   body.student[data-student-tab="emogas"] #egaStudentPinnedResults #egaMetrics{grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:4px!important}
+   body.student[data-student-tab="emogas"] #egaStudentPinnedResults #egaMetrics>div{padding:5px!important;min-width:0}
+   body.student[data-student-tab="emogas"] #egaStudentPinnedResults #egaMetrics small{font-size:10px}
+   body.student[data-student-tab="emogas"] #egaStudentPinnedResults #egaMetrics>div>div{font-size:15px!important;overflow-wrap:anywhere}
+   body.student[data-student-tab="emogas"] .student-fixed-monitor>.hemo-wrap{flex:1 1 0;min-height:45px;overflow-y:auto!important;overscroll-behavior:contain}
+   @media(max-width:1050px){body.student[data-student-tab="emogas"] #egaStudentPinnedResults #egaMetrics{grid-template-columns:repeat(5,minmax(0,1fr))!important}}
+   @media(max-height:850px){body.student[data-student-tab="emogas"] .student-fixed-monitor{flex-basis:85%;height:85%;max-height:85%}}
+
    body.student[data-student-tab="emogas"] #egaAcidBaseCard h2{font-size:14px;margin:0 0 4px}
    body.student[data-student-tab="emogas"] #egaAcidBaseCard p{margin:3px 0!important;font-size:10px!important}
    body.student[data-student-tab="emogas"] #egaAcidBaseCard #egaAcidSummary{font-size:10px!important}
