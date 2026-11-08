@@ -296,7 +296,7 @@ window.addEventListener('DOMContentLoaded',function(){
   acidCard.hidden=false;
   if(!$('egaAcidSvg')?.querySelector('circle'))drawInitialAcidChart();
  };
- nav?.querySelectorAll('button:not(:last-child)').forEach(b=>b.addEventListener('click',()=>{tab.hidden=true;acidCard.hidden=true;btn.setAttribute('aria-selected','false')}));
+ nav?.querySelectorAll('button').forEach(b=>{if(b===btn)return;b.addEventListener('click',()=>{tab.hidden=true;acidCard.hidden=true;btn.setAttribute('aria-selected','false')})});
  // Second set of controls in Ventilazione; original Emogas controls remain the single source of truth.
  const ventCard=document.createElement('section');
  ventCard.className='card';
