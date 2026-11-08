@@ -43,26 +43,29 @@ window.addEventListener('DOMContentLoaded',function(){
  '<svg id="egaAcidSvg" viewBox="0 0 700 320" role="img" aria-label="Diagramma acido-base con pH in verticale e PaCO₂ in orizzontale" style="width:100%;height:auto;display:block"></svg>'+
  '<div id="egaAcidSummary" style="font-size:12px;color:#b7cbd3">In attesa del prelievo arterioso</div>';
  if(student){
-  // Student Emogas mirrors the side-by-side ventilation loop layout:
-  // EGA values on the left, acid-base graph on the right.
-  const metrics=panel.querySelector('#egaMetrics');
-  const layout=document.createElement('div');
-  layout.id='egaStudentSplit';
-  layout.style.cssText='display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start;margin:12px 0;width:100%';
-  const left=document.createElement('div');
-  left.style.cssText='min-width:0';
-  const right=document.createElement('div');
-  right.style.cssText='min-width:0';
-  metrics.before(layout);
-  layout.append(left,right);
-  left.append(metrics);
-  right.append(acidCard);
-  metrics.style.gridTemplateColumns='repeat(auto-fit,minmax(105px,1fr))';
-  acidCard.hidden=false;
-  acidCard.style.cssText='margin:0;width:100%;min-width:0;box-sizing:border-box';
-  acidCard.querySelector('svg').style.cssText='width:100%;height:auto;display:block';
+  // In Emogas, graph occupies the right half of the fixed waveform area,
+  // exactly like the ventilation loops; EGA readouts remain in the lower tab.
+  const waveLayout=document.getElementById('studentVentLayout');
+  if(waveLayout){
+   waveLayout.append(acidCard);
+   acidCard.hidden=false;
+   acidCard.style.cssText='margin:0;min-width:0;width:100%;box-sizing:border-box;align-self:start';
+   acidCard.querySelector('svg').style.cssText='width:100%;height:auto;display:block';
+  }
   const responsive=document.createElement('style');
-  responsive.textContent='@media(max-width:850px){#egaStudentSplit{grid-template-columns:minmax(0,1fr)!important}}';
+  responsive.textContent=`
+   body.student #studentVentLayout>#egaAcidBaseCard{display:none!important}
+   body.student[data-student-tab="emogas"] .student-fixed-monitor{flex:0 0 77%;height:77%;max-height:77%;overflow-y:hidden!important;overflow-x:hidden!important}
+   body.student[data-student-tab="emogas"] #studentVentLayout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px;align-items:start;flex:0 0 auto;min-width:0}
+   body.student[data-student-tab="emogas"] #studentVentLayout>#egaAcidBaseCard{display:block!important}
+   body.student[data-student-tab="emogas"] .student-vent-wave-column{min-width:0}
+   body.student[data-student-tab="emogas"] .student-vent-wave-column .wave{height:58px!important;min-height:58px!important}
+   body.student[data-student-tab="emogas"] .student-fixed-monitor>.hemo-wrap{flex:1 1 0;min-height:60px;overflow-y:auto!important;overscroll-behavior:contain}
+   body.student[data-student-tab="emogas"] #egaAcidBaseCard h2{font-size:14px;margin:0 0 4px}
+   body.student[data-student-tab="emogas"] #egaAcidBaseCard p{margin:3px 0!important;font-size:10px!important}
+   body.student[data-student-tab="emogas"] #egaAcidBaseCard #egaAcidSummary{font-size:10px!important}
+   @media(max-height:800px){body.student[data-student-tab="emogas"] .student-vent-wave-column .wave{height:49px!important;min-height:49px!important}}
+  `;
   document.head.append(responsive);
  }
  else if(hemo)hemo.insertAdjacentElement('afterend',acidCard);
@@ -222,7 +225,7 @@ window.addEventListener('DOMContentLoaded',function(){
   if(nav&&host){
    const btn=document.createElement('button');btn.type='button';btn.textContent='Emogas';btn.setAttribute('role','tab');
    nav.append(btn);panel.className='student-tab-panel';panel.hidden=true;host.append(panel);
-   btn.onclick=()=>{nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected','false'));host.querySelectorAll('.student-tab-panel').forEach(p=>p.hidden=true);btn.setAttribute('aria-selected','true');panel.hidden=false};
+   btn.onclick=()=>{nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected','false'));host.querySelectorAll('.student-tab-panel').forEach(p=>p.hidden=true);btn.setAttribute('aria-selected','true');panel.hidden=false;document.body.dataset.studentTab='emogas'};
    nav.querySelectorAll('button:not(:last-child)').forEach(b=>b.addEventListener('click',()=>{panel.hidden=true;btn.setAttribute('aria-selected','false')}));
   }
   let latestSettings=null;
