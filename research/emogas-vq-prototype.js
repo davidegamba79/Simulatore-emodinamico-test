@@ -54,7 +54,7 @@
   // A supplied PaCO2 takes precedence for isolated gas-exchange experiments.
   const vco2=clamp(+input.metabolicCO2||140,15,650);
   const paco2=clamp(input.paCO2!=null?+input.paCO2:.863*vco2/va,10,120);
-  const hco3=clamp(+input.bicarbonate||24,4,60);
+  // Expected ACUTE respiratory compensation only: non-renal buffering.\n  // Baseline PaCO2 40 mmHg, HCO3 24 mmol/L. No independent metabolic disorder.\n  const hco3=clamp(24+(paco2>=40?.1:.2)*(paco2-40),4,60);
   const hb=clamp(+input.hb||14,3,25);
   const q=clamp(Number.isFinite(+input.cardiacOutput)&&+input.cardiacOutput>0?+input.cardiacOutput:3,.1,30);
   
@@ -103,7 +103,7 @@
    paEtGradient:null,
    compartments:Object.freeze({normal:1-shunt-low,lowVQ:low,shunt}),
    inputs:Object.freeze({fio2,pb,q,va,vco2,vo2,shunt,low,dead,rq,hb}),
-   warning:'Modello didattico esplorativo: V/Q, equilibrio venoso e acido-base semplificati; PaCO2 stazionaria, non validato clinicamente.'
+   warning:'Modello didattico esplorativo: compenso respiratorio acuto atteso, senza disturbi misti o compenso renale; non validato clinicamente.'
   });
  }
  root.EmogasVQ=Object.freeze({calculate,peepResponse});
