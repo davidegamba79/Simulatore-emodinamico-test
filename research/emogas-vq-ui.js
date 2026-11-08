@@ -43,7 +43,35 @@ window.addEventListener('DOMContentLoaded',function(){
  '<svg id="egaAcidSvg" viewBox="0 0 700 320" role="img" aria-label="Diagramma acido-base con pH in verticale e PaCO₂ in orizzontale" style="width:100%;height:auto;display:block"></svg>'+
  '<div id="egaAcidSummary" style="font-size:12px;color:#b7cbd3">In attesa del prelievo arterioso</div>';
  if(!student&&hemo)hemo.insertAdjacentElement('afterend',acidCard);
- let previousGas=null;
+ let referenceGas=null;
+ let latestGas=null;
+ // Reference remains fixed during continuous EGA sampling.
+ function setReferenceBeforeAdjustment(){
+  if(!latestGas)return;
+  referenceGas={paCO2:latestGas.paCO2,ph:latestGas.ph};
+  acidPlot(latestGas);
+ }
+ const activeEdits=new WeakSet();
+ function isClinicalSetting(el){
+  if(!(el instanceof HTMLElement)||!el.matches('input,select'))return false;
+  if(el.id==='egaLive'||el.id==='egaLiveVent')return false;
+  const id=(el.id||'').toLowerCase();
+  if(/pause|speed|time|seek|scrub|live|sample|tab|trend|scroll/.test(id))return false;
+  return Boolean(el.closest('#instructor-panel-ventilation,#instructor-panel-emogas,#instructor-panel-anesthesia,#instructor-panel-therapies,#instructor-panel-patient,#egaVentControls')||
+   /^(ega(shunt|low|dead|hb|scenario)|vent|peep|fio2|rr|vt|mac|dose)/i.test(el.id||''));
+ }
+ document.addEventListener('input',e=>{
+  const el=e.target;
+  if(!isClinicalSetting(el)||activeEdits.has(el))return;
+  activeEdits.add(el);
+  setReferenceBeforeAdjustment();
+ },true);
+ document.addEventListener('change',e=>{
+  const el=e.target;
+  if(!isClinicalSetting(el))return;
+  if(!activeEdits.has(el))setReferenceBeforeAdjustment();
+  activeEdits.delete(el);
+ },true);
  function acidPlot(r){
   if(!acidCard.isConnected||!r)return;
   const svg=$('egaAcidSvg');if(!svg)return;
@@ -70,13 +98,13 @@ window.addEventListener('DOMContentLoaded',function(){
   out+=txt(315,101,'Compenso acuto atteso',12,'#55e0a8');
   out+=txt(85,75,'Alcalosi respiratoria',13,'#8fb8e8');
   out+=txt(475,260,'Acidosi respiratoria',13,'#8fb8e8');
-  if(previousGas&&Number.isFinite(previousGas.paCO2)&&Number.isFinite(previousGas.ph)){
-   out+='<circle cx="'+X(previousGas.paCO2)+'" cy="'+Y(previousGas.ph)+'" r="6" fill="none" stroke="#9aafbd" stroke-width="2" stroke-dasharray="3 2"/>';
+  if(referenceGas&&Number.isFinite(referenceGas.paCO2)&&Number.isFinite(referenceGas.ph)){
+   out+='<circle cx="'+X(referenceGas.paCO2)+'" cy="'+Y(referenceGas.ph)+'" r="6" fill="none" stroke="#9aafbd" stroke-width="2" stroke-dasharray="3 2"/>';
   }
   out+='<circle cx="'+X(r.paCO2)+'" cy="'+Y(r.ph)+'" r="7" fill="#36d8f2" stroke="#fff" stroke-width="2"/>';
   svg.innerHTML=out;
-  $('egaAcidSummary').textContent='Ultimo prelievo: pH '+fmt(r.ph,3)+' · PaCO₂ '+fmt(r.paCO2)+' mmHg · HCO₃⁻ '+fmt(r.hco3)+' mmol/L. Cerchio tratteggiato: prelievo precedente.';
-  previousGas={paCO2:r.paCO2,ph:r.ph};
+  $('egaAcidSummary').textContent='Ultimo prelievo: pH '+fmt(r.ph,3)+' · PaCO₂ '+fmt(r.paCO2)+' mmHg · HCO₃⁻ '+fmt(r.hco3)+' mmol/L. Cerchio tratteggiato: riferimento prima dell’ultima modifica.';
+
  }
  function draw(result,stamp){
   if(!result)return;
@@ -88,6 +116,7 @@ window.addEventListener('DOMContentLoaded',function(){
   const d=result.inputs;
   const effectiveInfo=' · quote V/Q effettive alla PEEP: shunt '+fmt(d.shunt*100,1)+'%, basso V/Q '+fmt(d.low*100,1)+'%, spazio morto alveolare '+fmt(d.dead*100,1)+'%';
   $('egaStatus').textContent='Ultimo campione arterioso · '+stamp+effectiveInfo+(result.oxygenSupplyWarning?' · '+result.oxygenSupplyWarning:'');
+  latestGas={paCO2:result.paCO2,ph:result.ph,hco3:result.hco3};
   acidPlot(result);
  }
  // Shared effective alveolar minute ventilation for the CO2 pool and EGA.
@@ -334,7 +363,7 @@ window.addEventListener('DOMContentLoaded',function(){
   if(!acidCard.isConnected)return;
   const baseline={paCO2:40,ph:6.1+Math.log10(24/(.03*40)),hco3:24};
   acidPlot(baseline);
-  previousGas=null;
+  referenceGas=null;
   const summary=$('egaAcidSummary');
   if(summary)summary.textContent='Curva di riferimento: compenso respiratorio acuto atteso. Esegui un prelievo per visualizzare il valore del paziente.';
  }
