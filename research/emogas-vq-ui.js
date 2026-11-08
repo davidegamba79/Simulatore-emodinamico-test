@@ -255,8 +255,8 @@ window.addEventListener('DOMContentLoaded',function(){
   const nav=document.querySelector('.student-tabs-nav');
   const host=document.querySelector('.student-tabs-shell');
   if(nav&&host){
-   const btn=document.createElement('button');btn.type='button';btn.textContent='Emogas';btn.setAttribute('role','tab');
-   nav.append(btn);panel.className='student-tab-panel';panel.hidden=true;host.append(panel);
+   const btn=document.createElement('button');btn.type='button';btn.textContent='Emogas';btn.id='student-tab-emogas';btn.style.whiteSpace='nowrap';btn.setAttribute('role','tab');
+   nav.insertBefore(btn,nav.querySelector('#student-tab-trends'));panel.className='student-tab-panel';panel.hidden=true;host.append(panel);
    const pinned=document.getElementById('egaStudentPinnedResults');
    if(pinned){
     const status=panel.querySelector('#egaStatus');
@@ -265,7 +265,7 @@ window.addEventListener('DOMContentLoaded',function(){
     if(metrics)pinned.append(metrics);
    }
    btn.onclick=()=>{nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected','false'));host.querySelectorAll('.student-tab-panel').forEach(p=>p.hidden=true);btn.setAttribute('aria-selected','true');panel.hidden=false;document.body.dataset.studentTab='emogas'};
-   nav.querySelectorAll('button:not(:last-child)').forEach(b=>b.addEventListener('click',()=>{panel.hidden=true;btn.setAttribute('aria-selected','false')}));
+   nav.querySelectorAll('button').forEach(b=>{if(b!==btn)b.addEventListener('click',()=>{panel.hidden=true;btn.setAttribute('aria-selected','false')})});
   }
   let latestSettings=null;
   function showSettings(){
@@ -287,7 +287,7 @@ window.addEventListener('DOMContentLoaded',function(){
  const aside=instructor.parentElement;
  const btn=document.createElement('button');btn.id='instructor-tab-emogas';btn.type='button';btn.textContent='Emogas';btn.setAttribute('role','tab');
  const tab=document.createElement('div');tab.id='instructor-panel-emogas';tab.className='instructor-tab-panel';tab.setAttribute('role','tabpanel');
- tab.hidden=true;tab.append(panel);aside.append(tab);nav?.append(btn);
+ tab.hidden=true;tab.append(panel);aside.append(tab);btn.style.whiteSpace='nowrap';nav?.insertBefore(btn,nav.querySelector('#instructor-tab-trends'));
  btn.onclick=()=>{
   nav?.querySelectorAll('button').forEach(b=>{b.setAttribute('aria-selected','false');b.classList.remove('active')});
   aside.querySelectorAll('.instructor-tab-panel').forEach(p=>p.hidden=true);
