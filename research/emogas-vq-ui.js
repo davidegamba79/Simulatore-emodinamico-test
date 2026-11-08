@@ -65,10 +65,8 @@ window.addEventListener('DOMContentLoaded',function(){
    heading.textContent='Emogasanalisi · risultati';
    heading.style.cssText='font-size:13px;margin:0 0 5px';
    egaReadouts.append(heading);
-   const status=document.getElementById('egaStatus');
-   const metrics=document.getElementById('egaMetrics');
-   if(status)egaReadouts.append(status);
-   if(metrics)egaReadouts.append(metrics);
+   // Panel is not yet attached to document here. Move its real nodes
+   // after host.append(panel), otherwise getElementById returns null.
    fixed.insertBefore(egaReadouts,pram);
   }
   const responsive=document.createElement('style');
@@ -82,6 +80,12 @@ window.addEventListener('DOMContentLoaded',function(){
    body.student[data-student-tab="emogas"] #egaStudentPinnedResults{display:block!important}
    body.student[data-student-tab="emogas"] #egaStudentPinnedResults #egaStatus{margin:2px 0 5px!important;font-size:10px!important}
    body.student[data-student-tab="emogas"] #egaStudentPinnedResults #egaMetrics{grid-template-columns:repeat(7,minmax(0,1fr))!important;gap:4px!important}
+   body.student[data-student-tab="emogas"] .student-fixed-monitor{max-height:92%!important;height:92%!important;flex-basis:92%!important}
+   body.student[data-student-tab="emogas"] #egaStudentPinnedResults{position:relative;z-index:1}
+   body.student[data-student-tab="emogas"] .student-fixed-monitor>.hemo-wrap{order:3;flex:1 1 0;min-height:0;overflow-y:auto!important}
+   body.student[data-student-tab="emogas"] #egaStudentPinnedResults{order:2}
+   body.student[data-student-tab="emogas"] #studentVentLayout{order:1}
+
    body.student[data-student-tab="emogas"] #egaStudentPinnedResults #egaMetrics>div{padding:5px!important;min-width:0}
    body.student[data-student-tab="emogas"] #egaStudentPinnedResults #egaMetrics small{font-size:10px}
    body.student[data-student-tab="emogas"] #egaStudentPinnedResults #egaMetrics>div>div{font-size:15px!important;overflow-wrap:anywhere}
@@ -253,6 +257,13 @@ window.addEventListener('DOMContentLoaded',function(){
   if(nav&&host){
    const btn=document.createElement('button');btn.type='button';btn.textContent='Emogas';btn.setAttribute('role','tab');
    nav.append(btn);panel.className='student-tab-panel';panel.hidden=true;host.append(panel);
+   const pinned=document.getElementById('egaStudentPinnedResults');
+   if(pinned){
+    const status=panel.querySelector('#egaStatus');
+    const metrics=panel.querySelector('#egaMetrics');
+    if(status)pinned.append(status);
+    if(metrics)pinned.append(metrics);
+   }
    btn.onclick=()=>{nav.querySelectorAll('button').forEach(b=>b.setAttribute('aria-selected','false'));host.querySelectorAll('.student-tab-panel').forEach(p=>p.hidden=true);btn.setAttribute('aria-selected','true');panel.hidden=false;document.body.dataset.studentTab='emogas'};
    nav.querySelectorAll('button:not(:last-child)').forEach(b=>b.addEventListener('click',()=>{panel.hidden=true;btn.setAttribute('aria-selected','false')}));
   }
