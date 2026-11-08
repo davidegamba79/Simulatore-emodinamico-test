@@ -192,6 +192,7 @@ window.addEventListener('DOMContentLoaded',function(){
   btn.setAttribute('aria-selected','true');btn.classList.add('active');tab.hidden=false;
   document.body.dataset.instructorTab='emogas';
   acidCard.hidden=false;
+  if(!$('egaAcidSvg')?.querySelector('circle'))drawInitialAcidChart();
  };
  nav?.querySelectorAll('button:not(:last-child)').forEach(b=>b.addEventListener('click',()=>{tab.hidden=true;acidCard.hidden=true;btn.setAttribute('aria-selected','false')}));
  // Second set of controls in Ventilazione; original Emogas controls remain the single source of truth.
@@ -321,6 +322,18 @@ window.addEventListener('DOMContentLoaded',function(){
   }catch(err){$('egaStatus').textContent='Errore modello: '+err.message;console.error(err)}
  }
  $('egaSample').onclick=sample;
+ // Render the acid-base chart immediately when Emogas is opened, even
+ // before the instructor requests the first arterial sample.
+ // The plot must never remain an empty SVG while waiting for a sample.
+ function drawInitialAcidChart(){
+  if(!acidCard.isConnected)return;
+  const baseline={paCO2:40,ph:6.1+Math.log10(24/(.03*40)),hco3:24};
+  acidPlot(baseline);
+  previousGas=null;
+  const summary=$('egaAcidSummary');
+  if(summary)summary.textContent='Curva di riferimento: compenso respiratorio acuto atteso. Esegui un prelievo per visualizzare il valore del paziente.';
+ }
+ drawInitialAcidChart();
  $('egaScenario').onchange=()=>{
   const key=$('egaScenario').value;
   if(typeof window.simVentSetLungProfile==='function')window.simVentSetLungProfile(key);
