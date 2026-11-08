@@ -72,16 +72,16 @@ function avECG(t,r,hr){
  return P-.12*p(c.qrsOffset-.053,c.cycle,.027)+.68*p(c.qrsOffset,c.cycle,.033)
   -.25*p(c.qrsOffset+.065,c.cycle,.034)+.15*p(c.qrsOffset+.26,c.cycle,.092);
 }
-function art(q){if(E("rhythm")?.value==="Artefatto massaggio cardiaco 120/min")return .85*G(q,.22,.105)+.22*G(q,.4,.17);if((E("rhythm")?.value==="Fibrillazione ventricolare"||E("rhythm")?.value==="Tachicardia ventricolare senza polso"||E("rhythm")?.value==="PEA / attività elettrica"||E("rhythm")?.value==="Asistolia"))return 0;let pp=C((N("sap")-N("dap"))/60,.12,1.75),sv=C(N("sv")/36,.35,1.8),con=C((window.macEffectiveContractility||N("contractility"))/100,.2,1.9),dp=C((N("dpdt")||.8)/.8,.4,2.2),tone=C((window.macEffectiveTone||N("vascularTone"))/100,.3,2.1),comp=C(N("compliance")/100,.4,1.8);
+function art(q){if(E("rhythm")?.value==="Artefatto massaggio cardiaco 120/min")return .85*G(q,.22,.105)+.22*G(q,.4,.17);if((E("rhythm")?.value==="Fibrillazione ventricolare"||E("rhythm")?.value==="Tachicardia ventricolare senza polso"||E("rhythm")?.value==="PEA / attività elettrica"||E("rhythm")?.value==="Asistolia"))return 0;const synced=document.body.classList.contains("student")?window.simStudentWaveShape:null;let pp=C((N("sap")-N("dap"))/60,.12,1.75),sv=C(N("sv")/36,.35,1.8),con=C((synced?.contractility??window.macEffectiveContractility??N("contractility"))/100,.2,1.9),dp=C((N("dpdt")||.8)/.8,.4,2.2),tone=C((synced?.tone??window.macEffectiveTone??N("vascularTone"))/100,.3,2.1),comp=C(N("compliance")/100,.4,1.8);
 // Baseline retains V2.8.22/V2.8.24 peripheral contour.
 // Norepinephrine alone adds a concave systolic downslope, prominent systolic
 // peak and near-horizontal post-dicrotic runoff as peripheral resistance rises.
-let norFx=(typeof v25!=="undefined"&&v25.fx)?Math.max(0,v25.fx.tone||0):0;
-let norActive=typeof v25!=="undefined"&&v25.inf&&v25.inf.nor;
+let norFx=synced?Math.max(0,synced.norFx||0):((typeof v25!=="undefined"&&v25.fx)?Math.max(0,v25.fx.tone||0):0);
+let norActive=synced?!!synced.norActive:(typeof v25!=="undefined"&&v25.inf&&v25.inf.nor);
 let nor=C((norActive||norFx>2?norFx:0)/30,0,1);
  // Canine dexmedetomidine: high peripheral resistance prolongs arterial
  // runoff. Preserve the norepinephrine-specific contour independently.
- const dex=typeof window.premedDexEffect==='function'?window.premedDexEffect():0;
+ const dex=synced?Number(synced.dex||0):(typeof window.premedDexEffect==='function'?window.premedDexEffect():0);
  const dexTone=C((tone-1)/.7,0,1)*C(dex,0,1);
 let onset=.085,rise=C(.072/Math.pow(con*dp,.10),.055,.092);
 let z=C((q-onset)/rise,0,1),up=z*z*(3-2*z);
