@@ -233,9 +233,15 @@ function draw(){
   const m=respiratoryBeat(beatStart);
   return dap+m.dia+(sap-dap)*m.pulse*shape;
  };
- // The plethysmographic pulse follows the same beat-level stroke-volume
- // modulation as ART, with its existing peripheral transit delay.
- const plethBeatAmplitude=beatStart=>respiratoryBeat(beatStart).pulse;
+ // Pleth amplitude is more sensitive to respiratory pulse modulation than
+ // the pressure pulse contour. Use the identical beat/respiratory phase as ART,
+ // but amplify the visual modulation for teaching (not a calibrated PVI).
+ // Numeric SpO2 is deliberately unaffected.
+ const plethBeatAmplitude=beatStart=>{
+  if(!respActive||!vent?.controlled)return 1;
+  const swing=Math.sin(2*Math.PI*beatStart*respRate/60-.3);
+  return C(1+C(respPpv/200,0,.175)*2.5*swing,.55,1.45);
+ };
  [["ecg","#39ef8b"],["pleth","#3bd6ff"],["capno","#f8fbff"],["art","#ff5364"]].forEach(([id,col])=>{
   const c=E(id);if(!c||c.offsetParent===null)return;
   const [g,w,h]=fit(c);g.clearRect(0,0,w,h);g.strokeStyle=col;g.lineWidth=2;g.beginPath();
