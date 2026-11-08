@@ -49,7 +49,7 @@ function render(){
  document.querySelectorAll('[data-key]').forEach(el=>{let k=el.dataset.key;el.style.display=(active[k]&&!(k==='capno'&&(typeof window.simNonIntubated==='function'?window.simNonIntubated():window.premedAwakePhase)))?'':'none'});const awakeNotice=$('awakeCapnoNotice');if(awakeNotice)awakeNotice.style.display=(typeof window.simNonIntubated==='function'?window.simNonIntubated():window.premedAwakePhase)?'flex':'none';
  if(!document.body.classList.contains('student'))save();
 }
-function save(){localStorage.setItem('recoverCaneState',JSON.stringify({state,active,name:$('name').value,weight:$('weight').value,rhythm:$('rhythm').value,caseState:typeof caseState!=='undefined'?caseState:null,casePresentation:(typeof caseState!=='undefined'&&caseState.active)?clinicalCases[caseState.key].presentation:'',caseEvolutionText:(typeof caseState!=='undefined'&&caseState.active)?caseEvolution():'',anesthesiaPhase:typeof v25!=='undefined'?v25.induction.phase:'legacy',inductionStarted:typeof v25!=='undefined'&&v25.induction.startedAt>0,patient:{age:$('patientAge')?.value,breed:$('patientBreed')?.value,morph:$('patientMorph')?.value,bodyType:$('patientBodyType')?.value,bcs:$('patientBCS')?.value},vent:typeof window.simVentSettings==='function'?window.simVentSettings():null}))}
+function save(){localStorage.setItem('recoverCaneState',JSON.stringify({state,active,name:$('name').value,weight:$('weight').value,rhythm:$('rhythm').value,caseState:typeof caseState!=='undefined'?caseState:null,casePresentation:(typeof caseState!=='undefined'&&caseState.active)?clinicalCases[caseState.key].presentation:'',caseEvolutionText:(typeof caseState!=='undefined'&&caseState.active)?caseEvolution():'',airwayIntubated:window.simAirwayIntubated,anesthesiaPhase:typeof v25!=='undefined'?v25.induction.phase:'legacy',inductionStarted:typeof v25!=='undefined'&&v25.induction.startedAt>0,patient:{age:$('patientAge')?.value,breed:$('patientBreed')?.value,morph:$('patientMorph')?.value,bodyType:$('patientBodyType')?.value,bcs:$('patientBCS')?.value},vent:typeof window.simVentSettings==='function'?window.simVentSettings():null}))}
 function setActive(v){keys.forEach(k=>active[k]=v);document.querySelectorAll('[data-toggle]').forEach(x=>x.checked=v);render()}
 document.querySelectorAll('input,select').forEach(x=>{
  if(!['preload','contractility','vascularTone','compliance','v25FluidRate','v25DobRate','v25NorRate','v25AtDose','v25EphDose','v25Metric','v25Window'].includes(x.id)) x.addEventListener('input',render)
@@ -119,6 +119,7 @@ function applyPreset(p){
    v25.oxygenEffective=98;
    v25.induction.startedAt=0;
    v25.induction.phase=isHealthy?'awake':'maintenance';
+    window.simAirwayIntubated=!isHealthy;
    v25.induction.maintenanceAt=isHealthy?0:(typeof simClock!=='undefined'?simClock.virtual-60000:0);
   }
   const label=$('patientPresetStatus');if(label)label.textContent=isHealthy?'Paziente sano · sveglio · non premedicato':'Paziente anestetizzato · preset manuale';
@@ -169,6 +170,7 @@ function setNum(id,v){
 function caseApplyStart(c){
  patientModel='anesthetized';
  if(typeof v25!=='undefined')v25.induction.phase='maintenance';
+ window.simAirwayIntubated=true;
  const presetLabel=$('patientPresetStatus');if(presetLabel)presetLabel.textContent='Caso clinico · profilo emodinamico dedicato';
  $('mac').value=1;$('macOut').textContent='1,0';
  phys.preload=c.start.preload;phys.contractility=c.start.contractility;phys.vascularTone=c.start.vascularTone;phys.compliance=c.start.compliance;
@@ -318,6 +320,15 @@ $('autoPhys').addEventListener('change',physiology);
 const v25={start:performance.now(),last:performance.now(),lastPhys:performance.now(),lastSample:0,oxygenEffective:+$('spo2').value||98,inf:{fluid:false,dob:false,nor:false},fluidBolusUntil:0,atropineUntil:0,ephedrineAt:0,ephedrineDose:0,ephedrineBaselineMAP:0,dobStoppedAt:0,etRef:+$('etco2Set').value||33,etEffective:+$('etco2').value||33,co2Pools:null,history:[],events:[],applying:false,base:{preload:phys.preload,contractility:phys.contractility,vascularTone:phys.vascularTone,hr:95},fx:{preload:0,contractility:0,tone:0,hr:0},
  induction:{phase:'awake',startedAt:0,maintenanceAt:0,drug:'',dose:0,administrationSeconds:60,windowMinutes:10,
  pk:{central:0,fast:0,slow:0,ce:0,cv:0},effects:{preload:0,tone:0,contractility:0,hr:0,active:false},apneaRisk:'—'}};
+// Airway is an explicit instructor-controlled state, independent of anesthesia phase.
+window.simAirwayIntubated=false;
+window.simSetAirwayIntubated=(value,reason)=>{
+ if(document.body.classList.contains('student'))return;
+ const next=Boolean(value),previous=window.simAirwayIntubated;
+ window.simAirwayIntubated=next;
+ if(previous!==next&&typeof v25Event==='function')v25Event('Vie aeree: '+(next?'intubato':'non intubato')+' ('+(reason||'comando istruttore')+')');
+ if(typeof physiology==='function')physiology();
+};
 const v25Metrics=[['hr','FC','bpm'],['spo2','SpO₂','%'],['etco2','EtCO₂','mmHg'],['rr','FR','/min'],['sap','SAP','mmHg'],['dap','DAP','mmHg'],['map','MAP','mmHg'],['co','CO','L/min'],['ci','CI','L/min/m²'],['sv','SV','mL'],['svi','SVI','mL/m²'],['svr','SVR','dyn·s/cm⁵'],['svri','SVRI','dyn·s·m²/cm⁵'],['ppv','PPV','%'],['spv','SPV','mmHg'],['dpdt','dP/dtmax','mmHg/ms'],['cce','CCE',''],['ea','Ea','mmHg/mL'],['cpo','CPO','W'],['preload','Precarico','%'],['afterload','Afterload','%'],['contractility','Contrattilità','%'],['mac','MAC','']];
 function v25Event(txt){let t=(simClock.virtual-v25.start)/1000;v25.events.push({t,txt});if(v25.events.length>300)v25.events.shift();logEvent(txt);v25RenderEvents()}
 function v25CaptureUntreatedBase(){v25.base={preload:clamp(phys.preload-v25.fx.preload,20,180),contractility:clamp(phys.contractility-v25.fx.contractility,20,180),vascularTone:clamp(phys.vascularTone-v25.fx.tone,30,180),hr:v25.base.hr||80}}
@@ -634,7 +645,7 @@ function simCaptureSnapshot(){
  if(previous&&simClock.virtual-previous.time<950)return;
  const values={};document.querySelectorAll('input[id],select[id]').forEach(el=>{if(el.type!=='checkbox')values[el.id]=el.value});
  const dynamics={};Object.keys(v25).forEach(k=>{if(!['history','events','applying'].includes(k))dynamics[k]=simCopy(v25[k])});
- simSnapshots.push({time:simClock.virtual,state:simCopy(state),phys:simCopy(phys),patientModel,lungProfile:window.simVentLungProfile||'healthy',dynamics,values});
+ simSnapshots.push({time:simClock.virtual,state:simCopy(state),phys:simCopy(phys),patientModel,lungProfile:window.simVentLungProfile||'healthy',airwayIntubated:window.simAirwayIntubated,dynamics,values});
  if(simSnapshots.length>1800)simSnapshots.shift();
 }
 function simRewind(minutes){
@@ -644,6 +655,7 @@ function simRewind(minutes){
  if(!snap)return;
  simClock.virtual=snap.time;simClock.accumulator=0;simClock.real=performance.now();
  state=simCopy(snap.state);Object.assign(phys,simCopy(snap.phys));patientModel=snap.patientModel||'anesthetized';
+  window.simAirwayIntubated=typeof snap.airwayIntubated==='boolean'?snap.airwayIntubated:snap.dynamics?.induction?.phase==='maintenance';
  Object.assign(v25,simCopy(snap.dynamics));v25.applying=false;
  Object.entries(snap.values).forEach(([id,value])=>{const el=$(id);if(el)el.value=value});
  if(typeof window.simVentSetLungProfile==='function')window.simVentSetLungProfile(snap.lungProfile||'healthy',true);
@@ -659,7 +671,7 @@ const studentStatusKey='recoverCaneStudentStatusV2891',studentHistoryKey='recove
 let studentLastStatusAt=0,studentLastHistoryAt=0;
 function simPublishStudentStatus(){
  if(document.body.classList.contains('student'))return;
- try{localStorage.setItem(studentStatusKey,JSON.stringify({paused:simClock.paused,anesthesiaPhase:v25.induction.phase,inductionStarted:v25.induction.startedAt>0,elapsed:(simClock.virtual-v25.start)/1000,sample:v25.history[v25.history.length-1]||null,trendWindow:+$('v25Window').value,events:v25.events.slice(-30),treatments:{infusions:{fluid:!!v25.inf.fluid,dob:!!v25.inf.dob,nor:!!v25.inf.nor},rates:{fluid:+$('v25FluidRate').value,dob:+$('v25DobRate').value,nor:+$('v25NorRate').value},mac:+$('mac').value,phase:v25.induction.phase}}))}
+ try{localStorage.setItem(studentStatusKey,JSON.stringify({paused:simClock.paused,airwayIntubated:window.simAirwayIntubated,anesthesiaPhase:v25.induction.phase,inductionStarted:v25.induction.startedAt>0,elapsed:(simClock.virtual-v25.start)/1000,sample:v25.history[v25.history.length-1]||null,trendWindow:+$('v25Window').value,events:v25.events.slice(-30),treatments:{infusions:{fluid:!!v25.inf.fluid,dob:!!v25.inf.dob,nor:!!v25.inf.nor},rates:{fluid:+$('v25FluidRate').value,dob:+$('v25DobRate').value,nor:+$('v25NorRate').value},mac:+$('mac').value,phase:v25.induction.phase}}))}
  catch(err){console.warn('Sincronizzazione studenti:',err)}
 }
 function simPublishStudentHistory(){
@@ -681,6 +693,7 @@ function simStudentApplyStatus(d){
  simStudentApplyTrendWindow(d);
  if(Number.isFinite(d.elapsed))simClock.virtual=v25.start+Math.max(0,d.elapsed)*1000;
  if(d.anesthesiaPhase)v25.induction.phase=d.anesthesiaPhase;
+  if(typeof d.airwayIntubated==='boolean')window.simAirwayIntubated=d.airwayIntubated;
  if(typeof d.inductionStarted==='boolean')v25.induction.startedAt=d.inductionStarted?1:0;
  if(d.sample&&Number.isFinite(d.sample.t)){
   v25.history=v25.history.filter(x=>x.t<d.sample.t);
@@ -770,6 +783,7 @@ window.addEventListener('storage',e=>{
  }
  if(e.key==='recoverCaneState'&&document.body.classList.contains('student')){let d=JSON.parse(e.newValue);state=d.state;active=d.active;$('name').value=d.name;$('weight').value=d.weight;$('rhythm').value=d.rhythm;Object.entries(state).forEach(([k,v])=>{if($(k))$(k).value=v});document.querySelectorAll('[data-toggle]').forEach(x=>x.checked=active[x.dataset.toggle]);
 if(d.anesthesiaPhase)v25.induction.phase=d.anesthesiaPhase;
+if(typeof d.airwayIntubated==='boolean')window.simAirwayIntubated=d.airwayIntubated;
 if(typeof d.inductionStarted==='boolean')v25.induction.startedAt=d.inductionStarted?1:0;
 if(d.patient)for(const [id,k] of [['patientAge','age'],['patientBreed','breed'],['patientMorph','morph'],['patientBodyType','bodyType'],['patientBCS','bcs']]){if($(id)&&d.patient[k]!=null)$(id).value=d.patient[k]}
 if(d.vent&&typeof window.simVentApplySettings==='function')window.simVentApplySettings(d.vent);
