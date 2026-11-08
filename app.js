@@ -671,7 +671,7 @@ const studentStatusKey='recoverCaneStudentStatusV2891',studentHistoryKey='recove
 let studentLastStatusAt=0,studentLastHistoryAt=0;
 function simPublishStudentStatus(){
  if(document.body.classList.contains('student'))return;
- try{localStorage.setItem(studentStatusKey,JSON.stringify({paused:simClock.paused,airwayIntubated:window.simAirwayIntubated,anesthesiaPhase:v25.induction.phase,inductionStarted:v25.induction.startedAt>0,elapsed:(simClock.virtual-v25.start)/1000,sample:v25.history[v25.history.length-1]||null,trendWindow:+$('v25Window').value,events:v25.events.slice(-30),treatments:{infusions:{fluid:!!v25.inf.fluid,dob:!!v25.inf.dob,nor:!!v25.inf.nor},rates:{fluid:+$('v25FluidRate').value,dob:+$('v25DobRate').value,nor:+$('v25NorRate').value},mac:+$('mac').value,phase:v25.induction.phase}}))}
+ try{localStorage.setItem(studentStatusKey,JSON.stringify({paused:simClock.paused,airwayIntubated:window.simAirwayIntubated,anesthesiaPhase:v25.induction.phase,inductionStarted:v25.induction.startedAt>0,elapsed:(simClock.virtual-v25.start)/1000,sample:v25.history[v25.history.length-1]||null,trendWindow:+$('v25Window').value,events:v25.events.slice(-30),waveShape:{tone:window.macEffectiveTone??null,contractility:window.macEffectiveContractility??null,norFx:v25.fx.tone||0,norActive:!!v25.inf.nor,dex:typeof window.premedDexEffect==='function'?window.premedDexEffect():0},treatments:{infusions:{fluid:!!v25.inf.fluid,dob:!!v25.inf.dob,nor:!!v25.inf.nor},rates:{fluid:+$('v25FluidRate').value,dob:+$('v25DobRate').value,nor:+$('v25NorRate').value},mac:+$('mac').value,phase:v25.induction.phase}}))}
  catch(err){console.warn('Sincronizzazione studenti:',err)}
 }
 function simPublishStudentHistory(){
@@ -691,6 +691,7 @@ function simStudentApplyTrendWindow(d){
 function simStudentApplyStatus(d){
  if(!d||!document.body.classList.contains('student'))return;
  simStudentApplyTrendWindow(d);
+ if(d.waveShape)window.simStudentWaveShape=d.waveShape;
  if(Number.isFinite(d.elapsed))simClock.virtual=v25.start+Math.max(0,d.elapsed)*1000;
  if(d.anesthesiaPhase)v25.induction.phase=d.anesthesiaPhase;
   if(typeof d.airwayIntubated==='boolean')window.simAirwayIntubated=d.airwayIntubated;
