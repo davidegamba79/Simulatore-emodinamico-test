@@ -6,12 +6,12 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Sim Emod. V2.9.34">
+<meta name="apple-mobile-web-app-title" content="Sim Anestesia V3.0">
 <meta name="theme-color" content="#071016">
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="stylesheet" href="./styles.css">
 <link rel="stylesheet" href="./styles-v2.css?v=2900">
-<title>Simulatore Emodinamico — V2.9.34</title>
+<title>SIMULATORE ANESTESIA — V3.0</title>
 <style id="student-panel-2893">body.student #timeControls,body.student #premedPanel,body.student #inductionPanel{display:none!important}</style>
 <style id="therapy-layout-2861">
 /* Applied in the document to avoid stale stylesheet caching */
@@ -221,7 +221,7 @@ body:not(.student) .resp-wave-controls{margin-top:12px;margin-bottom:0}
 .resp-wave[data-resp-type="pressure"] .wlabel,.resp-wave[data-resp-type="pressure"] .values{color:#ffd34e}
 .resp-wave[data-resp-type="flow"] .wlabel,.resp-wave[data-resp-type="flow"] .values{color:#ff9a3c}
 .resp-wave[data-resp-type="volume"] .wlabel,.resp-wave[data-resp-type="volume"] .values{color:#bd895a}
-/* V2.9.34 — dati paziente della ventilazione richiudibili come i salti temporali. */
+/* V3.0 — dati paziente della ventilazione richiudibili come i salti temporali. */
 details.vent-patient-card{padding:0;overflow:hidden}
 .vent-patient-card .vent-patient-summary{
  cursor:pointer;min-height:44px;padding:9px 12px;display:flex;align-items:center;
@@ -245,7 +245,7 @@ body.student[data-student-tab="ventilation"] .student-fixed-monitor{max-height:6
 body:not(.student)[data-instructor-tab="ventilation"] .monitor .wave{height:67px!important;min-height:67px!important}
 @media(max-width:720px){.vent-loop-grid{grid-template-columns:1fr}}
 @media(max-height:800px){body.student[data-student-tab="ventilation"] .student-fixed-monitor .wave{height:48px!important;min-height:48px!important}}
-/* V2.9.34: EtCO₂ bianca su ogni monitor, docente e studenti. */
+/* V3.0: EtCO₂ bianca su ogni monitor, docente e studenti. */
 .monitor .wave[data-key="capno"] .wlabel,
 .monitor .wave[data-key="capno"] .values{color:#f8fbff!important}
 /* Scala geometrica invariata: i canvas spirometrici conservano un rapporto 17:12. */
@@ -266,7 +266,7 @@ body.student .student-vent-loops .vent-loop-card{padding:6px}
 body.student .student-vent-loops .vent-loop-card strong{font-size:11px;margin-bottom:2px}
 body.student .student-vent-loops .vent-loop-card canvas{aspect-ratio:17 / 12;height:auto!important}
 body.student .student-vent-loops .vent-loop-legend{margin-top:5px;font-size:10px}
-/* V2.9.34: i dati ventilatori riempiono lo spazio sotto IBP,
+/* V3.0: i dati ventilatori riempiono lo spazio sotto IBP,
    affiancati ai due loop; nessun riquadro nelle altre schede. */
 body.student .student-vent-metrics{display:none;min-width:0}
 body.student[data-student-tab="ventilation"] .student-vent-metrics{
@@ -304,7 +304,7 @@ body.student[data-student-tab="ventilation"] .student-vent-wave-column .wave[dat
  body.student[data-student-tab="ventilation"] .student-vent-layout{grid-template-columns:1fr}
  body.student[data-student-tab="ventilation"] .student-vent-loops .vent-loop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
-/* V2.9.34 — nella scheda Ventilazione gli emodinamici scorrono
+/* V3.0 — nella scheda Ventilazione gli emodinamici scorrono
    nel proprio riquadro: le onde e i loop non vengono mai scrollati via
    o coperti quando si consultano i valori PRAM. */
 body.student[data-student-tab="ventilation"] .student-fixed-monitor{
@@ -351,7 +351,7 @@ body.student[data-student-tab="ventilation"] .student-fixed-monitor>.hemo-wrap h
   grid-template-columns:repeat(2,minmax(0,1fr));
  }
 }
-/* V2.9.34 — nessuna misura delle vie aeree prima dell'intubazione.
+/* V3.0 — nessuna misura delle vie aeree prima dell'intubazione.
    Se l'utente ha attivato le onde opzionali, questa regola ha comunque priorita'. */
 body[data-resp-intubated="false"] .monitor .wave.resp-wave[data-resp-type]:not([hidden]){
  display:none!important
@@ -389,7 +389,7 @@ body.student[data-student-tab="ventilation"] .student-fixed-monitor>.hemo-wrap{
  }
 }
 
-/* V2.9.34 — navigazione studenti in testata, a fianco del titolo. */
+/* V3.0 — navigazione studenti in testata, a fianco del titolo. */
 body:not(.student) header .student-tabs-nav{display:none!important}
 body.student header{
  padding:8px 12px;gap:8px;min-height:54px
@@ -436,7 +436,7 @@ body.student[data-student-tab="ventilation"][data-resp-intubated="false"] .stude
  body.student header>.row{margin-left:auto}
 }
 
-/* V2.9.34 — controllo docente delle scale dei loop e confronto statico. */
+/* V3.0 — controllo docente delle scale dei loop e confronto statico. */
 .vent-loop-actions{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:8px 0}
 .vent-loop-actions button,.vent-loop-axis-grid button{min-height:35px}
 .vent-loop-ref-status{font-size:11px;color:#b6d1db;line-height:1.4;overflow-wrap:anywhere}
@@ -458,7 +458,7 @@ body.student[data-student-tab="ventilation"][data-resp-intubated="false"] .stude
 </style>
 
 <style id="instructor-trend-tab-2933">
-/* V2.9.34 — ripristina tutte le cinque schede e la vista originale nelle altre sezioni.
+/* V3.0 — ripristina tutte le cinque schede e la vista originale nelle altre sezioni.
    SOLO nella scheda Trend: onde e PRAM in alto, grafici grandi e scorrevoli sotto. */
 body:not(.student) .instructor-fixed-monitor,
 body:not(.student) .instructor-monitor-scroll{display:contents}
@@ -548,7 +548,7 @@ body:not(.student)[data-instructor-tab="anesthesia"] #instructorInhaledCard inpu
 <body>
 
 <header>
- <div><h1>SIMULATORE EMODINAMICO <span class="app-version">V2.9.34</span> — <span id="modeTitle">Console istruttore</span></h1><div class="badge" id="syncBadge">Monitor locale sincronizzato</div></div>
+ <div><h1>SIMULATORE ANESTESIA <span class="app-version">V3.0</span> — <span id="modeTitle">Console istruttore</span></h1><div class="badge" id="syncBadge">Monitor locale sincronizzato</div></div>
  <div class="row">
   <button class="tiny instructor-only" id="studentBtn">Apri Monitor studenti</button>
   <button class="tiny" id="modeBtn">Modalità studenti</button>
