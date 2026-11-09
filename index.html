@@ -969,6 +969,46 @@ window.addEventListener('DOMContentLoaded',()=>{
   const el=findCard(title);if(el)inner.append(el);
  }
  panels.patient.append(advanced);
+ // Vista speculare del motore fisiologico nella scheda Emodinamica:
+ // i controlli originali restano nella scheda Paziente; il duplicato
+ // inoltra gli eventi agli stessi input, senza creare un secondo motore.
+ const physiologyCard=findCard('Motore fisiologico — emodinamica');
+ if(physiologyCard){
+  const mirror=physiologyCard.cloneNode(true);
+  mirror.id='hemoPhysiologyMirror';
+  const originals=Array.from(physiologyCard.querySelectorAll('input'));
+  const mirrors=Array.from(mirror.querySelectorAll('input'));
+  const originalOutputs=Array.from(physiologyCard.querySelectorAll('span[id]'));
+  const mirrorOutputs=Array.from(mirror.querySelectorAll('span[id]'));
+  mirror.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+  const syncPhysiologyMirror=()=>{
+   mirrors.forEach((input,i)=>{
+    const source=originals[i];if(!source)return;
+    if(input.type==='checkbox')input.checked=source.checked;
+    else input.value=source.value;
+    input.disabled=source.disabled;
+   });
+   mirrorOutputs.forEach((el,i)=>{if(originalOutputs[i])el.textContent=originalOutputs[i].textContent});
+  };
+  mirrors.forEach((input,i)=>{
+   const source=originals[i];if(!source)return;
+   const forward=type=>{
+    if(input.type==='checkbox')source.checked=input.checked;
+    else source.value=input.value;
+    source.dispatchEvent(new Event(type,{bubbles:true}));
+    syncPhysiologyMirror();
+   };
+   input.addEventListener('input',()=>forward('input'));
+   input.addEventListener('change',()=>forward('change'));
+  });
+  originals.forEach(input=>{
+   input.addEventListener('input',syncPhysiologyMirror);
+   input.addEventListener('change',syncPhysiologyMirror);
+  });
+  panels.therapy.prepend(mirror);
+  setInterval(syncPhysiologyMirror,350);
+  syncPhysiologyMirror();
+ }
  add('premedPanel','anesthesia');add('inductionPanel','anesthesia');
  const inhaledCard=findCard('Anestesia inalatoria');
  add('ventilationPanel','ventilation');
