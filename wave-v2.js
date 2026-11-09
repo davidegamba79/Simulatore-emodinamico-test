@@ -213,7 +213,9 @@ function draw(){
    window.simWaveSetPaused(Boolean(simClock.paused));
   if(wavePaused)return;
  const hr=Math.max(1,N("hr")||90),rr=Math.max(1,N("rr")||18),et=C(N("etco2")||38,3,80);
- const rh=E("rhythm")?.value||"Ritmo sinusale",av=rh.startsWith("Blocco AV "),timing=av?avTiming(rh,hr):null,now=performance.now()/1000-t0-wavePausedTotal;
+ const rh=E("rhythm")?.value||"Ritmo sinusale",av=rh.startsWith("Blocco AV "),timing=av?avTiming(rh,hr):null;
+ const clock= document.body.classList.contains('student')?window.simStudentWaveClock:null;
+ const now=clock&&Number.isFinite(clock.time)&&Number.isFinite(clock.sentAt)?clock.time+Math.max(0,(Date.now()-clock.sentAt)/1000):performance.now()/1000-t0-wavePausedTotal;
  window.simWaveTimeSeconds=now;
  window.simWaveFrameTimestamp=performance.now();
  const vent=typeof window.simVentCalc==='function'?window.simVentCalc():null;
