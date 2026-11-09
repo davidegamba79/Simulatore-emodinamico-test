@@ -6,7 +6,7 @@
  let reference=null;
  const panel=document.createElement('section');
  panel.id='lvPvTeaching';panel.className='card instructor-only';
- panel.innerHTML='<h2>Ventricolo sinistro — curva pressione/volume (modello didattico)</h2><p class="lv-pv-note">Modello didattico ispirato a Suga–Sagawa (elastanza variabile) e Denault–Gorcsan–Pinsky (interazione con ventilazione a pressione positiva). Il loop varia con emodinamica e fase respiratoria; non è una misurazione ventricolare. La linea arancione tratteggiata indica la ESPVR; quella grigia conserva il loop prima della terapia.</p><div class="lv-pv-actions"><label style="font-size:11px;color:#a9c2ce"><input type="checkbox" id="lvPvResp" checked> Modula con il respiro</label><label style="font-size:11px;color:#a9c2ce"><input type="checkbox" id="lvPvFail"> Funzione ventricolare depressa (scenario)</label><button type="button" id="lvPvSave">Memorizza loop di riferimento</button><button type="button" id="lvPvClear">Rimuovi riferimento</button><span id="lvPvRefStatus">Nessun riferimento salvato</span></div><div class="lv-pv-layout"><canvas id="lvPvCanvas" aria-label="Loop pressione volume del ventricolo sinistro" role="img"></canvas><div class="lv-pv-values" id="lvPvValues"></div></div><div class="lv-pv-legend"><span>● Riempimento</span><span>● Contrazione isovolumetrica</span><span>● Eiezione</span><span>● Rilasciamento isovolumetrico</span></div>';
+ panel.innerHTML='<h2>Ventricolo sinistro — curva pressione/volume (modello didattico)</h2><p class="lv-pv-note">Modello didattico ispirato a Suga–Sagawa (elastanza variabile) e Denault–Gorcsan–Pinsky (interazione con ventilazione a pressione positiva). Il loop varia con emodinamica e fase respiratoria; non è una misurazione ventricolare. La linea arancione tratteggiata indica la ESPVR, quella rossa tratteggiata indica Ea (elastanza arteriosa efficace) e quella grigia conserva il loop prima della terapia.</p><div class="lv-pv-actions"><label style="font-size:11px;color:#a9c2ce"><input type="checkbox" id="lvPvResp" checked> Modula con il respiro</label><label style="font-size:11px;color:#a9c2ce"><input type="checkbox" id="lvPvFail"> Funzione ventricolare depressa (scenario)</label><button type="button" id="lvPvSave">Memorizza loop di riferimento</button><button type="button" id="lvPvClear">Rimuovi riferimento</button><span id="lvPvRefStatus">Nessun riferimento salvato</span></div><div class="lv-pv-layout"><canvas id="lvPvCanvas" aria-label="Loop pressione volume del ventricolo sinistro" role="img"></canvas><div class="lv-pv-values" id="lvPvValues"></div></div><div class="lv-pv-legend"><span>● Riempimento</span><span>● Contrazione isovolumetrica</span><span>● Eiezione</span><span>● Rilasciamento isovolumetrico</span><span class="lv-pv-key"><i style="border-color:#ffad70"></i>ESPVR (Ees)</span><span class="lv-pv-key"><i style="border-color:#ff5757"></i>Ea</span><span class="lv-pv-key"><i style="border-color:#a5b3bd"></i>Riferimento</span></div>';
  const anchor=document.querySelector('.hemo-wrap');if(!anchor)return;
  anchor.insertAdjacentElement('afterend',panel);
  const css=document.createElement('style');css.textContent=`
@@ -112,10 +112,16 @@
   const guideEnd=clamp(esv+(maxP-endP)/ees,esv+5,maxV);
   const guideStart=clamp(esv-endP/ees,0,esv);
   ctx.save();ctx.strokeStyle='#ffad70';ctx.lineWidth=1.4;ctx.setLineDash([3,5]);ctx.beginPath();ctx.moveTo(x(guideStart),y(Math.max(0,espvrP(guideStart))));ctx.lineTo(x(guideEnd),y(Math.min(maxP,espvrP(guideEnd))));ctx.stroke();ctx.restore();
+  // Effective arterial elastance Ea = end-systolic pressure / stroke volume.
+  // The negative slope joins (EDV, 0) to the end-systolic point (ESV, Pes).
+  // This is a lumped ventricular-arterial coupling index, not arterial stiffness.
+  const ea=endP/sv;
+  ctx.save();ctx.strokeStyle='#ff5757';ctx.lineWidth=2;ctx.setLineDash([7,5]);
+  ctx.beginPath();ctx.moveTo(x(edv),y(0));ctx.lineTo(x(esv),y(endP));ctx.stroke();ctx.restore();
   current={edv,peak,segments:[fill,isoC,eject,isoR]};
  if(reference){reference.segments.forEach(seg=>trace(seg,'#a5b3bd',true))}
  trace(fill,'#3dd5bb');trace(isoC,'#f3c969');trace(eject,'#60b8ff');trace(isoR,'#d19afa');
-  const cells=[['EDV',edv.toFixed(0)+' mL'],['ESV',esv.toFixed(0)+' mL'],['SV',sv.toFixed(0)+' mL'],['FE stimata',(100*sv/edv).toFixed(0)+'%'],['Ees (ESPVR)',ees.toFixed(2)+' mmHg/mL'],['Rigidità TD (dP/dV)',stiffness.toFixed(3)+' mmHg/mL'],['Pressione TD',edp.toFixed(0)+' mmHg'],['Fase respiratoria',respOn?(respSwing>0?'Inspirazione':'Espirazione'):'Non modulata'],['V₀ ipotizzato',v0.toFixed(0)+' mL']];
+  const cells=[['EDV',edv.toFixed(0)+' mL'],['ESV',esv.toFixed(0)+' mL'],['SV',sv.toFixed(0)+' mL'],['FE stimata',(100*sv/edv).toFixed(0)+'%'],['Ees (ESPVR)',ees.toFixed(2)+' mmHg/mL'],['Ea (arteriosa efficace)',ea.toFixed(2)+' mmHg/mL'],['Ea/Ees',(ea/ees).toFixed(2)],['Rigidità TD (dP/dV)',stiffness.toFixed(3)+' mmHg/mL'],['Pressione TD',edp.toFixed(0)+' mmHg'],['Fase respiratoria',respOn?(respSwing>0?'Inspirazione':'Espirazione'):'Non modulata'],['V₀ ipotizzato',v0.toFixed(0)+' mL']];
   get('lvPvValues').innerHTML=cells.map(([k,v])=>'<div class="lv-pv-value"><small>'+k+'</small><b>'+v+'</b></div>').join('');
  }
  const obs=new MutationObserver(draw);obs.observe(document.body,{attributes:true,attributeFilter:['data-instructor-tab','class']});
