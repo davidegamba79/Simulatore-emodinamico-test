@@ -621,7 +621,7 @@ function simAdvancePhysics(seconds){
  for(let i=0;i<n;i++){
   simClock.virtual+=step*1000;
   v25.applying=true;
-  v25InductionStep(step,simClock.virtual);if($('autoPhys').checked)v25TherapyStep(step,simClock.virtual);
+  v25InductionStep(step,simClock.virtual);v25TherapyStep(step,simClock.virtual);
   physiology();
   const ventData=typeof window.simVentCalc==='function'?window.simVentCalc():null;
   const target=v25PerfusionEt(step,ventData);
