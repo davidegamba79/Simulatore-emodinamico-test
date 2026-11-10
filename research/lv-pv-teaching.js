@@ -64,7 +64,11 @@
   // End-systolic elastance is a teaching parameter (mmHg/mL), not measured.
   const v0=clamp(4+baseSV*.08,3,20);
   const emax=clamp(3.3*effectiveContract,0.55,8);
-  const peak=clamp(sap*1.06,40,255);
+  // Ea is read from the same PRAM state; Pes = Ea * SV.
+  // Using the instantaneous respiratory SV keeps the red Ea line's slope
+  // identical to the displayed PRAM Ea throughout the respiratory cycle.
+  const sharedEa=clamp(cvNum('ea',num('ea',2.5)),.01,15);
+  const peak=clamp(Math.max(sap*1.06,sharedEa*baseSV*1.12),40,255);
   // ESPVR: end-systolic volume is determined by end-systolic pressure/Emax.
   const esv0=v0+Math.max(10,sap*.88)/emax;
   const edv0=esv0+baseSV;
@@ -101,7 +105,8 @@
   // ejection -> isovolumetric relaxation. The isovolumetric pressure
   // follows a smooth time-varying elastance trajectory.
   for(let i=0;i<=48;i++){const t=i/48;const v=esv+sv*t;fill.push([v,diastolicP(v)])}
-  const openP=Math.max(dap+2,edp+8),endP=clamp(sap*.82,openP*.7,peak);
+  const endP=sharedEa*sv;
+  const openP=Math.min(Math.max(dap+2,edp+8),endP*.93);
   for(let i=0;i<=36;i++){const t=i/36;isoC.push([edv,edp+(openP-edp)*elastance(t)])}
   for(let i=0;i<=64;i++){
    const t=i/64,v=edv-sv*t;
@@ -117,13 +122,13 @@
   // Effective arterial elastance Ea = end-systolic pressure / stroke volume.
   // The negative slope joins (EDV, 0) to the end-systolic point (ESV, Pes).
   // This is a lumped ventricular-arterial coupling index, not arterial stiffness.
-  const ea=endP/sv; // Ea geometrica del loop corrente (incluse oscillazioni respiratorie).
+  const ea=sharedEa; // Single source: PRAM and PV-loop share effective arterial elastance.
   ctx.save();ctx.strokeStyle='#ff5757';ctx.lineWidth=2;ctx.setLineDash([7,5]);
   ctx.beginPath();ctx.moveTo(x(edv),y(0));ctx.lineTo(x(esv),y(endP));ctx.stroke();ctx.restore();
   current={edv,peak,segments:[fill,isoC,eject,isoR]};
  if(reference){reference.segments.forEach(seg=>trace(seg,'#a5b3bd',true))}
  trace(fill,'#3dd5bb');trace(isoC,'#f3c969');trace(eject,'#60b8ff');trace(isoR,'#d19afa');
-  const cells=[['EDV',edv.toFixed(0)+' mL'],['ESV',esv.toFixed(0)+' mL'],['SV',sv.toFixed(0)+' mL'],['FE stimata',(100*sv/edv).toFixed(0)+'%'],['Ees (ESPVR)',ees.toFixed(2)+' mmHg/mL'],['Ea (loop)',ea.toFixed(2)+' mmHg/mL'],['Ea/Ees',(ea/ees).toFixed(2)],['Rigidità TD (dP/dV)',stiffness.toFixed(3)+' mmHg/mL'],['Pressione TD',edp.toFixed(0)+' mmHg'],['Fase respiratoria',respOn?(respSwing>0?'Inspirazione':'Espirazione'):'Non modulata'],['V₀ ipotizzato',v0.toFixed(0)+' mL']];
+  const cells=[['EDV',edv.toFixed(0)+' mL'],['ESV',esv.toFixed(0)+' mL'],['SV',sv.toFixed(0)+' mL'],['FE stimata',(100*sv/edv).toFixed(0)+'%'],['Ees (ESPVR)',ees.toFixed(2)+' mmHg/mL'],['Ea (PRAM / loop)',ea.toFixed(2)+' mmHg/mL'],['Ea/Ees',(ea/ees).toFixed(2)],['Rigidità TD (dP/dV)',stiffness.toFixed(3)+' mmHg/mL'],['Pressione TD',edp.toFixed(0)+' mmHg'],['Fase respiratoria',respOn?(respSwing>0?'Inspirazione':'Espirazione'):'Non modulata'],['V₀ ipotizzato',v0.toFixed(0)+' mL']];
   get('lvPvValues').innerHTML=cells.map(([k,v])=>'<div class="lv-pv-value"><small>'+k+'</small><b>'+v+'</b></div>').join('');
  }
  const obs=new MutationObserver(draw);obs.observe(document.body,{attributes:true,attributeFilter:['data-instructor-tab','class']});
