@@ -458,11 +458,20 @@ function v25PerfusionEt(dt,ventData){
    (vent?.etco2Gradient||0),3,80);
  }
  // VCO2 metabolica: allometria del peso con piccoli aggiustamenti per eta'
- // e BCS. Il riferimento EtCO2 docente calibra la produzione basale,
- // senza forzare artificialmente la risposta agli altri volumi correnti.
+ // e BCS. Il riferimento docente calibra SOLO la produzione metabolica
+ // basale, non impone l'EtCO2 ad ogni passo: CO e ventilazione restano libere
+ // di modificarla. Riferimento 34 mmHg per il paziente standard 25 kg.
+ // Questa calibrazione e' didattica, non una misura metabolimetrica.
  const age=clamp(vent.age||6,.1,22),bcs=clamp(vent.bcs||5,1,9);
  const ageFactor=age<1?1.10:age>10?clamp(1-.015*(age-10),.82,1):1;
  const bcsFactor=bcs>=7?clamp(1-.025*(bcs-6),.90,1):1;
+ // A Vt 12 mL/kg e FR 12/min, VA ~3 L/min: 128 mL/min porta
+ // PaCO2 all'equilibrio ~36.8 mmHg prima della miscela terminale.
+ // Il controllo EtCO2 calibra il metabolismo solo quando cambia
+ // esplicitamente il riferimento; non dipende dalla ventilazione corrente.
+ const referenceScale=clamp(v25.etRef/34,.50,1.65);
+ const metabolicVCO2=clamp(128*Math.pow(weight/25,.8)*ageFactor*bcsFactor*
+  referenceScale,15,650);
  const alveolar=clamp(typeof window.simEgaAlveolarMinute==='function'?
   window.simEgaAlveolarMinute(vent):vent.alveolarMinute,.05,25);
  // Il flusso ridotto rallenta il trasporto della CO2 metabolica ai polmoni.
@@ -490,13 +499,13 @@ function v25PerfusionEt(dt,ventData){
   // One fixed metabolic production model, shared with experimental EGA.
   // Do not calibrate VCO2 from the current ventilator setting: doing so
   // makes transient ventilator changes permanently bias CO2 equilibrium.
-  const vco2=clamp(105*Math.pow(weight/25,.8)*ageFactor*bcsFactor,15,650);
+  const vco2=metabolicVCO2;
   const arterial=clamp(.863*vco2/alveolar,10,120);
   v25.co2Pools={arterial,tissue:clamp(arterial+vco2/conductance,4,160),
    ref:v25.etRef,weight,vco2};
  }
  // Keep VCO2 consistent even when an old simulator state is reused.
- v25.co2Pools.vco2=clamp(105*Math.pow(weight/25,.8)*ageFactor*bcsFactor,15,650);
+ v25.co2Pools.vco2=metabolicVCO2;
  const vco2=v25.co2Pools.vco2;
  const pool=v25.co2Pools,seconds=clamp(dt,0,1);
  window.simDynamicPaCO2=pool.arterial;
