@@ -1260,7 +1260,13 @@ window.addEventListener('DOMContentLoaded',()=>{
   number.type='number';number.min=range.min;number.max=range.max;number.step='1';
   number.value=range.value;number.setAttribute('aria-label','Valore percentuale '+range.closest('label')?.textContent.trim());
   const unit=document.createElement('span');unit.className='percent-unit';unit.textContent='%';
-  editor.append(number,unit);range.insertAdjacentElement('afterend',editor);
+  editor.append(number,unit);
+  // Non inserire il campo numerico dentro la <label> dello slider:
+  // su Safari/iPad il click sulla label puo' riportare il focus al cursore,
+  // impedendo di digitare nel campo.
+  const sliderLabel=range.closest('label');
+  if(sliderLabel)sliderLabel.insertAdjacentElement('afterend',editor);
+  else range.insertAdjacentElement('afterend',editor);
   const sync=()=>{
    if(document.activeElement!==number)number.value=range.value;
    number.disabled=range.disabled;
