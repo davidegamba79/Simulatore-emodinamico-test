@@ -463,9 +463,9 @@ function v25PerfusionEt(dt,ventData){
  const age=clamp(vent.age||6,.1,22),bcs=clamp(vent.bcs||5,1,9);
  const ageFactor=age<1?1.10:age>10?clamp(1-.015*(age-10),.82,1):1;
  const bcsFactor=bcs>=7?clamp(1-.025*(bcs-6),.90,1):1;
- // 105 mL/min e' il riferimento didattico per il cane anestetizzato
+ // 120 mL/min e' il riferimento didattico per il cane anestetizzato
  // di 25 kg. Evitiamo che il comando EtCO2 modifichi il metabolismo.
- const metabolicVCO2=clamp(105*Math.pow(weight/25,.8)*ageFactor*bcsFactor,15,650);
+ const metabolicVCO2=clamp(120*Math.pow(weight/25,.8)*ageFactor*bcsFactor,15,650);
  const alveolar=clamp(typeof window.simEgaAlveolarMinute==='function'?
   window.simEgaAlveolarMinute(vent):vent.alveolarMinute,.05,25);
  // Il flusso ridotto rallenta il trasporto della CO2 metabolica ai polmoni.
@@ -510,9 +510,18 @@ function v25PerfusionEt(dt,ventData){
  // rapido e riserva tissutale lenta. La riserva tissutale di 12, anziche'
  // 18, riduce il trascinamento residuo dopo la sospensione di un inotropo
  // senza azzerare l'inerzia del trasporto della CO2.
- const centralCapacity=4.5,tissueCapacity=12;
+ const centralCapacity=3.5,tissueCapacity=7;
  pool.arterial=clamp(pool.arterial+(transfer-elimination)*seconds/(60*centralCapacity),4,160);
  pool.tissue=clamp(pool.tissue+(vco2-transfer)*seconds/(60*tissueCapacity),4,160);
+ // Recupero reversibile: il punto di equilibrio dipende solo da ventilazione
+ // alveolare e VCO2 costante, non dalla storia della PEEP. Una lieve
+ // convergenza aggiuntiva evita code numeriche prolungate dopo il ritorno
+ // ai parametri iniziali senza azzerare le riserve durante i transitori.
+ const equilibriumArterial=clamp(.863*vco2/alveolar,4,160);
+ const equilibriumTissue=clamp(equilibriumArterial+vco2/conductance,4,160);
+ const recovery=1-Math.exp(-seconds/95);
+ pool.arterial=clamp(pool.arterial+(equilibriumArterial-pool.arterial)*recovery,4,160);
+ pool.tissue=clamp(pool.tissue+(equilibriumTissue-pool.tissue)*recovery,4,160);
  window.simDynamicPaCO2=pool.arterial;
  if(cpr||arrest){
   // Aggiorna la diagnostica a ogni passo: mai mostrare una misura polmonare
