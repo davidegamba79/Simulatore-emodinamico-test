@@ -429,7 +429,10 @@ function v25PerfusionEt(dt,ventData){
  const rhythm=$('rhythm').value;
  const arrest=['Fibrillazione ventricolare','Tachicardia ventricolare senza polso','PEA / attività elettrica','Asistolia'].includes(rhythm);
  const cpr=rhythm==='Artefatto massaggio cardiaco 120/min';
- const co=Math.max(0,+$('co').value||0),perf=clamp(co/2.9,.02,1.6);
+ // CO dal motore Frank-Starling/terapie; non proporzionalita' diretta CO/EtCO2.
+ const co=Math.max(0,Number($('co').value)||0),perf=clamp(co/2.9,0,1.6);
+ const flowDeficit=clamp((1-perf)/.85,0,1);
+ const flowDeadSpace=clamp(.34*Math.pow(flowDeficit,1.35),0,.34);
  const vent=ventData||(typeof window.simVentCalc==='function'?window.simVentCalc():null);
  const weight=clamp(+$('weight').value||25,1,100);
  // Il vecchio andamento in spontanea resta per ora invariato: il modello
@@ -445,7 +448,9 @@ function v25PerfusionEt(dt,ventData){
   const exponent=(vent?.postInduction&&!vent.controlled)?.36:.28;
   const rhythmFactor=rhythm==='Tachicardia ventricolare con polso'?
    clamp(.90-.12*clamp(((+$('hr').value||180)-120)/120,0,1),.78,.90):1;
-  return clamp(v25.etRef*(.55+.45*perf)*Math.pow(ventilatoryDeficit,exponent)*rhythmFactor-
+  // In spontanea la quota di gas ipoperfuso diluisce il gas terminale.
+  const perfusionMix=clamp(1-.60*flowDeadSpace-.16*flowDeficit,.50,1.10);
+  return clamp(v25.etRef*perfusionMix*Math.pow(ventilatoryDeficit,exponent)*rhythmFactor-
    (vent?.etco2Gradient||0),3,80);
  }
  // VCO2 metabolica: allometria del peso con piccoli aggiustamenti per eta'
@@ -456,7 +461,8 @@ function v25PerfusionEt(dt,ventData){
  const bcsFactor=bcs>=7?clamp(1-.025*(bcs-6),.90,1):1;
  const alveolar=clamp(typeof window.simEgaAlveolarMinute==='function'?
   window.simEgaAlveolarMinute(vent):vent.alveolarMinute,.05,25);
- const conductance=10*clamp(perf,.20,1.6);
+ // Il flusso ridotto rallenta il trasporto della CO2 metabolica ai polmoni.
+ const conductance=10*clamp(perf,.06,1.6);
  // Experimental terminal-expiratory gas mixing, NOT PaCO2 minus a fixed
  // gradient. Dead-space fraction denotes poorly perfused ALVEOLAR units only.
  // Perfusion fractions (low V/Q) and ventilated fractions (alveolar dead space)
@@ -468,7 +474,10 @@ function v25PerfusionEt(dt,ventData){
  const perfusedLow=low/(Math.max(.05,1-(ega?.shunt??0)));
  // Late expiration preferentially samples perfused alveoli. These teaching
  // weights represent regional emptying, not a measured volumetric capnogram.
- const deadTerminal=clamp(dead*(.14+.14*(1-clamp(perf,0,1))),0,.65);
+ // Spazio morto funzionale da bassa perfusione, distinto da quello anatomico.
+ const effectiveDead=clamp(dead+(1-dead)*flowDeadSpace,0,.90);
+ const deadTerminal=clamp(dead*(.14+.14*flowDeficit)+
+  (1-dead)*flowDeadSpace*.58,0,.72);
  const lowTerminal=clamp((1-deadTerminal)*perfusedLow*.30,0,1-deadTerminal);
  const normalTerminal=Math.max(0,1-deadTerminal-lowTerminal);
  if(!v25.co2Pools||!Number.isFinite(v25.co2Pools.arterial)||
@@ -505,6 +514,11 @@ function v25PerfusionEt(dt,ventData){
  const deadGas=pool.arterial*.10;
  const terminalGas=normalTerminal*normalGas+
   lowTerminal*lowGas+deadTerminal*deadGas;
+ // Diagnostica interna, senza nuovi comandi docente.
+ window.simPulmonaryPerfusionState={cardiacOutput:co,relativeFlow:perf,
+  flowDeadSpace,effectiveAlveolarDeadSpace:effectiveDead,
+  alveolarVentilation:alveolar,metabolicVCO2:vco2,
+  estimatedTerminalCO2:terminalGas};
  return clamp(terminalGas,3,80);
 }
 // La SpO2 dipende qualitativamente da FiO2, reclutamento, sovradistensione
