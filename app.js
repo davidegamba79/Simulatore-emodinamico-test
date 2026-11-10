@@ -424,7 +424,8 @@ function v25Setup(){
 // PaCO2 o gas ematici individuali e non sostituiscono un'emogasanalisi.
 // 0,863 * VCO2 (mL/min) / VA (L/min) = PaCO2 (mmHg) all'equilibrio.
 // A 25 kg, Vt 12 mL/kg, FR 12, spazio morto 2 mL/kg: VA = 3 L/min.
-// Con EtCO2 di riferimento 34 e gradiente 2,8: VCO2 ~128 mL/min.
+// Il riferimento didattico e' 120 mL/min a 25 kg; la calibrazione
+// di EtCO2 dipende dalla ventilazione alveolare e dalla perfusione.
 function v25PerfusionEt(dt,ventData){
  const rhythm=$('rhythm').value;
  const arrest=['Fibrillazione ventricolare','Tachicardia ventricolare senza polso','PEA / attività elettrica','Asistolia'].includes(rhythm);
