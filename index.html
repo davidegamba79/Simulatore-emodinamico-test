@@ -1267,10 +1267,15 @@ window.addEventListener('DOMContentLoaded',()=>{
   const sliderLabel=range.closest('label');
   if(sliderLabel)sliderLabel.insertAdjacentElement('afterend',editor);
   else range.insertAdjacentElement('afterend',editor);
+  // Non sovrascrivere il valore mentre l'utente sta digitando.
+  // Il focus puo' variare su Safari durante l'apertura della tastiera.
+  let editing=false;
   const sync=()=>{
-   if(document.activeElement!==number)number.value=range.value;
+   if(!editing)number.value=range.value;
    number.disabled=range.disabled;
   };
+  number.addEventListener('focus',()=>{editing=true;number.select()});
+  number.addEventListener('blur',()=>{editing=false;sync()});
   const apply=()=>{
    const n=Number(number.value);
    if(number.value.trim()===''||!Number.isFinite(n))return;
@@ -1282,10 +1287,10 @@ window.addEventListener('DOMContentLoaded',()=>{
    number.value=range.value;
   };
   number.addEventListener('change',apply);
-  number.addEventListener('keydown',e=>{if(e.key==='Enter'){apply();number.blur()}});
+  number.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();apply();number.blur()}});
   range.addEventListener('input',sync);
   range.addEventListener('change',sync);
-  setInterval(sync,350);
+  // Nessun polling: l'aggiornamento periodico interrompeva la digitazione.
   sync();
  }
  // Il duplicato conserva l'ordine dei quattro slider originali.
