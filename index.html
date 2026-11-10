@@ -622,8 +622,8 @@ body.student #studentPvReadings small{display:block;color:#a4bbc7;font-size:9px}
     <option value="arrest">Caso D — arresto cardiaco / PEA</option>
   </select></label>
   <div class="row" style="margin-top:9px"><button class="primary" id="startCase">Avvia caso</button><button id="advanceCase">+ 1 minuto</button><button class="danger" id="endCase">Termina caso</button></div>
-  <div id="caseInstructor" class="status" style="margin-top:9px">Nessun caso clinico attivo.</div>
-  <div id="caseFeedback" class="status" style="margin-top:8px">Gestisci il caso utilizzando i controlli del simulatore.</div>
+  <div id="caseInstructor" hidden style="display:none!important"></div>
+  <div id="caseFeedback" hidden style="display:none!important"></div>
  </section>
 <section class="card" id="ventilationPanel"><h2>Ventilazione e meccanica respiratoria</h2>
  <div class="status" id="ventStatus">La ventilazione controllata diventa disponibile dopo l'intubazione o con il preset Paziente anestetizzato.</div>
@@ -682,11 +682,7 @@ body.student #studentPvReadings small{display:block;color:#a4bbc7;font-size:9px}
 
 <section class="monitor">
  <div class="student-only card" style="padding:8px 12px"><b id="studentPatient">Paziente Cane</b> · <span id="studentWeight">25</span> kg · <span id="studentPhenotype">6 anni · Meticcio · BCS 5/9</span></div>
- <div class="student-only case-banner" id="studentCaseBanner" style="display:none">
-   <div><b>CASO CLINICO</b> · minuto <span id="studentCaseMinute">0</span></div>
-   <div id="studentCasePresentation" style="margin-top:5px"></div>
-   <div id="studentCaseEvolution" style="margin-top:5px;color:var(--muted)">Valutare il paziente e richiedere il monitoraggio ritenuto necessario.</div>
- </div>
+ <div id="studentCaseBanner" hidden style="display:none!important"><span id="studentCaseMinute"></span><span id="studentCasePresentation"></span><span id="studentCaseEvolution"></span></div>
 
  <div class="wave" data-key="ecg"><span class="wlabel green">ECG</span><div class="values green"><span class="big" id="vhr">90</span><br>bpm</div><canvas id="ecg"></canvas></div>
  <div class="wave" id="awakeCapnoNotice" style="display:none;min-height:70px;align-items:center;padding:15px;color:#e9c46a;border:1px solid #24414d;border-radius:8px">Paziente non intubato — capnografia non disponibile durante premedicazione e induzione</div><div class="wave" data-key="capno"><span class="wlabel yellow">EtCO₂</span><div class="values yellow"><span class="big" id="vet">38</span> mmHg<br><span id="vrr">18</span> /min</div><canvas id="capno"></canvas></div>
