@@ -1282,17 +1282,14 @@ window.addEventListener('DOMContentLoaded',()=>{
   setInterval(sync,350);
   sync();
  }
- keys.forEach(key=>{
+ // Il duplicato conserva l'ordine dei quattro slider originali.
+ // Associazione per posizione, senza ricercare ripetutamente l'intero DOM.
+ const mirrorRanges=mirror
+  ? Array.from(mirror.querySelectorAll('input[type="range"]'))
+  : [];
+ keys.forEach((key,index)=>{
   install(original(key));
-  if(mirror){
-   const originalRange=original(key);
-   const mirrorRange=Array.from(mirror.querySelectorAll('input[type="range"]'))
-     .find(input=>input.getAttribute('id')===null&&
-       Array.from(originalRange?.closest('section')?.querySelectorAll('input')||[])
-         .filter(i=>i.type==='range').indexOf(originalRange)===
-       Array.from(mirror.querySelectorAll('input[type="range"]')).indexOf(input));
-   install(mirrorRange);
-  }
+  install(mirrorRanges[index]);
  });
 })();
 </script>
