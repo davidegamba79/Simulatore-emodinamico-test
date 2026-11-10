@@ -499,10 +499,13 @@ function v25PerfusionEt(dt,ventData){
  const transfer=conductance*(pool.tissue-pool.arterial); // mL/min
  const elimination=alveolar*pool.arterial/.863; // mL/min
  // d(mL CO2 immagazzinati)/dt = ingresso - uscita.
- // Capacita' efficaci: 4,5 e 18 mL/mmHg, scelte per due tempi di
- // risposta (rapido circolatorio e lento tissutale).
- pool.arterial=clamp(pool.arterial+(transfer-elimination)*seconds/(60*4.5),4,160);
- pool.tissue=clamp(pool.tissue+(vco2-transfer)*seconds/(60*18),4,160);
+ // Capacita' efficaci didattiche (mL/mmHg): compartimento centrale
+ // rapido e riserva tissutale lenta. La riserva tissutale di 12, anziche'
+ // 18, riduce il trascinamento residuo dopo la sospensione di un inotropo
+ // senza azzerare l'inerzia del trasporto della CO2.
+ const centralCapacity=4.5,tissueCapacity=12;
+ pool.arterial=clamp(pool.arterial+(transfer-elimination)*seconds/(60*centralCapacity),4,160);
+ pool.tissue=clamp(pool.tissue+(vco2-transfer)*seconds/(60*tissueCapacity),4,160);
  window.simDynamicPaCO2=pool.arterial;
  if(cpr)return 12;
  if(arrest)return 3;
@@ -520,7 +523,11 @@ function v25PerfusionEt(dt,ventData){
   alveolarVentilation:alveolar,metabolicVCO2:vco2,
   arterialCO2:pool.arterial,tissueCO2:pool.tissue,
   pulmonaryCO2Delivery:transfer,alveolarCO2Elimination:elimination,
-  estimatedTerminalCO2:terminalGas};
+   estimatedTerminalCO2:terminalGas,
+   estimatedPaEtGradient:pool.arterial-terminalGas,
+   centralCO2Balance:transfer-elimination,tissueCO2Balance:vco2-transfer,
+   totalCO2Balance:vco2-elimination,
+   centralCapacity,tissueCapacity};
  return clamp(terminalGas,3,80);
 }
 // La SpO2 dipende qualitativamente da FiO2, reclutamento, sovradistensione
