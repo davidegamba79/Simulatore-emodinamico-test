@@ -32,6 +32,6 @@ console.log('PaCO2 dinamica', window.simDynamicPaCO2);
 - Nessuna modifica al repository di produzione.
 
 ## Osservazioni da approfondire prima della prossima modifica
-- Nel codice corrente il riferimento docente `etRef` è memorizzato nei pool, ma il calcolo di VCO₂ usa un valore allometrico fisso: verificare la coerenza tra controllo manuale EtCO₂ e motore dinamico.
+- **Aggiornato:** `etRef` calibra il VCO₂ metabolico basale (128 mL/min per 25 kg con riferimento 34 mmHg); verificare nel browser che il riferimento docente e la risposta dinamica non si sovrappongano in modo artificiale.
 - La diagnostica `simPulmonaryPerfusionState` è assegnata dopo le uscite anticipate per CPR/arresto: evitare di interpretare dati diagnostici precedenti come correnti.
 - Il tempo `dt` è limitato a 1 s per aggiornamento: verificare accelerazione del tempo simulato e salti temporali.
