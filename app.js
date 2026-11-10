@@ -486,13 +486,13 @@ function v25PerfusionEt(dt,ventData){
   // One fixed metabolic production model, shared with experimental EGA.
   // Do not calibrate VCO2 from the current ventilator setting: doing so
   // makes transient ventilator changes permanently bias CO2 equilibrium.
-  const vco2=clamp(105*Math.pow(weight/25,.8),15,650);
+  const vco2=clamp(105*Math.pow(weight/25,.8)*ageFactor*bcsFactor,15,650);
   const arterial=clamp(.863*vco2/alveolar,10,120);
   v25.co2Pools={arterial,tissue:clamp(arterial+vco2/conductance,4,160),
    ref:v25.etRef,weight,vco2};
  }
  // Keep VCO2 consistent even when an old simulator state is reused.
- v25.co2Pools.vco2=clamp(105*Math.pow(weight/25,.8),15,650);
+ v25.co2Pools.vco2=clamp(105*Math.pow(weight/25,.8)*ageFactor*bcsFactor,15,650);
  const vco2=v25.co2Pools.vco2;
  const pool=v25.co2Pools,seconds=clamp(dt,0,1);
  window.simDynamicPaCO2=pool.arterial;
@@ -518,6 +518,8 @@ function v25PerfusionEt(dt,ventData){
  window.simPulmonaryPerfusionState={cardiacOutput:co,relativeFlow:perf,
   flowDeadSpace,effectiveAlveolarDeadSpace:effectiveDead,
   alveolarVentilation:alveolar,metabolicVCO2:vco2,
+  arterialCO2:pool.arterial,tissueCO2:pool.tissue,
+  pulmonaryCO2Delivery:transfer,alveolarCO2Elimination:elimination,
   estimatedTerminalCO2:terminalGas};
  return clamp(terminalGas,3,80);
 }
