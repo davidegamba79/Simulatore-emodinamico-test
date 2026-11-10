@@ -1,2 +1,43 @@
-/* V2.4 — waves before PRAM + capnography modes */
-(()=>{let m=document.querySelector(".monitor");if(m){let first=m.querySelector(".card.hemo-wrap");["ecg","pleth","capno","art"].forEach(k=>{let e=m.querySelector('.wave[data-key="'+k+'"]');if(e&&first)m.insertBefore(e,first)});let p=m.querySelector('.wave[data-key="pleth"] .wlabel');if(p)p.textContent="SpO₂ — pleth"}let cards=[...document.querySelectorAll("section.card")],cap=cards.find(s=>s.querySelector("h2")?.textContent.trim()==="Capnografia");if(cap&&!document.getElementById("capnoPattern")){let l=document.createElement("label");l.style.marginTop="8px";l.textContent="Morfologia";let s=document.createElement("select");s.id="capnoPattern";["Normale","Broncospasmo / shark-fin","Rebreathing","Oscillazioni cardiogene","Disconnessione / apnea"].forEach(x=>{let o=document.createElement("option");o.textContent=x;s.appendChild(o)});l.appendChild(s);cap.appendChild(l)}})();
+/* Legacy UI compatibility: preserve waveform ordering and capnography selector.
+   This module intentionally runs once, after the monitor markup is available. */
+(() => {
+  const monitor = document.querySelector('.monitor');
+  if (monitor) {
+    const hemodynamics = monitor.querySelector('.card.hemo-wrap');
+    for (const key of ['ecg', 'pleth', 'capno', 'art']) {
+      const waveform = monitor.querySelector('.wave[data-key="' + key + '"]');
+      if (waveform && hemodynamics) {
+        monitor.insertBefore(waveform, hemodynamics);
+      }
+    }
+
+    const plethLabel = monitor.querySelector('.wave[data-key="pleth"] .wlabel');
+    if (plethLabel) plethLabel.textContent = 'SpO₂ — pleth';
+  }
+
+  const capnography = [...document.querySelectorAll('section.card')]
+    .find(section => section.querySelector('h2')?.textContent.trim() === 'Capnografia');
+
+  if (capnography && !document.getElementById('capnoPattern')) {
+    const label = document.createElement('label');
+    label.style.marginTop = '8px';
+    label.textContent = 'Morfologia';
+
+    const selector = document.createElement('select');
+    selector.id = 'capnoPattern';
+    for (const name of [
+      'Normale',
+      'Broncospasmo / shark-fin',
+      'Rebreathing',
+      'Oscillazioni cardiogene',
+      'Disconnessione / apnea'
+    ]) {
+      const option = document.createElement('option');
+      option.textContent = name;
+      selector.appendChild(option);
+    }
+
+    label.appendChild(selector);
+    capnography.appendChild(label);
+  }
+})();
