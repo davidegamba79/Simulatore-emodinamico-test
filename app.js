@@ -432,7 +432,7 @@ function v25PerfusionEt(dt,ventData){
  // CO dal motore Frank-Starling/terapie; non proporzionalita' diretta CO/EtCO2.
  const co=Math.max(0,Number($('co').value)||0),perf=clamp(co/2.9,0,1.6);
  const flowDeficit=clamp((1-perf)/.85,0,1);
- const flowDeadSpace=clamp(.34*Math.pow(flowDeficit,1.35),0,.34);
+ const flowDeadSpace=clamp(.46*Math.pow(flowDeficit,1.15),0,.46);
  const vent=ventData||(typeof window.simVentCalc==='function'?window.simVentCalc():null);
  const weight=clamp(+$('weight').value||25,1,100);
  // Il vecchio andamento in spontanea resta per ora invariato: il modello
@@ -458,20 +458,14 @@ function v25PerfusionEt(dt,ventData){
    (vent?.etco2Gradient||0),3,80);
  }
  // VCO2 metabolica: allometria del peso con piccoli aggiustamenti per eta'
- // e BCS. Il riferimento docente calibra SOLO la produzione metabolica
- // basale, non impone l'EtCO2 ad ogni passo: CO e ventilazione restano libere
- // di modificarla. Riferimento 34 mmHg per il paziente standard 25 kg.
- // Questa calibrazione e' didattica, non una misura metabolimetrica.
+ // e BCS. In anestesia assumiamo una VCO2 basale sostanzialmente
+ // costante, indipendente da CO e ventilazione. Modello didattico.
  const age=clamp(vent.age||6,.1,22),bcs=clamp(vent.bcs||5,1,9);
  const ageFactor=age<1?1.10:age>10?clamp(1-.015*(age-10),.82,1):1;
  const bcsFactor=bcs>=7?clamp(1-.025*(bcs-6),.90,1):1;
- // A Vt 12 mL/kg e FR 12/min, VA ~3 L/min: 128 mL/min porta
- // PaCO2 all'equilibrio ~36.8 mmHg prima della miscela terminale.
- // Il controllo EtCO2 calibra il metabolismo solo quando cambia
- // esplicitamente il riferimento; non dipende dalla ventilazione corrente.
- const referenceScale=clamp(v25.etRef/34,.50,1.65);
- const metabolicVCO2=clamp(128*Math.pow(weight/25,.8)*ageFactor*bcsFactor*
-  referenceScale,15,650);
+ // 105 mL/min e' il riferimento didattico per il cane anestetizzato
+ // di 25 kg. Evitiamo che il comando EtCO2 modifichi il metabolismo.
+ const metabolicVCO2=clamp(105*Math.pow(weight/25,.8)*ageFactor*bcsFactor,15,650);
  const alveolar=clamp(typeof window.simEgaAlveolarMinute==='function'?
   window.simEgaAlveolarMinute(vent):vent.alveolarMinute,.05,25);
  // Il flusso ridotto rallenta il trasporto della CO2 metabolica ai polmoni.
@@ -490,7 +484,7 @@ function v25PerfusionEt(dt,ventData){
  // Spazio morto funzionale da bassa perfusione, distinto da quello anatomico.
  const effectiveDead=clamp(dead+(1-dead)*flowDeadSpace,0,.90);
  const deadTerminal=clamp(dead*(.14+.14*flowDeficit)+
-  (1-dead)*flowDeadSpace*.58,0,.72);
+  (1-dead)*flowDeadSpace*.82,0,.78);
  const lowTerminal=clamp((1-deadTerminal)*perfusedLow*.30,0,1-deadTerminal);
  const normalTerminal=Math.max(0,1-deadTerminal-lowTerminal);
  if(!v25.co2Pools||!Number.isFinite(v25.co2Pools.arterial)||
