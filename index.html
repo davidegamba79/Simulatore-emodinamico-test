@@ -679,9 +679,8 @@ body.student[data-student-tab="meds"] #studentTherapyClocks{display:block}
   <div class="status">1,0 MAC = baseline del paziente anestetizzato. La variazione del MAC modifica progressivamente tono vascolare e contrattilità; FC, pressione, CO, EtCO₂ e onde reagiscono attraverso il motore fisiologico.</div>
   <label style="margin-top:10px">MAC <input id="mac" type="range" min="0.6" max="2" value="1" step="0.1"><span id="macOut">1,0</span></label><div class="status" id="anesthesiaPhaseStatus" style="margin-top:8px">Fase anestetizzata: MAC attivo.</div>
  </section>
-<section class="card"><h2>Motore fisiologico — emodinamica</h2>
-  <div class="status">Modalità dinamica: precarico, contrattilità e tono vascolare modificano simultaneamente curva ART e parametri emodinamici.</div>
-  <div class="cols" style="margin-top:10px">
+<section class="card physiology-engine-card"><h2>Motore fisiologico — emodinamica</h2>
+  <div class="cols">
    <label>Precarico <input id="preload" type="range" min="20" max="180" value="100"><span id="preloadOut">100%</span></label>
    <label>Contrattilità <input id="contractility" type="range" min="20" max="180" value="100"><span id="contractilityOut">100%</span></label>
    <label>Tono vascolare / SVR <input id="vascularTone" type="range" min="30" max="180" value="100"><span id="vascularToneOut">100%</span></label>
@@ -1245,6 +1244,16 @@ window.addEventListener('DOMContentLoaded',()=>{
  .physiology-percent-editor{display:flex;align-items:center;gap:5px;margin-top:5px}
  .physiology-percent-editor input[type="number"]{width:76px;max-width:100%;box-sizing:border-box;padding:5px 6px;background:#081923;color:#e5f5fa;border:1px solid #34566a;border-radius:5px;font-size:13px}
  .physiology-percent-editor .percent-unit{font-size:12px;color:#a9c2ce}
+ /* Layout compatto, applicato sia all'originale sia alla copia emodinamica. */
+ .physiology-engine-card{padding:9px 11px!important}
+ .physiology-engine-card h2{margin:0 0 7px!important;font-size:14px}
+ .physiology-engine-card .cols{display:grid!important;grid-template-columns:minmax(0,1fr) 92px!important;gap:5px 8px!important;align-items:center;margin:0!important}
+ .physiology-engine-card .cols>label{display:flex!important;flex-direction:column;gap:2px;min-width:0;margin:0!important;font-size:12px;line-height:1.15}
+ .physiology-engine-card .cols>label input[type="range"]{width:100%;margin:0!important}
+ .physiology-engine-card .cols>label span[id]{display:none!important}
+ .physiology-engine-card .physiology-percent-editor{margin:0;gap:4px}
+ .physiology-engine-card .physiology-percent-editor input[type="number"]{width:65px;padding:4px 5px;font-size:13px}
+ @media(max-width:420px){.physiology-engine-card .cols{grid-template-columns:minmax(0,1fr) 82px!important;gap:5px!important}.physiology-engine-card .physiology-percent-editor input[type="number"]{width:57px}}
 </style>
 <script id="physiology-number-v30-script">
 (()=>{
