@@ -339,9 +339,9 @@ function physiology(){
  };
  Object.entries(vals).forEach(([k,v])=>{if($(k)&&(!manualLocks[k]||(rh==='Fibrillazione ventricolare'||rh==='Tachicardia ventricolare senza polso'||rh==='PEA / attività elettrica'||rh==='Asistolia'||rh==='Artefatto massaggio cardiaco 120/min')))$(k).value=v});$('preloadOut').textContent=Math.round(phys.preload)+'%';$('contractilityOut').textContent=Math.round(phys.contractility)+'%';$('vascularToneOut').textContent=Math.round(phys.vascularTone)+'%';$('complianceOut').textContent=Math.round(phys.compliance)+'%';render()
 }
-['preload','contractility','vascularTone','compliance'].forEach(k=>$(k).addEventListener('input',()=>{if(!$('autoPhys').checked&&typeof v25!=='undefined'){v25.base.preload=+$('preload').value;v25.base.contractility=+$('contractility').value;v25.base.vascularTone=+$('vascularTone').value;}physiology()}));
+['preload','contractility','vascularTone','compliance'].forEach(k=>$(k).addEventListener('input',()=>{if(typeof v25!=='undefined'){v25.base.preload=clamp(+$('preload').value-(v25.fx.preload||0),20,180);v25.base.contractility=clamp(+$('contractility').value-(v25.fx.contractility||0),20,180);v25.base.vascularTone=clamp(+$('vascularTone').value-(v25.fx.tone||0),30,180);}physiology()}));
 $('mac').addEventListener('input',()=>{$('macOut').textContent=(+$('mac').value).toFixed(1).replace('.',',');physiology()});$('mac').addEventListener('change',()=>{if(typeof v25Event==='function')v25Event('MAC impostato a '+(+$('mac').value).toFixed(1));});
-$('autoPhys').addEventListener('change',physiology);
+
 
 
 
