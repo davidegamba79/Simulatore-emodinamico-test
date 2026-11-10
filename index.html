@@ -571,7 +571,7 @@ body.student #studentPvReadings small{display:block;color:#a4bbc7;font-size:9px}
 body.student[data-student-tab="meds"] #studentTherapyClocks{display:block}
 @media(max-width:720px){#studentTherapyClocks .clock-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
-</head>
+<style id="v30-dose-update-style">.v30-confirm-rate{font-size:11px;padding:6px 8px;margin-top:5px;background:#174e62;color:#e5f8ff;border:1px solid #4d9cba;border-radius:6px;cursor:pointer}.v30-confirm-rate:disabled{opacity:.4;cursor:default}</style></head>
 <body>
 
 <header>
@@ -777,9 +777,9 @@ body.student[data-student-tab="meds"] #studentTherapyClocks{display:block}
  <section class="card" id="therapyV25"><h2>Terapie dinamiche</h2>
   <div class="therapy-grid">
    <div class="therapy"><div><b>Fluid challenge</b><small>2 mL/kg in 30 secondi</small></div><button id="v25FluidBolus">Somministra</button><span class="therapy-clock" id="clock-v25FluidBolus">Pronto · 00:00 / 00:30</span></div>
-   <div class="therapy"><div><b>Cristalloidi</b><small>Infusione continua</small></div><label>mL/kg/h<input id="v25FluidRate" type="number" min="0" max="50" step="1" value="2"></label><button id="v25FluidBtn">Avvia</button><span class="therapy-clock" id="clock-v25FluidBtn">Non attiva · 00:00</span></div>
-   <div class="therapy"><div><b>Dobutamina</b><small>Infusione continua</small></div><label>µg/kg/min<input id="v25DobRate" type="number" min="0" max="30" step=".5" value="5"></label><button id="v25DobBtn">Avvia</button><span class="therapy-clock" id="clock-v25DobBtn">Non attiva · 00:00</span></div>
-   <div class="therapy"><div><b>Noradrenalina</b><small>Infusione continua</small></div><label>µg/kg/min<input id="v25NorRate" type="number" min="0" max="2" step=".01" value=".10"></label><button id="v25NorBtn">Avvia</button><span class="therapy-clock" id="clock-v25NorBtn">Non attiva · 00:00</span></div>
+   <div class="therapy"><div><b>Cristalloidi</b><small>Infusione continua</small></div><label>mL/kg/h<input id="v25FluidRate" type="number" min="0" max="50" step="1" value="2"></label><button id="v25FluidBtn">Avvia</button><button type="button" id="v30Confirm-fluid" class="v30-confirm-rate" disabled>Conferma dose</button><span class="therapy-clock" id="clock-v25FluidBtn">Non attiva · 00:00</span></div>
+   <div class="therapy"><div><b>Dobutamina</b><small>Infusione continua</small></div><label>µg/kg/min<input id="v25DobRate" type="number" min="0" max="30" step=".5" value="5"></label><button id="v25DobBtn">Avvia</button><button type="button" id="v30Confirm-dob" class="v30-confirm-rate" disabled>Conferma dose</button><span class="therapy-clock" id="clock-v25DobBtn">Non attiva · 00:00</span></div>
+   <div class="therapy"><div><b>Noradrenalina</b><small>Infusione continua</small></div><label>µg/kg/min<input id="v25NorRate" type="number" min="0" max="2" step=".01" value=".10"></label><button id="v25NorBtn">Avvia</button><button type="button" id="v30Confirm-nor" class="v30-confirm-rate" disabled>Conferma dose</button><span class="therapy-clock" id="clock-v25NorBtn">Non attiva · 00:00</span></div>
    <div class="therapy"><div><b>Efedrina</b><small>Bolo EV · risposta transitoria (simulazione)</small></div><label>µg/kg<input id="v25EphDose" type="number" min="25" max="100" step="5" value="50"></label><button id="v25EphBtn">Somministra</button></div>
    <div class="therapy"><div><b>Atropina</b><small>Bolo</small></div><label>µg/kg<input id="v25AtDose" type="number" min="0" max="100" step="1" value="20"></label><button id="v25AtBtn">Somministra</button></div>
   </div><div id="v25TherapyStatus" class="status" style="margin-top:8px">Nessuna terapia attiva.</div>
