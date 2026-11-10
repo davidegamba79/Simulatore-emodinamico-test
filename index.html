@@ -544,6 +544,18 @@ body:not(.student)[data-instructor-tab="anesthesia"] #instructorInhaledCard inpu
  width:100%;min-height:32px;touch-action:pan-y;
 }
 </style>
+<style id="student-pv-v30">
+body.student.student-pv-active #studentVentLayout{display:grid!important;grid-template-columns:minmax(0,1.4fr) minmax(260px,1fr)!important;align-items:stretch;gap:9px}
+body.student .student-pv-side{min-width:0;background:#0a1820;border:1px solid #294653;border-radius:9px;padding:8px;overflow:hidden}
+body.student .student-pv-side[hidden]{display:none!important}
+body.student .student-pv-side h3{margin:0 0 6px;font-size:13px;color:#e4f2f8}
+body.student #studentPvCanvas{display:block;width:100%;height:clamp(210px,27vh,330px);background:#081923;border:1px solid #244351;border-radius:7px}
+body.student .student-pv-legend{display:flex;flex-wrap:wrap;gap:5px 10px;font-size:10px;margin-top:6px}
+body.student #studentPvReadings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-top:7px}
+body.student #studentPvReadings div{font-size:11px;color:#d5e7ee;background:#0c202a;border-radius:5px;padding:5px}
+body.student #studentPvReadings small{display:block;color:#a4bbc7;font-size:9px}
+@media(max-width:760px){body.student.student-pv-active #studentVentLayout{grid-template-columns:1fr!important}body.student #studentPvCanvas{height:220px}}
+</style>
 </head>
 <body>
 
@@ -1098,12 +1110,18 @@ window.addEventListener('DOMContentLoaded',()=>{
   fixed.insertBefore(ventLayout,waveNodes[0]);ventLayout.append(waveColumn);
   for(const wave of waveNodes)waveColumn.append(wave);
  }
+ // The LV PV loop is placed beside the live waveforms only on the
+ // Hemodynamics student tab; all student controls remain read-only.
+ const pvSide=document.createElement('aside');
+ pvSide.id='studentPvSide';pvSide.className='student-pv-side';pvSide.hidden=true;
+ pvSide.innerHTML='<h3>Ventricolo sinistro — loop P/V</h3><canvas id="studentPvCanvas" aria-label="Loop pressione volume sincronizzato con la console docente"></canvas><div class="student-pv-legend"><span style="color:#3dd5bb">● Riempimento</span> <span style="color:#f3c969">● Contrazione</span> <span style="color:#60b8ff">● Eiezione</span> <span style="color:#d19afa">● Rilasciamento</span> <span style="color:#ff5757">– – Ea</span> <span style="color:#ffad70">– – ESPVR</span></div><div id="studentPvReadings"></div>';
+ document.getElementById('studentVentLayout')?.append(pvSide);
  const shell=document.createElement('section');shell.className='student-tabs-shell';
  const nav=document.createElement('nav');nav.className='student-tabs-nav';nav.setAttribute('role','tablist');nav.setAttribute('aria-label','Visualizzazioni monitor studenti');
  // Navigazione accanto a «Monitor studenti» nell'intestazione, non piu' sotto i tracciati.
  header?.querySelector('h1')?.after(nav);
  const panels={};
- for(const [key,title] of [['trends','Trend'],['meds','Farmaci e terapie'],['ventilation','Ventilazione']]){
+ for(const [key,title] of [['trends','Trend'],['meds','Emodinamica'],['ventilation','Ventilazione']]){
   const b=document.createElement('button');b.type='button';b.id='student-tab-'+key;b.textContent=title;
   b.setAttribute('role','tab');b.setAttribute('aria-controls','student-panel-'+key);nav.append(b);
   const panel=document.createElement('div');panel.className='student-tab-panel';panel.id='student-panel-'+key;
@@ -1132,6 +1150,8 @@ window.addEventListener('DOMContentLoaded',()=>{
   }
   document.body.dataset.studentTab=key;
   shell.hidden=key==='ventilation';
+  pvSide.hidden=key!=='meds';
+  document.body.classList.toggle('student-pv-active',key==='meds');
   if(key==='trends'&&typeof v25Draw==='function')requestAnimationFrame(()=>v25Draw());
  }
  selectTab('trends');
