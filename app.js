@@ -167,6 +167,22 @@ function setNum(id,v){
  if(id==='etco2'){if($('etco2Set'))$('etco2Set').value=v;if($('etco2'))$('etco2').value=v;if(typeof v25!=='undefined'){v25.etRef=+v;v25.etEffective=+v;v25.co2Pools=null}return}
  if($(id))$(id).value=v
 }
+// A clinical case changes the untreated physiology baseline. Active
+// treatment effects remain additive, so subsequent therapy ticks cannot
+// silently restore the previous scenario.
+function caseSyncPhysiologyBaseline(){
+ if(typeof v25==='undefined')return;
+ const fx=v25.fx||{preload:0,contractility:0,tone:0,hr:0};
+ v25.base.preload=clamp(phys.preload-(fx.preload||0),20,180);
+ v25.base.contractility=clamp(phys.contractility-(fx.contractility||0),20,180);
+ v25.base.vascularTone=clamp(phys.vascularTone-(fx.tone||0),30,180);
+ v25.base.hr=+$('hr').value||80;
+}
+function caseRecalculatePhysiology(){
+ setPhysInputs();
+ caseSyncPhysiologyBaseline();
+ physiology();
+}
 function caseApplyStart(c){
  patientModel='anesthetized';
  if(typeof v25!=='undefined')v25.induction.phase='maintenance';
@@ -175,8 +191,8 @@ function caseApplyStart(c){
  $('mac').value=1;$('macOut').textContent='1,0';
  phys.preload=c.start.preload;phys.contractility=c.start.contractility;phys.vascularTone=c.start.vascularTone;phys.compliance=c.start.compliance;
  ['hr','etco2','rr','spo2'].forEach(k=>setNum(k,c.start[k]));
- if(typeof v25!=='undefined'){v25.base={preload:phys.preload,contractility:phys.contractility,vascularTone:phys.vascularTone,hr:+$('hr').value||80};v25.fx={preload:0,contractility:0,tone:0,hr:0};}
- setPhysInputs();physiology();
+ // Preserve ongoing pharmacological effects when switching clinical cases.
+ caseRecalculatePhysiology();
 }
 function caseStatus(msg){
  let c=clinicalCases[caseState.key];
@@ -207,7 +223,7 @@ function advanceClinicalCase(){
  phys.preload=clamp(phys.preload+(d.preload||0),20,180);phys.contractility=clamp(phys.contractility+(d.contractility||0),20,180);
  phys.vascularTone=clamp(phys.vascularTone+(d.vascularTone||0),30,180);
  if(d.hr)setNum('hr',clamp(+$('hr').value+d.hr,0,260));if(d.etco2)setNum('etco2',clamp(+$('etco2').value+d.etco2,3,60));
- setPhysInputs();physiology();caseStatus('È trascorso 1 minuto senza un nuovo intervento.');
+ caseRecalculatePhysiology();caseStatus('È trascorso 1 minuto senza un nuovo intervento.');
 }
 function caseAction(a){
  if(!caseState.active){$('caseFeedback').textContent='Avvia prima un caso clinico.';return}
@@ -220,7 +236,7 @@ function caseAction(a){
  if(a==='oxygen'){setNum('spo2',clamp(+$('spo2').value+6,0,100));setNum('etco2',clamp(+$('etco2').value+3,3,60));msg='Ottimizzata ossigenazione/ventilazione.'}
  if(a==='cpr'){caseState.cpr=true;setNum('hr',120);$('rhythm').value='Artefatto massaggio cardiaco 120/min';phys.contractility=48;phys.preload=clamp(phys.preload+8,20,180);setNum('etco2',Math.max(12,+$('etco2').value));msg='CPR iniziata.'}
  if(a==='shock'){msg='Defibrillazione eseguita.'; if(caseState.key==='arrest'){caseState.score-=2;msg+=' Il ritmo iniziale è PEA: rivalutare l’indicazione alla defibrillazione.'}}
- setPhysInputs();physiology();logEvent('Caso clinico: '+msg);caseStatus(msg+(good?' Risposta emodinamica favorevole.':bad?' Risposta non favorevole.':' Rivalutare i parametri.'));
+ caseRecalculatePhysiology();logEvent('Caso clinico: '+msg);caseStatus(msg+(good?' Risposta emodinamica favorevole.':bad?' Risposta non favorevole.':' Rivalutare i parametri.'));
 }
 function endClinicalCase(){
  if(!caseState.active)return;
@@ -317,6 +333,7 @@ function physiology(){
   dap:manualLocks.dap?Number($('dap').value):vals.dap,
   ea:manualLocks.ea?Number($('ea').value):vals.ea,
   preload:phys.preload,contractility:C*100,tone:V*100,
+  clinicalScenario:caseState.active?caseState.key:null,
   compliance:phys.compliance,
   timestamp:Date.now()
  };
