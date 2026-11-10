@@ -308,6 +308,18 @@ function physiology(){
  }
  let vals={sv:Math.round(r.sv),svi:+(r.sv/bsa).toFixed(1),co:+r.co.toFixed(2),ci:+(r.co/bsa).toFixed(2),svr:Math.round(r.svr),svri:Math.round(r.svr*bsa),ppv:(rh==='Tachicardia ventricolare con polso'||rh===AV2||rh===AV3)?0:Math.round(variability),spv:(rh==='Tachicardia ventricolare con polso'||rh===AV2||rh===AV3)?0:+clamp(r.pp*variability/100*.9+(vent?.controlled?(vent.peep||0)*.12:0),0,35).toFixed(1),dpdt:+(dpdt/1000).toFixed(3),cce:+cce.toFixed(2),ea:+ea.toFixed(2),cpo:+cpo.toFixed(2),sap:Math.round(r.sap),dap:Math.round(r.dap)};
  if((rh==='Artefatto massaggio cardiaco 120/min'||rh==='Fibrillazione ventricolare'||rh==='Tachicardia ventricolare senza polso'||rh==='PEA / attività elettrica'||rh==='Asistolia')){const arrest={sv:0,svi:0,co:0,ci:0,dpdt:0,cce:0,cpo:0,ea:0,ppv:0,spv:0,sap:0,dap:0,svr:0,svri:0};Object.assign(vals,arrest);if(rh==='Artefatto massaggio cardiaco 120/min'){vals.sap=55;vals.dap=15;}}
+ // V3.0: stato cardiovascolare condiviso, sola lettura per il loop PV.
+ // Il motore emodinamico resta l'unica fonte di SV, pressioni ed Ea.
+ window.simCardiovascularState={
+  hr:Number($('hr').value)||0,
+  sv:manualLocks.sv?Number($('sv').value):vals.sv,
+  sap:manualLocks.sap?Number($('sap').value):vals.sap,
+  dap:manualLocks.dap?Number($('dap').value):vals.dap,
+  ea:manualLocks.ea?Number($('ea').value):vals.ea,
+  preload:phys.preload,contractility:C*100,tone:V*100,
+  compliance:phys.compliance,
+  timestamp:Date.now()
+ };
  Object.entries(vals).forEach(([k,v])=>{if($(k)&&(!manualLocks[k]||(rh==='Fibrillazione ventricolare'||rh==='Tachicardia ventricolare senza polso'||rh==='PEA / attività elettrica'||rh==='Asistolia'||rh==='Artefatto massaggio cardiaco 120/min')))$(k).value=v});$('preloadOut').textContent=Math.round(phys.preload)+'%';$('contractilityOut').textContent=Math.round(phys.contractility)+'%';$('vascularToneOut').textContent=Math.round(phys.vascularTone)+'%';$('complianceOut').textContent=Math.round(phys.compliance)+'%';render()
 }
 ['preload','contractility','vascularTone','compliance'].forEach(k=>$(k).addEventListener('input',()=>{if(!$('autoPhys').checked&&typeof v25!=='undefined'){v25.base.preload=+$('preload').value;v25.base.contractility=+$('contractility').value;v25.base.vascularTone=+$('vascularTone').value;}physiology()}));
