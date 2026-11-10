@@ -346,7 +346,7 @@ $('mac').addEventListener('input',()=>{$('macOut').textContent=(+$('mac').value)
 
 
 /* ===== V2.8.14 dobutamine response + norepinephrine dose-response + drug washout + MAC closed-loop hemodynamics ===== */
-const v25={start:performance.now(),last:performance.now(),lastPhys:performance.now(),lastSample:0,oxygenEffective:+$('spo2').value||98,inf:{fluid:false,dob:false,nor:false},fluidBolusUntil:0,atropineUntil:0,ephedrineAt:0,ephedrineDose:0,ephedrineBaselineMAP:0,dobStoppedAt:0,etRef:+$('etco2Set').value||33,etEffective:+$('etco2').value||33,co2Pools:null,history:[],events:[],applying:false,base:{preload:phys.preload,contractility:phys.contractility,vascularTone:phys.vascularTone,hr:95},fx:{preload:0,contractility:0,tone:0,hr:0},
+const v25={start:performance.now(),last:performance.now(),lastPhys:performance.now(),lastSample:0,oxygenEffective:+$('spo2').value||98,inf:{fluid:false,dob:false,nor:false},fluidBolusUntil:0,fluidBolusStartedAt:0,infusionStartedAt:{fluid:0,dob:0,nor:0},infusionElapsed:{fluid:0,dob:0,nor:0},atropineUntil:0,ephedrineAt:0,ephedrineDose:0,ephedrineBaselineMAP:0,dobStoppedAt:0,etRef:+$('etco2Set').value||33,etEffective:+$('etco2').value||33,co2Pools:null,history:[],events:[],applying:false,base:{preload:phys.preload,contractility:phys.contractility,vascularTone:phys.vascularTone,hr:95},fx:{preload:0,contractility:0,tone:0,hr:0},
  induction:{phase:'awake',startedAt:0,maintenanceAt:0,drug:'',dose:0,administrationSeconds:60,windowMinutes:10,
  pk:{central:0,fast:0,slow:0,ce:0,cv:0},effects:{preload:0,tone:0,contractility:0,hr:0,active:false},apneaRisk:'—'}};
 // Airway is an explicit instructor-controlled state, independent of anesthesia phase.
@@ -361,14 +361,14 @@ window.simSetAirwayIntubated=(value,reason)=>{
 const v25Metrics=[['hr','FC','bpm'],['spo2','SpO₂','%'],['etco2','EtCO₂','mmHg'],['rr','FR','/min'],['sap','SAP','mmHg'],['dap','DAP','mmHg'],['map','MAP','mmHg'],['co','CO','L/min'],['ci','CI','L/min/m²'],['sv','SV','mL'],['svi','SVI','mL/m²'],['svr','SVR','dyn·s/cm⁵'],['svri','SVRI','dyn·s·m²/cm⁵'],['ppv','PPV','%'],['spv','SPV','mmHg'],['dpdt','dP/dtmax','mmHg/ms'],['cce','CCE',''],['ea','Ea','mmHg/mL'],['cpo','CPO','W'],['preload','Precarico','%'],['afterload','Afterload','%'],['contractility','Contrattilità','%'],['mac','MAC','']];
 function v25Event(txt){let t=(simClock.virtual-v25.start)/1000;v25.events.push({t,txt});if(v25.events.length>300)v25.events.shift();logEvent(txt);v25RenderEvents()}
 function v25CaptureUntreatedBase(){v25.base={preload:clamp(phys.preload-v25.fx.preload,20,180),contractility:clamp(phys.contractility-v25.fx.contractility,20,180),vascularTone:clamp(phys.vascularTone-v25.fx.tone,30,180),hr:v25.base.hr||80}}
-function v25Toggle(btn,key,label){let starting=!v25.inf[key],none=!v25.inf.fluid&&!v25.inf.dob&&!v25.inf.nor;if(starting&&none)v25CaptureUntreatedBase();v25.inf[key]=!v25.inf[key];if(key==='dob')v25.dobStoppedAt=v25.inf.dob?0:simClock.virtual;btn.classList.toggle('active-therapy',v25.inf[key]);btn.textContent=v25.inf[key]?'ATTIVA — Stop':'Avvia';const rateKey={fluid:'v25FluidRate',dob:'v25DobRate',nor:'v25NorRate'}[key];const unit={fluid:'mL/kg/h',dob:'µg/kg/min',nor:'µg/kg/min'}[key];v25Event(label+(v25.inf[key]?' avviata a '+(+$((rateKey)).value||0)+' '+unit:' arrestata'));v25Status()}
+function v25Toggle(btn,key,label){let starting=!v25.inf[key],none=!v25.inf.fluid&&!v25.inf.dob&&!v25.inf.nor;if(starting&&none)v25CaptureUntreatedBase();v25.inf[key]=!v25.inf[key];if(v25.inf[key])v25.infusionStartedAt[key]=simClock.virtual;else{v25.infusionElapsed[key]=Math.max(0,(v25.infusionElapsed[key]||0)+(simClock.virtual-(v25.infusionStartedAt[key]||simClock.virtual))/1000);v25.infusionStartedAt[key]=0;}if(key==='dob')v25.dobStoppedAt=v25.inf.dob?0:simClock.virtual;btn.classList.toggle('active-therapy',v25.inf[key]);btn.textContent=v25.inf[key]?'ATTIVA — Stop':'Avvia';const rateKey={fluid:'v25FluidRate',dob:'v25DobRate',nor:'v25NorRate'}[key];const unit={fluid:'mL/kg/h',dob:'µg/kg/min',nor:'µg/kg/min'}[key];v25Event(label+(v25.inf[key]?' avviata a '+(+$((rateKey)).value||0)+' '+unit:' arrestata'));v25Status()}
 function v25Status(){let a=[];if(v25.inf.fluid)a.push('Cristalloidi '+(+$('v25FluidRate').value||0)+' mL/kg/h');if(v25.inf.dob)a.push('Dobutamina '+(+$('v25DobRate').value||0)+' µg/kg/min');if(v25.inf.nor)a.push('Noradrenalina '+(+$('v25NorRate').value||0)+' µg/kg/min');$('v25TherapyStatus').textContent=a.length?'Attive: '+a.join(' · '):'Nessuna infusione continua attiva.'}
 function v25Flash(b){b.classList.add('pulse-therapy');setTimeout(()=>b.classList.remove('pulse-therapy'),700)}
 function v25Setup(){
  $('v25FluidBtn').onclick=()=>v25Toggle($('v25FluidBtn'),'fluid','Cristalloidi');
  $('v25DobBtn').onclick=()=>v25Toggle($('v25DobBtn'),'dob','Dobutamina');
  $('v25NorBtn').onclick=()=>v25Toggle($('v25NorBtn'),'nor','Noradrenalina');
- $('v25FluidBolus').onclick=()=>{if(!v25.inf.fluid&&!v25.inf.dob&&!v25.inf.nor)v25CaptureUntreatedBase();v25.fluidBolusUntil=simClock.virtual+30000;v25Flash($('v25FluidBolus'));v25Event('Fluid challenge 2 mL/kg / 30 s')};
+ $('v25FluidBolus').onclick=()=>{if(!v25.inf.fluid&&!v25.inf.dob&&!v25.inf.nor)v25CaptureUntreatedBase();v25.fluidBolusStartedAt=simClock.virtual;v25.fluidBolusUntil=simClock.virtual+30000;v25Flash($('v25FluidBolus'));v25Event('Fluid challenge 2 mL/kg / 30 s')};
  $('v25EphBtn').onclick=()=>{const d=+$('v25EphDose').value;if(!Number.isFinite(d)||d<25||d>100){$('v25EphDose').value=clamp(Number.isFinite(d)?d:50,25,100);return;}if(!v25.inf.fluid&&!v25.inf.dob&&!v25.inf.nor&&simClock.virtual>=v25.fluidBolusUntil)v25CaptureUntreatedBase();v25.ephedrineBaselineMAP=(+$('sap').value+2*(+$('dap').value))/3;v25.ephedrineAt=simClock.virtual;v25.ephedrineDose=d;v25Flash($('v25EphBtn'));v25Event('Efedrina '+d+' µg/kg EV (bolo)')};
  $('v25AtBtn').onclick=()=>{v25.atropineUntil=simClock.virtual+120000;v25Flash($('v25AtBtn'));v25Event('Atropina '+(+$('v25AtDose').value||0)+' µg/kg')};
  $('etco2Set').addEventListener('input',()=>{const raw=+$('etco2Set').value;if(!Number.isFinite(raw))return;v25.etRef=clamp(raw,3,80);if(!v25.applying){manualSet('etco2',true);v25.etEffective=v25.etRef;v25.co2Pools=null;$('etco2').value=v25.etEffective;render()}});
@@ -714,7 +714,24 @@ function simAdvancePhysics(seconds){
  }
  v25Draw();
 }
+function v30FormatClock(seconds){const s=Math.max(0,Math.floor(seconds||0));return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0')}
+function v30TherapyClocks(remote){
+ const now=simClock.virtual;
+ const bolusStart=remote?remote.bolusStartedAt:v25.fluidBolusStartedAt;
+ const bolusUntil=remote?remote.bolusUntil:v25.fluidBolusUntil;
+ const elapsed=bolusStart?Math.min(30,Math.max(0,(now-bolusStart)/1000)):0;
+ const bolusLabel=!bolusStart?'Pronto · 00:00 / 00:30':(now<bolusUntil?'In corso · ':'Completato · ')+v30FormatClock(elapsed)+' / 00:30';
+ const set=(id,val)=>{const el=$(id);if(el)el.textContent=val};
+ set('clock-v25FluidBolus',bolusLabel);set('studentClockBolus',bolusLabel);
+ const inf=remote?remote.infusions:v25.inf,started=remote?remote.startedAt:v25.infusionStartedAt,stored=remote?remote.elapsed:v25.infusionElapsed;
+ for(const [key,local,student] of [['fluid','clock-v25FluidBtn','studentClockFluid'],['dob','clock-v25DobBtn','studentClockDob'],['nor','clock-v25NorBtn','studentClockNor']]){
+  const seconds=Math.max(0,(stored?.[key]||0)+(inf?.[key]&&started?.[key]?(now-started[key])/1000:0));
+  const label=(inf?.[key]?'In corso · ':'Non attiva · ')+v30FormatClock(seconds);
+  set(local,label);set(student,label);
+ }
+}
 function simTimeDisplay(){
+ v30TherapyClocks(document.body.classList.contains('student')?window.simStudentTherapyTimers:null);
  const s=Math.max(0,Math.floor((simClock.virtual-v25.start)/1000));
  const val=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
  $('v25Clock').textContent=val;$('simTimeReadout').textContent=val;
@@ -752,7 +769,7 @@ const studentStatusKey='recoverCaneStudentStatusV2891',studentHistoryKey='recove
 let studentLastStatusAt=0,studentLastHistoryAt=0;
 function simPublishStudentStatus(){
  if(document.body.classList.contains('student'))return;
- try{localStorage.setItem(studentStatusKey,JSON.stringify({paused:simClock.paused,waveClock:{time:Number(window.simWaveTimeSeconds)||0,sentAt:Date.now()},airwayIntubated:window.simAirwayIntubated,anesthesiaPhase:v25.induction.phase,inductionStarted:v25.induction.startedAt>0,elapsed:(simClock.virtual-v25.start)/1000,sample:v25.history[v25.history.length-1]||null,trendWindow:+$('v25Window').value,events:v25.events.slice(-30),waveShape:{tone:window.macEffectiveTone??null,contractility:window.macEffectiveContractility??null,norFx:v25.fx.tone||0,norActive:!!v25.inf.nor,dex:typeof window.premedDexEffect==='function'?window.premedDexEffect():0},treatments:{infusions:{fluid:!!v25.inf.fluid,dob:!!v25.inf.dob,nor:!!v25.inf.nor},rates:{fluid:+$('v25FluidRate').value,dob:+$('v25DobRate').value,nor:+$('v25NorRate').value},mac:+$('mac').value,phase:v25.induction.phase}}))}
+ try{localStorage.setItem(studentStatusKey,JSON.stringify({paused:simClock.paused,waveClock:{time:Number(window.simWaveTimeSeconds)||0,sentAt:Date.now()},airwayIntubated:window.simAirwayIntubated,anesthesiaPhase:v25.induction.phase,inductionStarted:v25.induction.startedAt>0,elapsed:(simClock.virtual-v25.start)/1000,sample:v25.history[v25.history.length-1]||null,trendWindow:+$('v25Window').value,events:v25.events.slice(-30),waveShape:{tone:window.macEffectiveTone??null,contractility:window.macEffectiveContractility??null,norFx:v25.fx.tone||0,norActive:!!v25.inf.nor,dex:typeof window.premedDexEffect==='function'?window.premedDexEffect():0},therapyTimers:{bolusStartedAt:v25.fluidBolusStartedAt,bolusUntil:v25.fluidBolusUntil,infusions:{...v25.inf},startedAt:{...v25.infusionStartedAt},elapsed:{...v25.infusionElapsed}},treatments:{infusions:{fluid:!!v25.inf.fluid,dob:!!v25.inf.dob,nor:!!v25.inf.nor},rates:{fluid:+$('v25FluidRate').value,dob:+$('v25DobRate').value,nor:+$('v25NorRate').value},mac:+$('mac').value,phase:v25.induction.phase}}))}
  catch(err){console.warn('Sincronizzazione studenti:',err)}
 }
 function simPublishStudentHistory(){
@@ -773,6 +790,7 @@ function simStudentApplyStatus(d){
  if(!d||!document.body.classList.contains('student'))return;
  simStudentApplyTrendWindow(d);
  if(d.waveShape)window.simStudentWaveShape=d.waveShape;
+ if(d.therapyTimers)window.simStudentTherapyTimers=d.therapyTimers;
  if(d.waveClock&&Number.isFinite(d.waveClock.time)&&Number.isFinite(d.waveClock.sentAt))window.simStudentWaveClock=d.waveClock;
  if(Number.isFinite(d.elapsed))simClock.virtual=v25.start+Math.max(0,d.elapsed)*1000;
  if(d.anesthesiaPhase)v25.induction.phase=d.anesthesiaPhase;
