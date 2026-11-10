@@ -1090,7 +1090,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   }
   // Le onde del monitor seguono la scheda attiva; il monitor resta visibile.
  }
- activate('anesthesia');
+ activate('patient');
  const refresh=()=>{
   const read=id=>get(id)?.textContent.trim()||'—';
   get('quickHr').textContent=read('vhr');
