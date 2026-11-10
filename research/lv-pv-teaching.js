@@ -52,11 +52,13 @@
   const transmitted=clamp(Number(vent?.transmittedPressure)||0,0,16);
   const pressureCoupling=respOn?clamp(.018+transmitted*.006,.018,.10):0;
   const failure=get('lvPvFail').checked;
-  const sap=clamp(num('sap',98),30,240),dap=clamp(num('dap',48),10,160);
-  const baseSV=clamp(num('sv',36),3,160);
-  const preload=clamp(num('preload',100),20,180)/100;
-  const contract=clamp((window.macEffectiveContractility||num('contractility',100))/100,.2,2);
-  const tone=clamp((window.macEffectiveTone||num('vascularTone',100))/100,.3,2.2);
+  const cv=window.simCardiovascularState||null;
+  const cvNum=(key,fallback)=>Number.isFinite(Number(cv?.[key]))?Number(cv[key]):fallback;
+  const sap=clamp(cvNum('sap',num('sap',98)),30,240),dap=clamp(cvNum('dap',num('dap',48)),10,160);
+  const baseSV=clamp(cvNum('sv',num('sv',36)),3,160);
+  const preload=clamp(cvNum('preload',num('preload',100)),20,180)/100;
+  const contract=clamp(cvNum('contractility',window.macEffectiveContractility||num('contractility',100))/100,.2,2);
+  const tone=clamp(cvNum('tone',window.macEffectiveTone||num('vascularTone',100))/100,.3,2.2);
   const effectiveContract=contract*(failure?.47:1);
   const afterload=clamp((sap*.7+dap*.3)/85*.75+tone*.25,.35,2.3);
   // End-systolic elastance is a teaching parameter (mmHg/mL), not measured.
@@ -73,7 +75,7 @@
   const edv=clamp(edv0*(1+respFilling),baseSV+v0+5,260);
   const sv=clamp(baseSV*(1+respFilling*.8+respEjection),3,Math.max(3,edv-v0-3));
   const esv=edv-sv;
-  const compliance=clamp(num('compliance',100)/100,.4,1.8);
+  const compliance=clamp(cvNum('compliance',num('compliance',100))/100,.4,1.8);
   // EDPVR exponential, anchored at the current end-diastolic pressure.
   // Beta is an illustrative stiffness coefficient (1/mL), not a measured value.
   const beta=clamp(.028/compliance,.012,.075);
@@ -115,13 +117,13 @@
   // Effective arterial elastance Ea = end-systolic pressure / stroke volume.
   // The negative slope joins (EDV, 0) to the end-systolic point (ESV, Pes).
   // This is a lumped ventricular-arterial coupling index, not arterial stiffness.
-  const ea=endP/sv;
+  const ea=endP/sv; // Ea geometrica del loop corrente (incluse oscillazioni respiratorie).
   ctx.save();ctx.strokeStyle='#ff5757';ctx.lineWidth=2;ctx.setLineDash([7,5]);
   ctx.beginPath();ctx.moveTo(x(edv),y(0));ctx.lineTo(x(esv),y(endP));ctx.stroke();ctx.restore();
   current={edv,peak,segments:[fill,isoC,eject,isoR]};
  if(reference){reference.segments.forEach(seg=>trace(seg,'#a5b3bd',true))}
  trace(fill,'#3dd5bb');trace(isoC,'#f3c969');trace(eject,'#60b8ff');trace(isoR,'#d19afa');
-  const cells=[['EDV',edv.toFixed(0)+' mL'],['ESV',esv.toFixed(0)+' mL'],['SV',sv.toFixed(0)+' mL'],['FE stimata',(100*sv/edv).toFixed(0)+'%'],['Ees (ESPVR)',ees.toFixed(2)+' mmHg/mL'],['Ea (arteriosa efficace)',ea.toFixed(2)+' mmHg/mL'],['Ea/Ees',(ea/ees).toFixed(2)],['Rigidità TD (dP/dV)',stiffness.toFixed(3)+' mmHg/mL'],['Pressione TD',edp.toFixed(0)+' mmHg'],['Fase respiratoria',respOn?(respSwing>0?'Inspirazione':'Espirazione'):'Non modulata'],['V₀ ipotizzato',v0.toFixed(0)+' mL']];
+  const cells=[['EDV',edv.toFixed(0)+' mL'],['ESV',esv.toFixed(0)+' mL'],['SV',sv.toFixed(0)+' mL'],['FE stimata',(100*sv/edv).toFixed(0)+'%'],['Ees (ESPVR)',ees.toFixed(2)+' mmHg/mL'],['Ea (loop)',ea.toFixed(2)+' mmHg/mL'],['Ea/Ees',(ea/ees).toFixed(2)],['Rigidità TD (dP/dV)',stiffness.toFixed(3)+' mmHg/mL'],['Pressione TD',edp.toFixed(0)+' mmHg'],['Fase respiratoria',respOn?(respSwing>0?'Inspirazione':'Espirazione'):'Non modulata'],['V₀ ipotizzato',v0.toFixed(0)+' mL']];
   get('lvPvValues').innerHTML=cells.map(([k,v])=>'<div class="lv-pv-value"><small>'+k+'</small><b>'+v+'</b></div>').join('');
  }
  const obs=new MutationObserver(draw);obs.observe(document.body,{attributes:true,attributeFilter:['data-instructor-tab','class']});
