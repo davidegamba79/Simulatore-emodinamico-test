@@ -470,9 +470,11 @@ function v25PerfusionEt(dt,ventData){
  const age=clamp(vent.age||6,.1,22),bcs=clamp(vent.bcs||5,1,9);
  const ageFactor=age<1?1.10:age>10?clamp(1-.015*(age-10),.82,1):1;
  const bcsFactor=bcs>=7?clamp(1-.025*(bcs-6),.90,1):1;
- // 120 mL/min e' il riferimento didattico per il cane anestetizzato
- // di 25 kg. Evitiamo che il comando EtCO2 modifichi il metabolismo.
- const metabolicVCO2=clamp(120*Math.pow(weight/25,.8)*ageFactor*bcsFactor,15,650);
+ // Riferimento condiviso con Emogas: 105 mL/min a 25 kg.
+ // Con VCV 12/min, Vt 12 mL/kg e spazio morto alveolare 25%,
+ // il riferimento stazionario e' circa 34 mmHg.
+ // Il metabolismo resta indipendente da CO e impostazioni ventilatorie.
+ const metabolicVCO2=clamp(105*Math.pow(weight/25,.8)*ageFactor*bcsFactor,15,650);
  const alveolar=clamp(typeof window.simEgaAlveolarMinute==='function'?
   window.simEgaAlveolarMinute(vent):vent.alveolarMinute,.05,25);
  // Il flusso ridotto rallenta il trasporto della CO2 metabolica ai polmoni.
