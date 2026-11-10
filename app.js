@@ -200,7 +200,7 @@ function caseStatus(msg){
  $('caseFeedback').textContent=msg;
  $('studentCaseMinute').textContent=caseState.minute;$('studentCasePresentation').textContent=c.presentation;
  $('studentCaseEvolution').textContent=caseEvolution();
- $('studentCaseBanner').style.display='block';
+ $('studentCaseBanner').style.display='none';
  save();
 }
 function caseEvolution(){
@@ -870,7 +870,7 @@ if(typeof d.airwayIntubated==='boolean')window.simAirwayIntubated=d.airwayIntuba
 if(typeof d.inductionStarted==='boolean')v25.induction.startedAt=d.inductionStarted?1:0;
 if(d.patient)for(const [id,k] of [['patientAge','age'],['patientBreed','breed'],['patientMorph','morph'],['patientBodyType','bodyType'],['patientBCS','bcs']]){if($(id)&&d.patient[k]!=null)$(id).value=d.patient[k]}
 if(d.vent&&typeof window.simVentApplySettings==='function')window.simVentApplySettings(d.vent);
-if(d.caseState&&d.caseState.active){caseState=d.caseState;$('studentCaseBanner').style.display='block';$('studentCaseMinute').textContent=caseState.minute;$('studentCasePresentation').textContent=d.casePresentation;$('studentCaseEvolution').textContent=d.caseEvolutionText}else{$('studentCaseBanner').style.display='none'}
+if(d.caseState&&d.caseState.active){caseState=d.caseState;$('studentCaseBanner').style.display='none';$('studentCaseMinute').textContent=caseState.minute;$('studentCasePresentation').textContent=d.casePresentation;$('studentCaseEvolution').textContent=d.caseEvolutionText}else{$('studentCaseBanner').style.display='none'}
 render()}});
 
 setActive(true);setPhysInputs();manualSetup();physiology();
