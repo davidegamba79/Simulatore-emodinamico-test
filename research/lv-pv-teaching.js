@@ -142,10 +142,56 @@
   current={edv,peak,segments:[fill,isoC,eject,isoR]};
  if(reference){reference.segments.forEach(seg=>trace(seg,'#a5b3bd',true))}
  trace(fill,'#3dd5bb');trace(isoC,'#f3c969');trace(eject,'#60b8ff');trace(isoR,'#d19afa');
+  // Publish geometric data, not a second physiology calculation, for
+  // the external read-only student display. Throttle to ~5 Hz.
+  if(!document.body.classList.contains('student')&&Date.now()-(window.__lastStudentPvPublish||0)>190){
+   window.__lastStudentPvPublish=Date.now();
+   try{localStorage.setItem('sim_v30_student_pv',JSON.stringify({
+    at:Date.now(),maxV,maxP,edv,esv,sv,ees,ea,endP,v0,pleuralPressure,
+    segments:current.segments,reference:reference?.segments||null
+   }))}catch(e){}
+  }
   const cells=[['EDV',edv.toFixed(0)+' mL'],['ESV',esv.toFixed(0)+' mL'],['SV',sv.toFixed(0)+' mL'],['FE stimata',(100*sv/edv).toFixed(0)+'%'],['Ees (ESPVR)',ees.toFixed(2)+' mmHg/mL'],['Pes (cavitaria)',endP.toFixed(0)+' mmHg'],['Pes transmurale',transmuralPes.toFixed(0)+' mmHg'],['P pleurica stimata',pleuralPressure.toFixed(1)+' mmHg'],['PEEP totale',peep.toFixed(1)+' cmH₂O'],['Ea (PRAM / loop)',ea.toFixed(2)+' mmHg/mL'],['Ea/Ees',(ea/ees).toFixed(2)],['Rigidità TD (dP/dV)',stiffness.toFixed(3)+' mmHg/mL'],['Pressione TD',edp.toFixed(0)+' mmHg'],['Fase respiratoria',respOn?(respPhase<inspFraction?'Inspirazione':'Espirazione'):'Non modulata'],['V₀ ipotizzato',v0.toFixed(0)+' mL']];
   get('lvPvValues').innerHTML=cells.map(([k,v])=>'<div class="lv-pv-value"><small>'+k+'</small><b>'+v+'</b></div>').join('');
  }
  const obs=new MutationObserver(draw);obs.observe(document.body,{attributes:true,attributeFilter:['data-instructor-tab','class']});
  document.addEventListener('input',draw,true);document.addEventListener('change',draw,true);window.addEventListener('resize',draw);
  setInterval(draw,180);draw();
+ // The student view receives only already-computed PV geometry.
+ const studentCanvas=get('studentPvCanvas');
+ if(studentCanvas){
+  let studentData=null;
+  const paintStudent=()=>{
+   if(!document.body.classList.contains('student')||!studentData||!studentCanvas.isConnected)return;
+   const parent=get('studentPvSide');if(!parent||parent.hidden)return;
+   const rect=studentCanvas.getBoundingClientRect();if(rect.width<40)return;
+   const ratio=Math.min(2,window.devicePixelRatio||1);
+   studentCanvas.width=Math.round(rect.width*ratio);studentCanvas.height=Math.round(rect.height*ratio);
+   const c=studentCanvas.getContext('2d');c.setTransform(ratio,0,0,ratio,0,0);
+   const W=rect.width,H=rect.height,L=39,R=W-12,T=12,B=H-29;
+   const x=v=>L+v/studentData.maxV*(R-L),y=p=>B-p/studentData.maxP*(B-T);
+   c.clearRect(0,0,W,H);c.font='10px system-ui';c.lineWidth=1;
+   for(let i=0;i<=4;i++){
+    const v=i*studentData.maxV/4,p=i*studentData.maxP/4;
+    c.strokeStyle='#1d3846';c.beginPath();c.moveTo(x(v),T);c.lineTo(x(v),B);c.moveTo(L,y(p));c.lineTo(R,y(p));c.stroke();
+    c.fillStyle='#9ab4c0';c.textAlign='center';c.fillText(Math.round(v),x(v),B+13);c.textAlign='right';c.fillText(Math.round(p),L-5,y(p)+3);
+   }
+   c.fillStyle='#a9c5d1';c.textAlign='center';c.fillText('Volume (mL)',(L+R)/2,H-3);
+   const line=(points,color,dash=[])=>{
+    if(!points?.length)return;c.save();c.strokeStyle=color;c.lineWidth=dash.length?1.7:2.5;c.setLineDash(dash);c.beginPath();
+    points.forEach(([v,p],i)=>i?c.lineTo(x(v),y(p)):c.moveTo(x(v),y(p)));c.stroke();c.restore();
+   };
+   if(studentData.reference)studentData.reference.forEach(seg=>line(seg,'#a5b3bd',[5,4]));
+   const {ees,ea,esv,edv,endP,v0,pleuralPressure,maxP,maxV}=studentData;
+   line([[v0,pleuralPressure],[Math.min(maxV,esv+(maxP-endP)/ees),Math.min(maxP,pleuralPressure+ees*(Math.min(maxV,esv+(maxP-endP)/ees)-v0))]],'#ffad70',[3,5]);
+   line([[edv,0],[esv,endP]],'#ff5757',[7,5]);
+   ['#3dd5bb','#f3c969','#60b8ff','#d19afa'].forEach((color,i)=>line(studentData.segments[i],color));
+   const readings=get('studentPvReadings');
+   if(readings)readings.innerHTML=[['SV',studentData.sv.toFixed(0)+' mL'],['Ees',ees.toFixed(2)],['Ea',ea.toFixed(2)],['EDV',edv.toFixed(0)+' mL'],['ESV',esv.toFixed(0)+' mL'],['Pes',endP.toFixed(0)+' mmHg']].map(([k,v])=>'<div><small>'+k+'</small>'+v+'</div>').join('');
+  };
+  const receive=raw=>{try{const d=JSON.parse(raw);if(d&&Array.isArray(d.segments)){studentData=d;paintStudent()}}catch(e){}};
+  window.addEventListener('storage',e=>{if(e.key==='sim_v30_student_pv'&&e.newValue)receive(e.newValue)});
+  receive(localStorage.getItem('sim_v30_student_pv'));
+  setInterval(paintStudent,550);
+ }
 })();
