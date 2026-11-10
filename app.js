@@ -439,6 +439,10 @@ function v25PerfusionEt(dt,ventData){
  // spontaneo ha un Vt didattico separato e sara' calibrato in un test dedicato.
  if(!vent?.controlled){
   v25.co2Pools=null;
+  window.simDynamicPaCO2=null;
+  window.simPulmonaryPerfusionState={mode:'spontaneous',cardiacOutput:co,relativeFlow:perf,
+   flowDeadSpace,estimatedPaEtGradient:null,arterialCO2:null,
+   note:'Ventilazione spontanea: modello CO2 semplificato; PaCO2 non stimata'};
   if(cpr)return 12;
   if(arrest)return 3;
   const rr=Math.max(1,+$('rr').value||18);
@@ -507,8 +511,20 @@ function v25PerfusionEt(dt,ventData){
  pool.arterial=clamp(pool.arterial+(transfer-elimination)*seconds/(60*centralCapacity),4,160);
  pool.tissue=clamp(pool.tissue+(vco2-transfer)*seconds/(60*tissueCapacity),4,160);
  window.simDynamicPaCO2=pool.arterial;
- if(cpr)return 12;
- if(arrest)return 3;
+ if(cpr||arrest){
+  // Aggiorna la diagnostica a ogni passo: mai mostrare una misura polmonare
+  // precedente come se fosse attuale durante assenza di circolo efficace.
+  window.simPulmonaryPerfusionState={mode:cpr?'cpr':'arrest',cardiacOutput:co,
+   relativeFlow:perf,flowDeadSpace,effectiveAlveolarDeadSpace:effectiveDead,
+   alveolarVentilation:alveolar,metabolicVCO2:vco2,
+   arterialCO2:pool.arterial,tissueCO2:pool.tissue,
+   pulmonaryCO2Delivery:transfer,alveolarCO2Elimination:elimination,
+   estimatedTerminalCO2:cpr?12:3,estimatedPaEtGradient:null,
+   centralCO2Balance:transfer-elimination,tissueCO2Balance:vco2-transfer,
+   totalCO2Balance:vco2-elimination,centralCapacity,tissueCapacity,
+   note:'EtCO2 durante CPR/arresto: valore didattico imposto, non miscela alveolare'};
+  return cpr?12:3;
+ }
  // Regional end-alveolar PCO2: poorly perfused units contain little CO2,
  // while low V/Q units have a modestly higher alveolar PCO2. The resulting
  // EtCO2 is the weighted terminal gas concentration, not an imposed offset.
@@ -518,7 +534,7 @@ function v25PerfusionEt(dt,ventData){
  const terminalGas=normalTerminal*normalGas+
   lowTerminal*lowGas+deadTerminal*deadGas;
  // Diagnostica interna, senza nuovi comandi docente.
- window.simPulmonaryPerfusionState={cardiacOutput:co,relativeFlow:perf,
+ window.simPulmonaryPerfusionState={mode:'controlled',cardiacOutput:co,relativeFlow:perf,
   flowDeadSpace,effectiveAlveolarDeadSpace:effectiveDead,
   alveolarVentilation:alveolar,metabolicVCO2:vco2,
   arterialCO2:pool.arterial,tissueCO2:pool.tissue,
