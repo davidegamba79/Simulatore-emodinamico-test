@@ -1244,8 +1244,6 @@ window.addEventListener('DOMContentLoaded',()=>{
 <style id="physiology-number-v30">
  .physiology-percent-editor{display:flex;align-items:center;gap:5px;margin-top:5px}
  .physiology-percent-editor input[type="number"]{width:76px;max-width:100%;box-sizing:border-box;padding:5px 6px;background:#081923;color:#e5f5fa;border:1px solid #34566a;border-radius:5px;font-size:13px}
- .physiology-percent-editor .physiology-step-button{flex:0 0 auto;min-width:27px;min-height:29px;padding:2px 6px;border:1px solid #34566a;border-radius:5px;background:#143342;color:#e5f5fa;cursor:pointer}
- .physiology-percent-editor input[type="text"]{width:60px;min-width:0;box-sizing:border-box;padding:5px 6px;background:#081923;color:#e5f5fa;border:1px solid #34566a;border-radius:5px;font-size:13px;user-select:text;-webkit-user-select:text;touch-action:manipulation}
  .physiology-percent-editor .percent-unit{font-size:12px;color:#a9c2ce}
 </style>
 <script id="physiology-number-v30-script">
@@ -1259,18 +1257,13 @@ window.addEventListener('DOMContentLoaded',()=>{
   range.dataset.numberEditorInstalled='1';
   const editor=document.createElement('div');editor.className='physiology-percent-editor';
   const number=document.createElement('input');
-  // Campo testuale numerico: digitazione affidabile anche su Safari/iPad.
-  // I pulsanti +/- mantengono la regolazione incrementale.
-  number.type='text';number.inputMode='numeric';number.autocomplete='off';number.spellcheck=false;
+  number.type='number';number.min=range.min;number.max=range.max;number.step='1';
   number.value=range.value;number.setAttribute('aria-label','Valore percentuale '+range.closest('label')?.textContent.trim());
   const unit=document.createElement('span');unit.className='percent-unit';unit.textContent='%';
-  const minus=document.createElement('button'),plus=document.createElement('button');
-  minus.type=plus.type='button';minus.textContent='−';plus.textContent='+';
-  minus.className=plus.className='physiology-step-button';
-  editor.append(minus,number,plus,unit);range.insertAdjacentElement('afterend',editor);
+  editor.append(number,unit);range.insertAdjacentElement('afterend',editor);
   const sync=()=>{
    if(document.activeElement!==number)number.value=range.value;
-   number.disabled=minus.disabled=plus.disabled=range.disabled;
+   number.disabled=range.disabled;
   };
   const apply=()=>{
    const n=Number(number.value);
@@ -1283,10 +1276,7 @@ window.addEventListener('DOMContentLoaded',()=>{
    number.value=range.value;
   };
   number.addEventListener('change',apply);
-  number.addEventListener('blur',apply);
-  number.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();apply();number.blur()}});
-  const step=delta=>{const current=Number(number.value);number.value=String((Number.isFinite(current)?current:Number(range.value))+delta);apply()};
-  minus.addEventListener('click',()=>step(-1));plus.addEventListener('click',()=>step(1));
+  number.addEventListener('keydown',e=>{if(e.key==='Enter'){apply();number.blur()}});
   range.addEventListener('input',sync);
   range.addEventListener('change',sync);
   setInterval(sync,350);
