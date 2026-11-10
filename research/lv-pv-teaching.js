@@ -1,11 +1,94 @@
-  // Increased pleural pressure reduces venous filling; in depressed
-  // ventricles, reduced LV transmural afterload can partly compensate.
+/* Experimental teaching-only left ventricular pressure-volume loop. */
+(()=>{
+ const get=id=>document.getElementById(id);
+ const num=(id,fallback)=>{const el=get(id);const v=Number(el?.value);return el&&Number.isFinite(v)?v:fallback};
+ const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+ let reference=null;
+ const panel=document.createElement('section');
+ panel.id='lvPvTeaching';panel.className='card instructor-only';
+ panel.innerHTML='<h2>Ventricolo sinistro — curva pressione/volume (modello didattico)</h2><p class="lv-pv-note">Modello didattico ispirato a Suga–Sagawa (elastanza variabile) e Denault–Gorcsan–Pinsky (interazione con ventilazione a pressione positiva). Il loop distingue pressione pleurica stimata, riempimento e pressione transmurale; la pressione delle vie aeree non coincide con quella pleurica. Modello illustrativo, non misurazione ventricolare. La linea arancione tratteggiata indica la ESPVR, quella rossa tratteggiata indica Ea (elastanza arteriosa efficace) e quella grigia conserva il loop prima della terapia.</p><div class="lv-pv-actions"><label style="font-size:11px;color:#a9c2ce"><input type="checkbox" id="lvPvResp" checked> Modula con il respiro</label><label style="font-size:11px;color:#a9c2ce"><input type="checkbox" id="lvPvFail"> Funzione ventricolare depressa (scenario)</label><button type="button" id="lvPvSave">Memorizza loop di riferimento</button><button type="button" id="lvPvClear">Rimuovi riferimento</button><span id="lvPvRefStatus">Nessun riferimento salvato</span></div><div class="lv-pv-layout"><canvas id="lvPvCanvas" aria-label="Loop pressione volume del ventricolo sinistro" role="img"></canvas><div class="lv-pv-values" id="lvPvValues"></div></div><div class="lv-pv-legend"><span>● Riempimento</span><span>● Contrazione isovolumetrica</span><span>● Eiezione</span><span>● Rilasciamento isovolumetrico</span><span class="lv-pv-key" style="color:#ff5757"><i style="border-color:#ff5757"></i>Ea</span><span class="lv-pv-key" style="color:#ffad70"><i style="border-color:#ffad70"></i>ESPVR</span></div>';
+ const anchor=document.querySelector('.hemo-wrap');if(!anchor)return;
+ anchor.insertAdjacentElement('afterend',panel);
+ const css=document.createElement('style');css.textContent=`
+ #lvPvTeaching{display:none;margin-top:8px;padding:12px}
+ body:not(.student)[data-instructor-tab="hemodynamics"] #lvPvTeaching,
+ body:not(.student)[data-instructor-tab="hemo"] #lvPvTeaching,
+ body:not(.student)[data-instructor-tab="therapy"] #lvPvTeaching{display:block}
+ .lv-pv-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin:7px 0 10px}.lv-pv-actions button{font-size:11px;padding:7px 9px}.lv-pv-actions span{font-size:10px;color:#a9c2ce}
+ #lvPvTeaching h2{font-size:14px;margin:0 0 5px}
+ .lv-pv-note{color:#9bb5c1;font-size:11px;line-height:1.45;margin:0 0 8px}
+ .lv-pv-layout{display:grid;grid-template-columns:minmax(0,2fr) minmax(125px,1fr);gap:12px;align-items:center}
+ #lvPvCanvas{width:100%;height:260px;display:block;background:#081923;border:1px solid #244351;border-radius:8px}
+ .lv-pv-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ .lv-pv-value{background:#081923;border:1px solid #244351;border-radius:7px;padding:8px 6px}
+ .lv-pv-value small{display:block;color:#9ab1be;font-size:10px}
+ .lv-pv-value b{display:block;color:#e5f5fa;font-size:17px;margin-top:3px}
+ .lv-pv-legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:7px;font-size:10px;color:#a6bfcb}
+ .lv-pv-legend span:nth-child(1){color:#3dd5bb}.lv-pv-legend span:nth-child(2){color:#f3c969}.lv-pv-legend span:nth-child(3){color:#60b8ff}.lv-pv-legend span:nth-child(4){color:#d19afa}
+ @media(max-width:900px){.lv-pv-layout{grid-template-columns:1fr}#lvPvCanvas{height:230px}}
+ `;document.head.appendChild(css);
+ const canvas=get('lvPvCanvas'),ctx=canvas.getContext('2d');let current=null;
+ let respPhase=0,lastRenderAt=performance.now(),phaseClock=0;
+ get('lvPvResp').addEventListener('change',draw);get('lvPvFail').addEventListener('change',draw);
+ get('lvPvSave').addEventListener('click',()=>{if(!current)return;reference=JSON.parse(JSON.stringify(current));get('lvPvRefStatus').textContent='Riferimento salvato · tratteggio grigio';draw()});
+ get('lvPvClear').addEventListener('click',()=>{reference=null;get('lvPvRefStatus').textContent='Nessun riferimento salvato';draw()});
+ function draw(){
+  if(getComputedStyle(panel).display==='none')return;
+  const box=canvas.getBoundingClientRect();if(box.width<20)return;
+  const dpr=Math.min(2,window.devicePixelRatio||1),w=Math.round(box.width*dpr),h=Math.round(box.height*dpr);
+  if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
+  ctx.setTransform(dpr,0,0,dpr,0,0);const W=box.width,H=box.height;
+  // Ventilator effects are intentionally modest: airway pressure is NOT
+  // intrathoracic pressure. A fraction of mean airway pressure is transmitted.
+  const vent=typeof window.simVentCalc==='function'?window.simVentCalc():null;
+  const controlled=!!vent?.controlled;
+  const rr=clamp(vent?.rate||num('rr',12),4,45);
+  const now=performance.now(),dt=clamp((now-lastRenderAt)/1000,0,.3);lastRenderAt=now;
+  if(!window.simWaveIsPaused)phaseClock+=dt;
+  respPhase=(phaseClock*rr/60)%1;
+  const inspFraction=clamp((vent?.ti||1.5)/(60/rr),.15,.75);
+  const breath=respPhase<inspFraction
+   ?Math.sin(Math.PI*.5*respPhase/inspFraction)**2
+   :Math.cos(Math.PI*.5*(respPhase-inspFraction)/(1-inspFraction))**2;
+  const respOn=get('lvPvResp').checked&&!!vent?.controlled;
+  const failure=get('lvPvFail').checked;
+  const pmean=respOn?clamp(Number(vent?.pmean)||0,0,35):0;
+  const peep=respOn?clamp(Number(vent?.totalPeep)||0,0,30):0;
+  const transmitted=respOn?clamp(Number(vent?.transmittedPressure)||0,0,20):0;
+  const transmission=pmean>0?clamp(transmitted/pmean,.15,.8):.48;
+  const plateau=respOn?clamp(Number(vent?.plateau)||0,0,55):0;
+  const pleuralBase=peep*transmission;
+  const pleuralSwing=Math.max(0,plateau-peep)*transmission*.65;
+  const pleuralPressure=respOn?pleuralBase+pleuralSwing*breath:0;
+  // Mean PEEP effect is already included in the core hemodynamic SV.
+  // Apply only the cyclic excursion here to avoid double counting.
+  const deltaPleural=respOn?pleuralSwing*(breath-.5):0;
+  const cv=window.simCardiovascularState||null;
+  const cvNum=(key,fallback)=>Number.isFinite(Number(cv?.[key]))?Number(cv[key]):fallback;
+  const sap=clamp(cvNum('sap',num('sap',98)),30,240),dap=clamp(cvNum('dap',num('dap',48)),10,160);
+  const baseSV=clamp(cvNum('sv',num('sv',36)),3,160);
+  const preload=clamp(cvNum('preload',num('preload',100)),20,180)/100;
+  const contract=clamp(cvNum('contractility',window.macEffectiveContractility||num('contractility',100))/100,.2,2);
+  const tone=clamp(cvNum('tone',window.macEffectiveTone||num('vascularTone',100))/100,.3,2.2);
+  const effectiveContract=contract*(failure?.47:1);
+  const afterload=clamp((sap*.7+dap*.3)/85*.75+tone*.25,.35,2.3);
+  // End-systolic elastance is a teaching parameter (mmHg/mL), not measured.
+  const v0=clamp(4+baseSV*.08,3,20);
+  const emax=clamp(3.3*effectiveContract,0.55,8);
+  // Ea is read from the same PRAM state; Pes = Ea * SV.
+  // Using the instantaneous respiratory SV keeps the red Ea line's slope
+  // identical to the displayed PRAM Ea throughout the respiratory cycle.
+  const sharedEa=clamp(cvNum('ea',num('ea',2.5)),.01,15);
+  // One end-systolic intersection shared by ESPVR and effective arterial
+  // elastance: Pes = Ea * SV = Ees * (ESV - V0).
+  // The hemodynamic engine remains authoritative for SV and Ea.
+  const ees=emax;
+  // Inspiratory pleural pressure reduces venous filling. With LV
+  // dysfunction, reduced transmural afterload partially offsets this.
+  const fillingSensitivity=clamp(.008+Math.max(0,100-cvNum('preload',100))*.00012,.008,.018);
   const respFilling=respOn?clamp(-deltaPleural*fillingSensitivity,-.16,.16):0;
   const afterloadRelief=respOn&&failure?clamp(deltaPleural*.006,-.07,.07):0;
   const sv=clamp(baseSV*(1+respFilling+afterloadRelief),3,160);
-  // Intracavitary Pes remains tied to PRAM Ea. Transmural Pes subtracts
-  // the external pleural pressure; the ESPVR is plotted in cavity
-  // coordinates by adding that external pressure back.
   const endP=sharedEa*sv;
   const transmuralPes=Math.max(1,endP-pleuralPressure);
   const esv=v0+transmuralPes/ees;
@@ -58,7 +141,7 @@
   current={edv,peak,segments:[fill,isoC,eject,isoR]};
  if(reference){reference.segments.forEach(seg=>trace(seg,'#a5b3bd',true))}
  trace(fill,'#3dd5bb');trace(isoC,'#f3c969');trace(eject,'#60b8ff');trace(isoR,'#d19afa');
-  const cells=[['EDV',edv.toFixed(0)+' mL'],['ESV',esv.toFixed(0)+' mL'],['SV',sv.toFixed(0)+' mL'],['FE stimata',(100*sv/edv).toFixed(0)+'%'],['Ees (ESPVR)',ees.toFixed(2)+' mmHg/mL'],['Pes (cavitaria)',endP.toFixed(0)+' mmHg'],['Pes transmurale',transmuralPes.toFixed(0)+' mmHg'],['P intratoracica stimata',pleuralPressure.toFixed(1)+' mmHg'],['PEEP totale',peep.toFixed(1)+' cmH₂O'],['Ea (PRAM / loop)',ea.toFixed(2)+' mmHg/mL'],['Ea/Ees',(ea/ees).toFixed(2)],['Rigidità TD (dP/dV)',stiffness.toFixed(3)+' mmHg/mL'],['Pressione TD',edp.toFixed(0)+' mmHg'],['Fase respiratoria',respOn?(respPhase<inspFraction?'Inspirazione':'Espirazione'):'Non modulata'],['V₀ ipotizzato',v0.toFixed(0)+' mL']];
+  const cells=[['EDV',edv.toFixed(0)+' mL'],['ESV',esv.toFixed(0)+' mL'],['SV',sv.toFixed(0)+' mL'],['FE stimata',(100*sv/edv).toFixed(0)+'%'],['Ees (ESPVR)',ees.toFixed(2)+' mmHg/mL'],['Pes (cavitaria)',endP.toFixed(0)+' mmHg'],['Pes transmurale',transmuralPes.toFixed(0)+' mmHg'],['P pleurica stimata',pleuralPressure.toFixed(1)+' mmHg'],['PEEP totale',peep.toFixed(1)+' cmH₂O'],['Ea (PRAM / loop)',ea.toFixed(2)+' mmHg/mL'],['Ea/Ees',(ea/ees).toFixed(2)],['Rigidità TD (dP/dV)',stiffness.toFixed(3)+' mmHg/mL'],['Pressione TD',edp.toFixed(0)+' mmHg'],['Fase respiratoria',respOn?(respPhase<inspFraction?'Inspirazione':'Espirazione'):'Non modulata'],['V₀ ipotizzato',v0.toFixed(0)+' mL']];
   get('lvPvValues').innerHTML=cells.map(([k,v])=>'<div class="lv-pv-value"><small>'+k+'</small><b>'+v+'</b></div>').join('');
  }
  const obs=new MutationObserver(draw);obs.observe(document.body,{attributes:true,attributeFilter:['data-instructor-tab','class']});
