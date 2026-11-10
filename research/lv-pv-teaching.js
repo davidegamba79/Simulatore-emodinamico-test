@@ -33,7 +33,9 @@
  get('lvPvSave').addEventListener('click',()=>{if(!current)return;reference=JSON.parse(JSON.stringify(current));get('lvPvRefStatus').textContent='Riferimento salvato · tratteggio grigio';draw()});
  get('lvPvClear').addEventListener('click',()=>{reference=null;get('lvPvRefStatus').textContent='Nessun riferimento salvato';draw()});
  function draw(){
-  if(getComputedStyle(panel).display==='none')return;
+  // Keep producing student PV data even while the instructor views another tab.
+  const hiddenPanel=getComputedStyle(panel).display==='none';
+  if(hiddenPanel)panel.style.display='block';
   const box=canvas.getBoundingClientRect();if(box.width<20)return;
   const dpr=Math.min(2,window.devicePixelRatio||1),w=Math.round(box.width*dpr),h=Math.round(box.height*dpr);
   if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}
@@ -153,13 +155,16 @@
   }
   const cells=[['EDV',edv.toFixed(0)+' mL'],['ESV',esv.toFixed(0)+' mL'],['SV',sv.toFixed(0)+' mL'],['FE stimata',(100*sv/edv).toFixed(0)+'%'],['Ees (ESPVR)',ees.toFixed(2)+' mmHg/mL'],['Pes (cavitaria)',endP.toFixed(0)+' mmHg'],['Pes transmurale',transmuralPes.toFixed(0)+' mmHg'],['P pleurica stimata',pleuralPressure.toFixed(1)+' mmHg'],['PEEP totale',peep.toFixed(1)+' cmH₂O'],['Ea (PRAM / loop)',ea.toFixed(2)+' mmHg/mL'],['Ea/Ees',(ea/ees).toFixed(2)],['Rigidità TD (dP/dV)',stiffness.toFixed(3)+' mmHg/mL'],['Pressione TD',edp.toFixed(0)+' mmHg'],['Fase respiratoria',respOn?(respPhase<inspFraction?'Inspirazione':'Espirazione'):'Non modulata'],['V₀ ipotizzato',v0.toFixed(0)+' mL']];
   get('lvPvValues').innerHTML=cells.map(([k,v])=>'<div class="lv-pv-value"><small>'+k+'</small><b>'+v+'</b></div>').join('');
+  if(hiddenPanel)panel.style.display='';
  }
  const obs=new MutationObserver(draw);obs.observe(document.body,{attributes:true,attributeFilter:['data-instructor-tab','class']});
  document.addEventListener('input',draw,true);document.addEventListener('change',draw,true);window.addEventListener('resize',draw);
  setInterval(draw,180);draw();
  // The student view receives only already-computed PV geometry.
+ const initStudentPv=()=>{
  const studentCanvas=get('studentPvCanvas');
- if(studentCanvas){
+ if(studentCanvas&&!studentCanvas.dataset.pvInitialized){
+  studentCanvas.dataset.pvInitialized='1';
   let studentData=null;
   const paintStudent=()=>{
    if(!document.body.classList.contains('student')||!studentData||!studentCanvas.isConnected)return;
@@ -194,4 +199,9 @@
   receive(localStorage.getItem('sim_v30_student_pv'));
   setInterval(paintStudent,550);
  }
+ };
+ initStudentPv();
+ // Student monitor layout is constructed later by index.html.
+ document.addEventListener('DOMContentLoaded',initStudentPv);
+ const studentInitTimer=setInterval(()=>{initStudentPv();if(get('studentPvCanvas'))clearInterval(studentInitTimer)},300);
 })();
