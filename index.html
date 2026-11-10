@@ -556,6 +556,11 @@ body.student #studentPvReadings div{font-size:11px;color:#d5e7ee;background:#0c2
 body.student #studentPvReadings small{display:block;color:#a4bbc7;font-size:9px}
 @media(max-width:760px){body.student.student-pv-active #studentVentLayout{grid-template-columns:1fr!important}body.student #studentPvCanvas{height:220px}}
 </style>
+
+<style id="hide-clinical-case-narrative-v3">
+/* Keep case controls and JS state, but remove instructor/student narrative panels. */
+#caseInstructor, #caseFeedback, #studentCaseBanner { display: none !important; }
+</style>
 </head>
 <body>
 
