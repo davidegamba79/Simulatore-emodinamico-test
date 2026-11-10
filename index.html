@@ -561,6 +561,16 @@ body.student #studentPvReadings small{display:block;color:#a4bbc7;font-size:9px}
 /* Keep case controls and JS state, but remove instructor/student narrative panels. */
 #caseInstructor, #caseFeedback, #studentCaseBanner { display: none !important; }
 </style>
+
+<style id="therapy-clocks-v30">
+.therapy-clock{display:block;margin-top:5px;font-size:12px;font-variant-numeric:tabular-nums;color:#a9dce9;font-weight:600;white-space:nowrap}
+#studentTherapyClocks{display:none;padding:9px 12px;margin:6px 0;background:#0b2029;border:1px solid #294653;border-radius:8px}
+#studentTherapyClocks .clock-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+#studentTherapyClocks .clock-item{font-size:12px;color:#b9d6e1}
+#studentTherapyClocks .clock-item b{display:block;color:#eff9fd;font-size:14px;font-variant-numeric:tabular-nums;margin-top:3px}
+body.student[data-student-tab="hemodynamics"] #studentTherapyClocks,body.student[data-student-tab="hemo"] #studentTherapyClocks{display:block}
+@media(max-width:720px){#studentTherapyClocks .clock-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
 </head>
 <body>
 
@@ -684,6 +694,7 @@ body.student #studentPvReadings small{display:block;color:#a4bbc7;font-size:9px}
  <div class="student-only card" style="padding:8px 12px"><b id="studentPatient">Paziente Cane</b> · <span id="studentWeight">25</span> kg · <span id="studentPhenotype">6 anni · Meticcio · BCS 5/9</span></div>
  <div id="studentCaseBanner" hidden style="display:none!important"><span id="studentCaseMinute"></span><span id="studentCasePresentation"></span><span id="studentCaseEvolution"></span></div>
 
+ <div class="student-only" id="studentTherapyClocks"><b>Tempi terapie · tempo simulato</b><div class="clock-grid"><div class="clock-item">Fluid challenge<b id="studentClockBolus">Pronto · 00:00 / 00:30</b></div><div class="clock-item">Cristalloidi<b id="studentClockFluid">Non attiva · 00:00</b></div><div class="clock-item">Dobutamina<b id="studentClockDob">Non attiva · 00:00</b></div><div class="clock-item">Noradrenalina<b id="studentClockNor">Non attiva · 00:00</b></div></div></div>
  <div class="wave" data-key="ecg"><span class="wlabel green">ECG</span><div class="values green"><span class="big" id="vhr">90</span><br>bpm</div><canvas id="ecg"></canvas></div>
  <div class="wave" id="awakeCapnoNotice" style="display:none;min-height:70px;align-items:center;padding:15px;color:#e9c46a;border:1px solid #24414d;border-radius:8px">Paziente non intubato — capnografia non disponibile durante premedicazione e induzione</div><div class="wave" data-key="capno"><span class="wlabel yellow">EtCO₂</span><div class="values yellow"><span class="big" id="vet">38</span> mmHg<br><span id="vrr">18</span> /min</div><canvas id="capno"></canvas></div>
  <div class="wave" data-key="art"><span class="wlabel red">ART — pressione invasiva</span><div class="values red"><span class="big" id="vart">118/68</span><br>MAP <span id="vmap">85</span> mmHg</div><canvas id="art"></canvas></div>
@@ -765,10 +776,10 @@ body.student #studentPvReadings small{display:block;color:#a4bbc7;font-size:9px}
  </section>
  <section class="card" id="therapyV25"><h2>Terapie dinamiche</h2>
   <div class="therapy-grid">
-   <div class="therapy"><div><b>Fluid challenge</b><small>2 mL/kg in 30 secondi</small></div><button id="v25FluidBolus">Somministra</button></div>
-   <div class="therapy"><div><b>Cristalloidi</b><small>Infusione continua</small></div><label>mL/kg/h<input id="v25FluidRate" type="number" min="0" max="50" step="1" value="2"></label><button id="v25FluidBtn">Avvia</button></div>
-   <div class="therapy"><div><b>Dobutamina</b><small>Infusione continua</small></div><label>µg/kg/min<input id="v25DobRate" type="number" min="0" max="30" step=".5" value="5"></label><button id="v25DobBtn">Avvia</button></div>
-   <div class="therapy"><div><b>Noradrenalina</b><small>Infusione continua</small></div><label>µg/kg/min<input id="v25NorRate" type="number" min="0" max="2" step=".01" value=".10"></label><button id="v25NorBtn">Avvia</button></div>
+   <div class="therapy"><div><b>Fluid challenge</b><small>2 mL/kg in 30 secondi</small></div><button id="v25FluidBolus">Somministra</button><span class="therapy-clock" id="clock-v25FluidBolus">Pronto · 00:00 / 00:30</span></div>
+   <div class="therapy"><div><b>Cristalloidi</b><small>Infusione continua</small></div><label>mL/kg/h<input id="v25FluidRate" type="number" min="0" max="50" step="1" value="2"></label><button id="v25FluidBtn">Avvia</button><span class="therapy-clock" id="clock-v25FluidBtn">Non attiva · 00:00</span></div>
+   <div class="therapy"><div><b>Dobutamina</b><small>Infusione continua</small></div><label>µg/kg/min<input id="v25DobRate" type="number" min="0" max="30" step=".5" value="5"></label><button id="v25DobBtn">Avvia</button><span class="therapy-clock" id="clock-v25DobBtn">Non attiva · 00:00</span></div>
+   <div class="therapy"><div><b>Noradrenalina</b><small>Infusione continua</small></div><label>µg/kg/min<input id="v25NorRate" type="number" min="0" max="2" step=".01" value=".10"></label><button id="v25NorBtn">Avvia</button><span class="therapy-clock" id="clock-v25NorBtn">Non attiva · 00:00</span></div>
    <div class="therapy"><div><b>Efedrina</b><small>Bolo EV · risposta transitoria (simulazione)</small></div><label>µg/kg<input id="v25EphDose" type="number" min="25" max="100" step="5" value="50"></label><button id="v25EphBtn">Somministra</button></div>
    <div class="therapy"><div><b>Atropina</b><small>Bolo</small></div><label>µg/kg<input id="v25AtDose" type="number" min="0" max="100" step="1" value="20"></label><button id="v25AtBtn">Somministra</button></div>
   </div><div id="v25TherapyStatus" class="status" style="margin-top:8px">Nessuna terapia attiva.</div>
