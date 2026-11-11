@@ -683,7 +683,7 @@ body.student[data-student-tab="meds"] #studentTherapyClocks{display:block}
   <div class="cols">
    <label>Precarico <input id="preload" type="range" min="20" max="180" value="100"><span id="preloadOut">100%</span></label>
    <label>Contrattilità <input id="contractility" type="range" min="20" max="180" value="100"><span id="contractilityOut">100%</span></label>
-   <label>Tono vascolare / SVR <input id="vascularTone" type="range" min="30" max="180" value="100"><span id="vascularToneOut">100%</span></label>
+   <label>Tono vascolare / SVR <input id="vascularTone" type="range" min="20" max="180" value="100" data-logical-min="30" oninput="if(Number(this.value)<30)this.value=30"><span id="vascularToneOut">100%</span></label>
    <label>Compliance arteriosa <input id="compliance" type="range" min="40" max="160" value="100"><span id="complianceOut">100%</span></label>
   </div>
  </section>
@@ -1253,7 +1253,7 @@ window.addEventListener('DOMContentLoaded',()=>{
  .physiology-engine-card .cols>label>span{display:none!important}
  /* Il cursore SVR mantiene il range fisiologico 30–180%, ma a 100%
     la manopola si allinea visivamente agli altri slider. */
- .physiology-engine-card .cols>label input[type="range"][data-phys-key="vascularTone"]{width:93.75%!important;margin-left:6.25%!important;margin-right:0!important}
+ /* Scale visuali centrate su 100: SVR resta limitato logicamente a 30. */
  .physiology-engine-card .physiology-percent-editor{margin:0;gap:4px}
  .physiology-engine-card .physiology-percent-editor input[type="number"]{width:65px;padding:4px 5px;font-size:13px}
  @media(max-width:420px){.physiology-engine-card .cols{grid-template-columns:minmax(0,1fr) 82px!important;gap:5px!important}.physiology-engine-card .physiology-percent-editor input[type="number"]{width:57px}}
@@ -1269,7 +1269,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   range.dataset.numberEditorInstalled='1';
   const editor=document.createElement('div');editor.className='physiology-percent-editor';
   const number=document.createElement('input');
-  number.type='number';number.min=range.min;number.max=range.max;number.step='1';
+  number.type='number';number.min=range.dataset.logicalMin||range.min;number.max=range.max;number.step='1';
   number.value=range.value;number.setAttribute('aria-label','Valore percentuale '+range.closest('label')?.textContent.trim());
   const unit=document.createElement('span');unit.className='percent-unit';unit.textContent='%';
   editor.append(number,unit);
@@ -1291,7 +1291,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   const apply=()=>{
    const n=Number(number.value);
    if(number.value.trim()===''||!Number.isFinite(n))return;
-   const min=Number(range.min),max=Number(range.max);
+   const min=Number(range.dataset.logicalMin||range.min),max=Number(range.max);
    const value=Math.round(Math.max(min,Math.min(max,n)));
    range.value=String(value);
    range.dispatchEvent(new Event('input',{bubbles:true}));
