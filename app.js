@@ -892,6 +892,19 @@ $('fullBtn').onclick=()=>{if(!document.fullscreenElement)document.documentElemen
 if(new URLSearchParams(location.search).get('student')==='1'){$('modeBtn').click()}
 window.addEventListener('DOMContentLoaded',()=>{if(document.body.classList.contains('student'))simStudentRestore();else{simPublishStudentHistory();simPublishStudentStatus()}});
 
+// Safari/iPad puo' sospendere gli eventi storage quando una finestra
+// passa in background. Al ritorno in primo piano il monitor studenti
+// recupera l'ultimo stato pubblicato dalla console, senza intervenire
+// sulla simulazione fisiologica.
+window.addEventListener('pageshow',()=>{
+ if(document.body.classList.contains('student'))simStudentRestore();
+});
+document.addEventListener('visibilitychange',()=>{
+ if(document.visibilityState!=='visible')return;
+ if(document.body.classList.contains('student'))simStudentRestore();
+ else{simClock.real=performance.now();simPublishStudentHistory();simPublishStudentStatus()}
+});
+
 window.addEventListener('storage',e=>{
  if(document.body.classList.contains('student')&&e.newValue){
   if(e.key===studentStatusKey){try{simStudentApplyStatus(JSON.parse(e.newValue))}catch(err){console.warn(err)}return}
