@@ -108,6 +108,13 @@ function applyPreset(p){
   // Paziente sano: nessuna ventilazione controllata preimpostata.
   // Il preset anestetizzato conserva invece la VCV di riferimento.
   if($('ventMode'))$('ventMode').value=isHealthy?'SPONT':'VCV';
+  // Il preset anestetizzato usa il riferimento ventilatorio validato:
+  // 25 kg, VCV 12/min, Vt 12 mL/kg, PEEP 0 -> EtCO2 ~33-35 mmHg.
+  if(isAnesthetized){
+   if($('ventVtKg'))$('ventVtKg').value='12';
+   if($('ventRate'))$('ventRate').value='12';
+   if($('ventPeep'))$('ventPeep').value='0';
+  }
   if(typeof window.simVentSetLungProfile==='function')window.simVentSetLungProfile('healthy',true);
   phys={preload:100,contractility:100,vascularTone:100,compliance:100};setPhysInputs();
   $('mac').value=1;$('macOut').textContent='1,0';
