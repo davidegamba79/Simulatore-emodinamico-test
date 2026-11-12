@@ -701,7 +701,7 @@ function v25RenderEvents(){$('v25TrendEvents').textContent=v25.events.slice(-5).
 
 // Virtual simulation time is monotonic and independent of the browser clock.
 const simClock={virtual:performance.now(),real:performance.now(),speed:1,paused:false,busy:false,accumulator:0};
-window.simVirtualNow=()=>simClock.virtual;
+window.simVirtualNow=()=>simClock.virtual; window.simIsPaused=()=>simClock.paused;
 function simAdvancePhysics(seconds){
  const n=Math.ceil(seconds/.25),step=seconds/n;
  for(let i=0;i<n;i++){
