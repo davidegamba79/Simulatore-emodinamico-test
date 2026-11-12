@@ -1327,5 +1327,34 @@ window.addEventListener('DOMContentLoaded',()=>{
  });
 })();
 </script>
+<style id="instructor-compact-v30">
+body:not(.student).instructor-compact .controls>.card{padding:9px 11px!important;margin-bottom:7px!important}
+body:not(.student).instructor-compact .controls>.card>h2{margin-top:0!important;margin-bottom:7px!important;font-size:14px!important}
+body:not(.student).instructor-compact .controls .cols{gap:6px!important}
+body:not(.student).instructor-compact .controls label{font-size:12px}
+body:not(.student).instructor-compact .controls input,body:not(.student).instructor-compact .controls select{min-height:34px}
+body:not(.student) #instructorCompactSwitch{font:inherit;font-size:12px;min-height:34px;padding:6px 10px;border:1px solid #45616d;border-radius:8px;background:#17303c;color:#f3f8fa;cursor:pointer}
+body:not(.student) #instructorCompactSwitch[aria-pressed="true"]{background:#255168;border-color:#70a4b8}
+body.student #instructorCompactSwitch{display:none!important}
+</style>
+<script id="instructor-compact-v30-script">
+(()=>{
+ if(document.body.classList.contains('student'))return;
+ const host=document.querySelector('.instructor-console-top')||document.querySelector('.controls');
+ if(!host||document.getElementById('instructorCompactSwitch'))return;
+ const button=document.createElement('button');
+ button.type='button';button.id='instructorCompactSwitch';
+ button.setAttribute('aria-label','Alterna console docente compatta e spaziosa');
+ const update=()=>{
+  const compact=document.body.classList.contains('instructor-compact');
+  button.textContent=compact?'Vista compatta':'Vista spaziosa';
+  button.setAttribute('aria-pressed',String(compact));
+ };
+ document.body.classList.add('instructor-compact');
+ button.addEventListener('click',()=>{document.body.classList.toggle('instructor-compact');update()});
+ host.insertBefore(button,host.firstChild);
+ update();
+})();
+</script>
 </body>
 </html>
