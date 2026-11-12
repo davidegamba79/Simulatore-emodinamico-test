@@ -308,11 +308,14 @@ function physiology(){
   const opioid=clamp(fentEffect.intensity||0,0,1.5),inhaledSynergy=clamp((mac-.6)/1.4,0,1);
   // Interazioni additive limitate con la premedicazione, senza butorfanolo.
   const premedOpioid=typeof window.premedFentanylInteraction==='function'?window.premedFentanylInteraction():{sedation:0,pressor:0};
-  const opioidSynergy=opioid*(1+clamp(premedOpioid.sedation||0,0,.4));
+  // Solo il metadone amplifica moderatamente la componente mu; sedativi e acepromazina
+  // non diventano automaticamente bradicardizzanti. La dexmedetomidina ha gia'
+  // una risposta pressoria/baroriflessa autonoma, quindi qui l'incremento e' minimo.
+  const opioidSynergy=opioid*(1+clamp(premedOpioid.mu||0,0,.18));
   const opioidVascular=opioidSynergy*(1-clamp(premedOpioid.pressor||0,0,.12));
-  // Il fentanil e' soprattutto vagomimetico: vasodilatazione e inotropismo diretti minimi.
   const atropineVagalBlock=typeof v25!=='undefined'&&simClock.virtual<v25.atropineUntil?.85:0;
-  const fentanylVagalEffect=opioidSynergy*(1-atropineVagalBlock);
+  const fentanylVagalEffect=opioidSynergy*(1+clamp(premedOpioid.vagal||0,0,.16))*(1-atropineVagalBlock);
+  // Fentanil: predominanza vagale, effetti diretti su SVR e inotropismo modesti.
   let C=(phys.contractility/100)*macC*(1-.008*opioidSynergy),V=(phys.vascularTone/100)*macV*(1+avCompensation)*(1-(.012+.010*inhaledSynergy)*opioidVascular),A=phys.compliance/100;window.macEffectiveContractility=C*100;window.macEffectiveTone=V*100;
  // V3.0 sperimentale: pressione pleurica trasmessa dalla PEEP e postcarico
  // transmurale. La componente di pressione ciclica e' riservata al loop P/V;
