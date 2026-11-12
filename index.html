@@ -1070,10 +1070,11 @@ window.addEventListener('DOMContentLoaded',()=>{
   const row=time.querySelector('div[style*="display:flex"]');
   if(row){
    row.classList.add('time-primary');
-   const jumpButtons=['simBack10','simBack5','simBack1','simAdvance1','simAdvance5','simAdvance10'];
+   const jumpGrid=time.querySelector('.sim-time-jumps');
    const details=document.createElement('details');details.className='time-jumps';
-   details.innerHTML='<summary>Salti temporali e avanzamento rapido</summary><div></div>';
-   for(const id of jumpButtons){const b=get(id);if(b)details.querySelector('div').append(b)}
+   details.open=true;
+   details.innerHTML='<summary>Salti temporali e avanzamento rapido</summary>';
+   if(jumpGrid)details.append(jumpGrid);
    time.append(details);
   }
  }
@@ -1343,8 +1344,8 @@ body:not(.student) #instructorVentLoops .vent-loop-actions button{min-height:34p
 body:not(.student) #instructorVentLoops .vent-loop-ref-status{flex-basis:100%;font-size:11px}
 </style>
 <style id="sim-time-jumps-grid-v30">
-body:not(.student) #timeControls .sim-time-jumps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;min-width:210px}
-body:not(.student) #timeControls .sim-time-jumps button{min-width:0;min-height:36px;padding:6px 8px;white-space:nowrap}
+body:not(.student) #timeControls .time-jumps .sim-time-jumps{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;min-width:210px;width:100%}
+body:not(.student) #timeControls .time-jumps .sim-time-jumps button{min-width:0;min-height:36px;padding:6px 8px;white-space:nowrap}
 @media(max-width:550px){body:not(.student) #timeControls .sim-time-jumps{width:100%}}
 </style>
 </body>
