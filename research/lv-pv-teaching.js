@@ -33,6 +33,8 @@
  get('lvPvSave').addEventListener('click',()=>{if(!current)return;reference=JSON.parse(JSON.stringify(current));get('lvPvRefStatus').textContent='Riferimento salvato · tratteggio grigio';draw()});
  get('lvPvClear').addEventListener('click',()=>{reference=null;get('lvPvRefStatus').textContent='Nessun riferimento salvato';draw()});
  function draw(){
+  // Pausa globale: congela il loop P/V e l'ultimo frame inviato agli studenti.
+  if(typeof window.simIsPaused==='function'&&window.simIsPaused()){lastRenderAt=performance.now();return;}
   // Keep producing student PV data even while the instructor views another tab.
   const hiddenPanel=getComputedStyle(panel).display==='none';
   if(hiddenPanel)panel.style.display='block';
