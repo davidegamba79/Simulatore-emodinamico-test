@@ -304,7 +304,14 @@ function physiology(){
  // Compenso vasocostrittore moderato e attenuato dall'anestesia: non corregge la perdita dei battiti ventricolari.
  const avCompensation=advancedAV?clamp((80-ventRate)*(avRhythm===AV3?.0040:.0033),0,avRhythm===AV3?.16:.10)*clamp(1-.35*Math.max(0,mac-1),.6,1):0;
  let C=(phys.contractility/100)*macC,V=(phys.vascularTone/100)*macV*(1+avCompensation),A=phys.compliance/100;window.macEffectiveContractility=C*100;window.macEffectiveTone=V*100;
- const calc=hr=>{hr=Math.max(1,hr);let filling=clamp(Math.pow(P,.72),.25,1.45),tp=hr>110?clamp(1/(1+.008*(hr-110)*clamp(1+.9*Math.max(0,1-P)+.65*Math.max(0,1-A),.7,2)),.38,1):1;tp*=hr>140?1/(1+.004*(hr-140)):1;let bf=hr<70?clamp(1+(70-hr)/250,1,1.16):1,ap=clamp(Math.pow(V,-.22),.72,1.22),sv=clamp(refSV*filling*Math.pow(C,.78)*ap*tp*bf,5,70),co=clamp(sv*hr/1000,.25,7.5),svr=clamp(refSVR*V,450,3400),map=clamp(refCVP+co*svr/80,20,155),pp=clamp((sv/refSV)*(refPP/A)*Math.pow(V,-.28),12,85),
+ // V3.0 sperimentale: pressione pleurica trasmessa dalla PEEP e postcarico
+ // transmurale. La componente di pressione ciclica e' riservata al loop P/V;
+ // qui si considera solo l'incremento di pressione media dovuto alla PEEP.
+ // Coefficiente prudente e limitato: modello didattico, non predittivo.
+ const pleuralTransmission=vent?.pmean>0?clamp((vent.transmittedPressure||0)/vent.pmean,.15,.8):0;
+ const peepPleural=vent?.controlled?Math.max(0,vent.totalPeep||0)*pleuralTransmission:0;
+ const transmuralRelief=clamp(1+.006*peepPleural*clamp((1-C)/.65,0,1),1,1.07);
+ const calc=hr=>{hr=Math.max(1,hr);let filling=clamp(Math.pow(P,.72),.25,1.45),tp=hr>110?clamp(1/(1+.008*(hr-110)*clamp(1+.9*Math.max(0,1-P)+.65*Math.max(0,1-A),.7,2)),.38,1):1;tp*=hr>140?1/(1+.004*(hr-140)):1;let bf=hr<70?clamp(1+(70-hr)/250,1,1.16):1,ap=clamp(Math.pow(V,-.22),.72,1.22),sv=clamp(refSV*filling*Math.pow(C,.78)*ap*tp*bf*transmuralRelief,5,70),co=clamp(sv*hr/1000,.25,7.5),svr=clamp(refSVR*V,450,3400),map=clamp(refCVP+co*svr/80,20,155),pp=clamp((sv/refSV)*(refPP/A)*Math.pow(V,-.28),12,85),
  // Compliance arteriosa e runoff: con SVR elevate il decadimento diastolico
  // e' minore. Il termine della pressione pulsatoria si riduce moderatamente.
  dap=clamp(map-pp/3,12,125),sap=clamp(dap+pp,25,210);return{hr,sv,co,svr,map,pp,dap,sap}};
@@ -341,6 +348,7 @@ function physiology(){
   dap:manualLocks.dap?Number($('dap').value):vals.dap,
   ea:manualLocks.ea?Number($('ea').value):vals.ea,
   preload:phys.preload,contractility:C*100,tone:V*100,
+  pleuralPeepPressure:peepPleural,transmuralAfterloadFactor:transmuralRelief,
   clinicalScenario:caseState.active?caseState.key:null,
   compliance:phys.compliance,
   timestamp:Date.now()
