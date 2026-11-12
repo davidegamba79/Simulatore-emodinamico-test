@@ -42,6 +42,7 @@ window.simFentanylEffects=(t=now())=>{
 };
 
 const now=()=>typeof window.simVirtualNow==='function'?window.simVirtualNow():performance.now();
+window.simFentanylRewind=t=>{events=events.filter(e=>e.time<=t);runs=runs.filter(r=>r.start<=t);for(const r of runs)if(r.end!==null&&r.end>t)r.end=null;active=runs.length?runs[runs.length-1]:null;};
 const kg=()=>Math.max(0,Number($('weight').value)||0);
 const fmt=(n,d=2)=>Number(n).toFixed(d).replace('.',',');
 function rateAt(minutes,col){let k=0;while(k+1<times.length&&minutes>=times[k+1])k++;return rates[k][col]}
