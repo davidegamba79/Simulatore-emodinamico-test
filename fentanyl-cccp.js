@@ -43,6 +43,7 @@ window.simFentanylEffects=(t=now())=>{
 
 const now=()=>typeof window.simVirtualNow==='function'?window.simVirtualNow():performance.now();
 window.simFentanylRewind=t=>{events=events.filter(e=>e.time<=t);runs=runs.filter(r=>r.start<=t);for(const r of runs)if(r.end!==null&&r.end>t)r.end=null;active=runs.length?runs[runs.length-1]:null;};
+const bolusInProgress=t=>events.some(e=>t>=e.time&&t<e.time+(e.duration||bolusDurationMs));
 const kg=()=>Math.max(0,Number($('weight').value)||0);
 const fmt=(n,d=2)=>Number(n).toFixed(d).replace('.',',');
 function rateAt(minutes,col){let k=0;while(k+1<times.length&&minutes>=times[k+1])k++;return rates[k][col]}
@@ -50,7 +51,7 @@ function integrate(run,t){let end=Math.min(t,run.end===null?Infinity:run.end);le
 function refresh(){const t=now(),r=active&&active.start<=t&&active.end===null?active:null;
 const pending=events.filter(e=>t>=e.time&&t<e.time+(e.duration||bolusDurationMs));
 const latest=pending[pending.length-1];
-$('fentBolusClock').textContent=latest?'Bolo EV in corso · 00:'+String(Math.min(30,Math.floor((t-latest.time)/1000))).padStart(2,'0')+' / 00:30':events.length?'Bolo completato · 00:30 / 00:30':'Pronto · 00:00 / 00:30';
+$('fentBolusClock').textContent=latest?'Bolo EV in corso · 00:'+String(Math.min(30,Math.floor((t-latest.time)/1000))).padStart(2,'0')+' / 00:30':events.some(e=>t>=e.time+(e.duration||bolusDurationMs))?'Bolo completato · 00:30 / 00:30':'Pronto · 00:00 / 00:30';
 $('fentBolusGive').disabled=Boolean(latest);
 let total=events.reduce((a,e)=>a+delivered(e,t),0)+runs.reduce((a,v)=>a+integrate(v,t),0);
 
@@ -58,12 +59,12 @@ $('fentRate').textContent=fmt(r?rateAt((t-r.start)/60000,r.col):0)+' µg/kg/h';
 $('fentElapsed').textContent=active?fmt(Math.max(0,(Math.min(t,active.end===null?t:active.end)-active.start)/60000),1)+' min':'—';
 $('fentTotal').textContent=fmt(total)+' µg/kg · '+fmt(total*kg())+' µg';
 $('fentState').textContent=r?'TCI attiva · target '+targets[r.col]+' ng/mL':'TCI non attiva';
-$('fentStart').disabled=Boolean(r);$('fentStop').disabled=!r;
+$('fentStart').disabled=Boolean(r)||bolusInProgress(t);$('fentStop').disabled=!r;
 requestAnimationFrame(refresh)}
 function log(message){$('fentLog').textContent=message+' · '+$('simTimeReadout').textContent}
-$('fentStart').onclick=()=>{let t=now(),raw=Number($('fentTarget').value),col=Math.round((raw-.6)*10);if(!Number.isFinite(raw)||raw<.6||raw>2||Math.abs(raw-(.6+col*.1))>.00001||col<0||col>=targets.length||!kg())return;addBolus(bolus[col],t);active={start:t,end:null,col};runs.push(active);log('TCI avviata · bolo iniziale '+fmt(bolus[col])+' µg/kg')};
+$('fentStart').onclick=()=>{let t=now(),raw=Number($('fentTarget').value),col=Math.round((raw-.6)*10);if(bolusInProgress(t)||!Number.isFinite(raw)||raw<.6||raw>2||Math.abs(raw-(.6+col*.1))>.00001||col<0||col>=targets.length||!kg())return;addBolus(bolus[col],t);active={start:t,end:null,col};runs.push(active);log('TCI avviata · bolo iniziale '+fmt(bolus[col])+' µg/kg')};
 $('fentStop').onclick=()=>{if(!active||active.end!==null)return;active.end=now();log('TCI interrotta')};
-$('fentBolusGive').onclick=()=>{let dose=Number($('fentBolus').value);if(!Number.isFinite(dose)||dose<=0||dose>20)return;addBolus(dose,now());log('Bolo aggiuntivo EV '+fmt(dose)+' µg/kg')};
+$('fentBolusGive').onclick=()=>{let dose=Number($('fentBolus').value);if(!Number.isFinite(dose)||dose<=0||dose>20||bolusInProgress(now()))return;addBolus(dose,now());log('Bolo aggiuntivo EV '+fmt(dose)+' µg/kg')};
 $('fentTarget').onchange=()=>{if(active&&active.end===null)$('fentTarget').value=targets[active.col]};
 refresh();
 })();
