@@ -250,7 +250,7 @@ function endClinicalCase(){
  let outcome=caseEvolution();$('caseFeedback').textContent=`Caso terminato — ${outcome} Punteggio didattico: ${caseState.score}.`;
  caseState.active=false;$('studentCaseEvolution').textContent='Caso terminato.';save();
 }
-$('startCase').onclick=startClinicalCase;$('advanceCase').onclick=advanceClinicalCase;$('endCase').onclick=endClinicalCase;
+$('startCase').onclick=startClinicalCase;$('endCase').onclick=endClinicalCase;
 
 
 
