@@ -61,7 +61,7 @@ $('fentState').textContent=r?'TCI attiva · target '+targets[r.col]+' ng/mL':'TC
 $('fentStart').disabled=Boolean(r);$('fentStop').disabled=!r;
 requestAnimationFrame(refresh)}
 function log(message){$('fentLog').textContent=message+' · '+$('simTimeReadout').textContent}
-$('fentStart').onclick=()=>{let t=now(),col=targets.indexOf($('fentTarget').value);if(col<0||!kg())return;addBolus(bolus[col],t);active={start:t,end:null,col};runs.push(active);log('TCI avviata · bolo iniziale '+fmt(bolus[col])+' µg/kg')};
+$('fentStart').onclick=()=>{let t=now(),raw=Number($('fentTarget').value),col=Math.round((raw-.6)*10);if(!Number.isFinite(raw)||raw<.6||raw>2||Math.abs(raw-(.6+col*.1))>.00001||col<0||col>=targets.length||!kg())return;addBolus(bolus[col],t);active={start:t,end:null,col};runs.push(active);log('TCI avviata · bolo iniziale '+fmt(bolus[col])+' µg/kg')};
 $('fentStop').onclick=()=>{if(!active||active.end!==null)return;active.end=now();log('TCI interrotta')};
 $('fentBolusGive').onclick=()=>{let dose=Number($('fentBolus').value);if(!Number.isFinite(dose)||dose<=0||dose>20)return;addBolus(dose,now());log('Bolo aggiuntivo EV '+fmt(dose)+' µg/kg')};
 $('fentTarget').onchange=()=>{if(active&&active.end===null)$('fentTarget').value=targets[active.col]};
