@@ -306,7 +306,11 @@ function physiology(){
   const avCompensation=advancedAV?clamp((80-ventRate)*(avRhythm===AV3?.0040:.0033),0,avRhythm===AV3?.16:.10)*clamp(1-.35*Math.max(0,mac-1),.6,1):0;
  // Interazione oppioide-alogenato: effetto vascolare moderato e limitato, senza sommare linearmente la depressione.
   const opioid=clamp(fentEffect.intensity||0,0,1.5),inhaledSynergy=clamp((mac-.6)/1.4,0,1);
-  let C=(phys.contractility/100)*macC*(1-.025*opioid),V=(phys.vascularTone/100)*macV*(1+avCompensation)*(1-(.035+.025*inhaledSynergy)*opioid),A=phys.compliance/100;window.macEffectiveContractility=C*100;window.macEffectiveTone=V*100;
+  // Interazioni additive limitate con la premedicazione, senza butorfanolo.
+  const premedOpioid=typeof window.premedFentanylInteraction==='function'?window.premedFentanylInteraction():{sedation:0,pressor:0};
+  const opioidSynergy=opioid*(1+clamp(premedOpioid.sedation||0,0,.4));
+  const opioidVascular=opioidSynergy*(1-clamp(premedOpioid.pressor||0,0,.12));
+  let C=(phys.contractility/100)*macC*(1-.025*opioidSynergy),V=(phys.vascularTone/100)*macV*(1+avCompensation)*(1-(.035+.025*inhaledSynergy)*opioidVascular),A=phys.compliance/100;window.macEffectiveContractility=C*100;window.macEffectiveTone=V*100;
  // V3.0 sperimentale: pressione pleurica trasmessa dalla PEEP e postcarico
  // transmurale. La componente di pressione ciclica e' riservata al loop P/V;
  // qui si considera solo l'incremento di pressione media dovuto alla PEEP.
@@ -320,7 +324,7 @@ function physiology(){
  dap=clamp(map-pp/3,12,125),sap=clamp(dap+pp,25,210);return{hr,sv,co,svr,map,pp,dap,sap}};
  let shownHR=+$('hr').value||80;let hr=(typeof v25!=='undefined'&&Number.isFinite(v25.continuousHR)&&v25.lastShownHR===shownHR)?v25.continuousHR:shownHR;let r=calc(hr),rh=$('rhythm').value,reflex=['Ritmo sinusale','Tachicardia sinusale','Bradicardia sinusale',AV1].includes(rh);
  if(reflex&&!manualLocks.hr){const unpremedicatedPropofol=typeof v25!=='undefined'&&v25.induction.phase==='induction'&&v25.induction.drug==='Propofol'&&v25.induction.premedicated===false;
- let pressureDrive=clamp((refMAP-r.map)*1.15,-30,85),flowDrive=clamp((refCO-r.co)*18,-18,45),reflexGain=unpremedicatedPropofol?1:(awakePremed?1.25:((typeof window.isInductionPhase==='function'&&window.isInductionPhase())?.75:(mac<=1.6?1:clamp(1-.55*((mac-1.6)/.4),.45,1)))),dobResponse=(typeof v25!=='undefined'&&v25.inf.dob)?(phys.preload<85?-clamp((85-phys.preload)/25,0,1)*clamp(Math.max(0,v25.fx.contractility)*1.2,0,36):clamp((r.co-refCO)*18,0,14)):0,target=refHR-10*opioid+reflexGain*((pressureDrive+flowDrive)>0?(unpremedicatedPropofol?.72:(awakePremed?.36:.25))*(pressureDrive+flowDrive):(pressureDrive+flowDrive))-dobResponse+(typeof v25!=='undefined'?(v25.fx.hr||0):0);let ephActive=typeof v25!=='undefined'&&v25.ephedrineAt&&simClock.virtual-v25.ephedrineAt<420000;if(ephActive){let pressorRise=Math.max(0,r.map-v25.ephedrineBaselineMAP);let ephElapsed=(simClock.virtual-v25.ephedrineAt)/1000;let gain=clamp((ephElapsed-2)/9,0,1);target-=clamp(pressorRise*1.45*gain,0,65);}
+ let pressureDrive=clamp((refMAP-r.map)*1.15,-30,85),flowDrive=clamp((refCO-r.co)*18,-18,45),reflexGain=unpremedicatedPropofol?1:(awakePremed?1.25:((typeof window.isInductionPhase==='function'&&window.isInductionPhase())?.75:(mac<=1.6?1:clamp(1-.55*((mac-1.6)/.4),.45,1)))),dobResponse=(typeof v25!=='undefined'&&v25.inf.dob)?(phys.preload<85?-clamp((85-phys.preload)/25,0,1)*clamp(Math.max(0,v25.fx.contractility)*1.2,0,36):clamp((r.co-refCO)*18,0,14)):0,target=refHR-10*opioidSynergy+reflexGain*((pressureDrive+flowDrive)>0?(unpremedicatedPropofol?.72:(awakePremed?.36:.25))*(pressureDrive+flowDrive):(pressureDrive+flowDrive))-dobResponse+(typeof v25!=='undefined'?(v25.fx.hr||0):0);let ephActive=typeof v25!=='undefined'&&v25.ephedrineAt&&simClock.virtual-v25.ephedrineAt<420000;if(ephActive){let pressorRise=Math.max(0,r.map-v25.ephedrineBaselineMAP);let ephElapsed=(simClock.virtual-v25.ephedrineAt)/1000;let gain=clamp((ephElapsed-2)/9,0,1);target-=clamp(pressorRise*1.45*gain,0,65);}
  // Riflesso barocettivo nel cane: la bradicardia segue l'aumento delle SVR
  // e della pressione indotto dalla dexmedetomidina, non una riduzione FC fissa.
  const dex=typeof window.premedDexEffect==='function'?window.premedDexEffect():0;
