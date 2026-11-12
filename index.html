@@ -828,7 +828,7 @@ body.student[data-student-tab="meds"] #studentTherapyClocks{display:block}
 </div>
 </main>
 
-<script src="./app.js?v=300-fent-vagal-20261112"></script>
+<script src="./app.js?v=300-pv-pause-phys-numbers"></script>
 <script src="./ui-v2.4.js"></script>
 <script src="./wave-v2.js?v=29352"></script>
 <script>
@@ -1271,7 +1271,7 @@ window.addEventListener('DOMContentLoaded',()=>{
 <!-- Solo ramo sperimentale: modulo EGA/VQ, nessuna modifica al motore principale -->
 <script src="./research/emogas-vq-prototype.js?v=6"></script>
 <script src="./research/emogas-vq-ui.js?v=30"></script>
-<script src="./research/lv-pv-teaching.js?v=13"></script>
+<script src="./research/lv-pv-teaching.js?v=14"></script>
 <style id="physiology-number-v30">
  .physiology-percent-editor{display:flex;align-items:center;gap:5px;margin-top:5px}
  .physiology-percent-editor input[type="number"]{width:76px;max-width:100%;box-sizing:border-box;padding:5px 6px;background:#081923;color:#e5f5fa;border:1px solid #34566a;border-radius:5px;font-size:13px}
@@ -1338,6 +1338,9 @@ window.addEventListener('DOMContentLoaded',()=>{
   number.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();apply();number.blur()}});
   range.addEventListener('input',sync);
   range.addEventListener('change',sync);
+  // Gli effetti farmacologici muovono gli slider via codice senza eventi input:
+  // aggiorna il valore numerico a ogni aggiornamento fisiologico, salvo digitazione.
+  window.addEventListener('sim:physiology-updated',sync);
   // Non ascoltare i render globali: possono interrompere la digitazione.
   // Nessun polling: l'aggiornamento periodico interrompeva la digitazione.
   sync();
