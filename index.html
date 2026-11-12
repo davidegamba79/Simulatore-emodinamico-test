@@ -1314,16 +1314,16 @@ window.addEventListener('DOMContentLoaded',()=>{
   // Non sovrascrivere il valore mentre l'utente sta digitando.
   // Il focus puo' variare su Safari durante l'apertura della tastiera.
   let editing=false;
-  const sync=()=>{
-   // La digitazione ha precedenza assoluta sugli aggiornamenti del modello.
-   // Safari puo' cambiare il focus durante la tastiera numerica.
-   if(!editing && document.activeElement!==number)number.value=range.value;
+  const sync=(force=false)=>{
+   // Lo spostamento dello slider prevale sempre, anche se il campo numerico
+   // era stato compilato o ha ancora il focus (Safari/iPad).
+   if(force){editing=false;if(document.activeElement===number)number.blur();}
+   if(force||(!editing&&document.activeElement!==number))number.value=range.value;
    number.disabled=range.disabled;
   };
   number.addEventListener('pointerdown',()=>{editing=true});
   number.addEventListener('focus',()=>{editing=true});
   number.addEventListener('input',()=>{editing=true});
-  number.addEventListener('blur',()=>{apply();editing=false;sync()});
   const apply=()=>{
    const n=Number(number.value);
    if(number.value.trim()===''||!Number.isFinite(n))return;
@@ -1334,15 +1334,15 @@ window.addEventListener('DOMContentLoaded',()=>{
    range.dispatchEvent(new Event('change',{bubbles:true}));
    number.value=range.value;
   };
-  number.addEventListener('change',apply);
-  number.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();apply();number.blur()}});
-  range.addEventListener('input',sync);
-  range.addEventListener('change',sync);
-  // Gli effetti farmacologici muovono gli slider via codice senza eventi input:
-  // aggiorna il valore numerico a ogni aggiornamento fisiologico, salvo digitazione.
-  window.addEventListener('sim:physiology-updated',sync);
-  // Non ascoltare i render globali: possono interrompere la digitazione.
-  // Nessun polling: l'aggiornamento periodico interrompeva la digitazione.
+  number.addEventListener('blur',()=>{if(editing)apply();editing=false;sync()});
+  number.addEventListener('change',()=>{if(editing)apply()});
+  number.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();apply();editing=false;number.blur()}});
+  range.addEventListener('pointerdown',()=>sync(true));
+  range.addEventListener('touchstart',()=>sync(true),{passive:true});
+  range.addEventListener('input',()=>sync(true));
+  range.addEventListener('change',()=>sync(true));
+  // Aggiornamento farmacologico senza interrompere una digitazione in corso.
+  window.addEventListener('sim:physiology-updated',()=>sync(false));
   sync();
  }
  // Il duplicato conserva l'ordine dei quattro slider originali.
