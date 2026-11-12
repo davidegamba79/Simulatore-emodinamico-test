@@ -1348,5 +1348,9 @@ body:not(.student) #timeControls .time-jumps .sim-time-jumps{display:grid!import
 body:not(.student) #timeControls .time-jumps .sim-time-jumps button{min-width:0;min-height:36px;padding:6px 8px;white-space:nowrap}
 @media(max-width:550px){body:not(.student) #timeControls .sim-time-jumps{width:100%}}
 </style>
+<style id="instructor-hide-duplicate-vitals-v30">
+/* I valori FC, MAP, CO e SVR restano nel monitor; non duplicarli nella barra docente. */
+body:not(.student) .instructor-console-top .quick-values{display:none!important}
+</style>
 </body>
 </html>
