@@ -343,7 +343,7 @@ function physiology(){
  // Il motore emodinamico resta l'unica fonte di SV, pressioni ed Ea.
  window.simCardiovascularState={
   hr:Number($('hr').value)||0,
-  sv:manualLocks.sv?Number($('sv').value):vals.sv,
+  sv:manualLocks.sv?Number($('sv').value):r.sv,
   sap:manualLocks.sap?Number($('sap').value):vals.sap,
   dap:manualLocks.dap?Number($('dap').value):vals.dap,
   ea:manualLocks.ea?Number($('ea').value):vals.ea,
