@@ -45,7 +45,7 @@ function rateAt(minutes,col){let k=0;while(k+1<times.length&&minutes>=times[k+1]
 function integrate(run,t){let end=Math.min(t,run.end===null?Infinity:run.end);let cursor=run.start;if(end<=cursor)return 0;let sum=0;while(cursor<end){let elapsed=(cursor-run.start)/60000,j=0;while(j+1<times.length&&elapsed>=times[j+1])j++;let boundary=j+1<times.length?run.start+times[j+1]*60000:end,next=Math.min(end,boundary);if(next<=cursor)break;sum+=rates[j][run.col]*(next-cursor)/3600000;cursor=next}return sum}
 function refresh(){const t=now(),r=active&&active.start<=t&&active.end===null?active:null;
 let total=events.filter(e=>e.time<=t).reduce((a,e)=>a+e.dose,0)+runs.reduce((a,v)=>a+integrate(v,t),0);
-$('fentEffect').textContent=window.simFentanylEffects(t).analgesicIndex+' / 100';
+
 $('fentRate').textContent=fmt(r?rateAt((t-r.start)/60000,r.col):0)+' µg/kg/h';
 $('fentElapsed').textContent=active?fmt(Math.max(0,(Math.min(t,active.end===null?t:active.end)-active.start)/60000),1)+' min':'—';
 $('fentTotal').textContent=fmt(total)+' µg/kg · '+fmt(total*kg())+' µg';
