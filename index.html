@@ -676,7 +676,7 @@ body.student[data-student-tab="meds"] #studentTherapyClocks{display:block}
 
  </section>
 <section class="card"><h2>Anestesia inalatoria</h2>
-  <div class="status">1,0 MAC = baseline del paziente anestetizzato. La variazione del MAC modifica progressivamente tono vascolare e contrattilità; FC, pressione, CO, EtCO₂ e onde reagiscono attraverso il motore fisiologico.</div>
+  
   <label style="margin-top:10px">MAC <input id="mac" type="range" min="0.6" max="2" value="1" step="0.1"><span id="macOut">1,0</span></label><div class="status" id="anesthesiaPhaseStatus" style="margin-top:8px">Fase anestetizzata: MAC attivo.</div>
  </section>
 <section class="card physiology-engine-card"><h2>Motore fisiologico — emodinamica</h2>
@@ -753,8 +753,8 @@ body.student[data-student-tab="meds"] #studentTherapyClocks{display:block}
  </section>
 
 
-<div class="card" id="timeControls" style="margin-bottom:8px"><h2>Tempo simulato</h2><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><label>Velocità <select id="simSpeed"><option value="1">1× reale</option><option value="5">5×</option><option value="20">20×</option><option value="60">60×</option></select></label><button type="button" id="simPause">Pausa</button><button type="button" id="simBack10">−10 min</button><button type="button" id="simBack5">−5 min</button><button type="button" id="simBack1">−1 min</button><button type="button" id="simAdvance1">+1 min</button><button type="button" id="simAdvance5">+5 min</button><button type="button" id="simAdvance10">+10 min</button><strong id="simTimeReadout">00:00</strong></div><small style="color:var(--muted)">Pausa congela anche ECG, pletismografia, capnografia e pressione arteriosa per la discussione didattica. I salti temporali aggiornano emodinamica e trend.</small></div>
-<section class="card" id="premedPanel"><h2>Premedicazione anestesiologica — cane</h2><div class="premed-form"><label>Farmaco<select id="premedDrug"><option>Acepromazina</option><option>Dexmedetomidina</option><option>Midazolam</option><option>Metadone</option><option>Butorfanolo</option><option>Ketamina</option></select></label><label>Dosaggio (inserimento manuale)<input id="premedDose" type="number" min="0" step="any" placeholder="Dose"></label><label>Unità<select id="premedUnit"><option>mg/kg</option><option>µg/kg</option></select></label><label>Via<input id="premedRoute" value="IM" readonly aria-label="Via intramuscolare" title="Premedicazione standardizzata esclusivamente IM"></label><button type="button" id="premedAdd">Aggiungi alla combinazione</button></div><div id="premedCombination" class="status" style="margin-top:8px">Nessun farmaco nella combinazione.</div><div class="row" style="margin-top:8px"><button type="button" id="premedGive">Somministra combinazione</button><button type="button" id="premedClear">Svuota combinazione</button></div><div class="status" id="premedElapsed" style="margin-top:8px">Tempo dalla premedicazione: —</div><div class="status" id="premedStatus" style="margin-top:8px">Nessuna somministrazione registrata.</div><small style="color:var(--muted)">Modulo iniziale: registra dosi e tempi nei trend. Effetti emodinamici didattici progressivi: non costituiscono una previsione clinica validata.</small></section>
+<div class="card" id="timeControls" style="margin-bottom:8px"><h2>Tempo simulato</h2><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><label>Velocità <select id="simSpeed"><option value="1">1× reale</option><option value="5">5×</option><option value="20">20×</option><option value="60">60×</option></select></label><button type="button" id="simPause">Pausa</button><button type="button" id="simBack10">−10 min</button><button type="button" id="simBack5">−5 min</button><button type="button" id="simBack1">−1 min</button><button type="button" id="simAdvance1">+1 min</button><button type="button" id="simAdvance5">+5 min</button><button type="button" id="simAdvance10">+10 min</button><strong id="simTimeReadout">00:00</strong></div></div>
+<section class="card" id="premedPanel"><h2>Premedicazione anestesiologica — cane</h2><div class="premed-form"><label>Farmaco<select id="premedDrug"><option>Acepromazina</option><option>Dexmedetomidina</option><option>Midazolam</option><option>Metadone</option><option>Butorfanolo</option><option>Ketamina</option></select></label><label>Dosaggio (inserimento manuale)<input id="premedDose" type="number" min="0" step="any" placeholder="Dose"></label><label>Unità<select id="premedUnit"><option>mg/kg</option><option>µg/kg</option></select></label><label>Via<input id="premedRoute" value="IM" readonly aria-label="Via intramuscolare" title="Premedicazione standardizzata esclusivamente IM"></label><button type="button" id="premedAdd">Aggiungi alla combinazione</button></div><div id="premedCombination" class="status" style="margin-top:8px">Nessun farmaco nella combinazione.</div><div class="row" style="margin-top:8px"><button type="button" id="premedGive">Somministra combinazione</button><button type="button" id="premedClear">Svuota combinazione</button></div><div class="status" id="premedElapsed" style="margin-top:8px">Tempo dalla premedicazione: —</div><div class="status" id="premedStatus" style="margin-top:8px">Nessuna somministrazione registrata.</div></section>
  <section class="card" id="inductionPanel"><h2>Induzione anestesiologica EV — cane</h2>
   <div class="premed-form">
    <label>Induttore<select id="inductionDrug"><option>Propofol</option><option>Alfaxalone</option></select></label>
@@ -1327,34 +1327,13 @@ window.addEventListener('DOMContentLoaded',()=>{
  });
 })();
 </script>
-<style id="instructor-compact-v30">
-body:not(.student).instructor-compact .controls>.card{padding:9px 11px!important;margin-bottom:7px!important}
-body:not(.student).instructor-compact .controls>.card>h2{margin-top:0!important;margin-bottom:7px!important;font-size:14px!important}
-body:not(.student).instructor-compact .controls .cols{gap:6px!important}
-body:not(.student).instructor-compact .controls label{font-size:12px}
-body:not(.student).instructor-compact .controls input,body:not(.student).instructor-compact .controls select{min-height:34px}
-body:not(.student) #instructorCompactSwitch{font:inherit;font-size:12px;min-height:34px;padding:6px 10px;border:1px solid #45616d;border-radius:8px;background:#17303c;color:#f3f8fa;cursor:pointer}
-body:not(.student) #instructorCompactSwitch[aria-pressed="true"]{background:#255168;border-color:#70a4b8}
-body.student #instructorCompactSwitch{display:none!important}
+
+<style id="instructor-clean-copy-v30">
+/* Solo docente: nasconde testo esplicativo, non stati dinamici o comandi. */
+body:not(.student) #ventilationPanel > .status:not([id]),
+body:not(.student) .controls > section.card > small[style*="display:block"],
+body:not(.student) #inductionPanel > small,
+body:not(.student) #premedPanel > small {display:none!important}
 </style>
-<script id="instructor-compact-v30-script">
-(()=>{
- if(document.body.classList.contains('student'))return;
- const host=document.querySelector('.instructor-console-top')||document.querySelector('.controls');
- if(!host||document.getElementById('instructorCompactSwitch'))return;
- const button=document.createElement('button');
- button.type='button';button.id='instructorCompactSwitch';
- button.setAttribute('aria-label','Alterna console docente compatta e spaziosa');
- const update=()=>{
-  const compact=document.body.classList.contains('instructor-compact');
-  button.textContent=compact?'Vista compatta':'Vista spaziosa';
-  button.setAttribute('aria-pressed',String(compact));
- };
- document.body.classList.add('instructor-compact');
- button.addEventListener('click',()=>{document.body.classList.toggle('instructor-compact');update()});
- host.insertBefore(button,host.firstChild);
- update();
-})();
-</script>
 </body>
 </html>
