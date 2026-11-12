@@ -755,7 +755,7 @@ body.student[data-student-tab="meds"] #studentTherapyClocks{display:block}
  </section>
 
 
-<div class="card" id="timeControls" style="margin-bottom:8px"><h2>Tempo simulato</h2><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><label>Velocità <select id="simSpeed"><option value="1">1× reale</option><option value="5">5×</option><option value="20">20×</option><option value="60">60×</option></select></label><button type="button" id="simPause">Pausa</button><button type="button" id="simBack10">−10 min</button><button type="button" id="simBack5">−5 min</button><button type="button" id="simBack1">−1 min</button><button type="button" id="simAdvance1">+1 min</button><button type="button" id="simAdvance5">+5 min</button><button type="button" id="simAdvance10">+10 min</button><strong id="simTimeReadout">00:00</strong></div></div>
+<div class="card" id="timeControls" style="margin-bottom:8px"><h2>Tempo simulato</h2><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><label>Velocità <select id="simSpeed"><option value="1">1× reale</option><option value="5">5×</option><option value="20">20×</option><option value="60">60×</option></select></label><button type="button" id="simPause">Pausa</button><div class="sim-time-jumps" aria-label="Salti temporali"><button type="button" id="simBack1">−1 min</button><button type="button" id="simBack5">−5 min</button><button type="button" id="simBack10">−10 min</button><button type="button" id="simAdvance1">+1 min</button><button type="button" id="simAdvance5">+5 min</button><button type="button" id="simAdvance10">+10 min</button></div><strong id="simTimeReadout">00:00</strong></div></div>
 <section class="card" id="premedPanel"><h2>Premedicazione anestesiologica — cane</h2><div class="premed-form"><label>Farmaco<select id="premedDrug"><option>Acepromazina</option><option>Dexmedetomidina</option><option>Midazolam</option><option>Metadone</option><option>Butorfanolo</option><option>Ketamina</option></select></label><label>Dosaggio (inserimento manuale)<input id="premedDose" type="number" min="0" step="any" placeholder="Dose"></label><label>Unità<select id="premedUnit"><option>mg/kg</option><option>µg/kg</option></select></label><label>Via<input id="premedRoute" value="IM" readonly aria-label="Via intramuscolare" title="Premedicazione standardizzata esclusivamente IM"></label><button type="button" id="premedAdd">Aggiungi alla combinazione</button></div><div id="premedCombination" class="status" style="margin-top:8px">Nessun farmaco nella combinazione.</div><div class="row" style="margin-top:8px"><button type="button" id="premedGive">Somministra combinazione</button><button type="button" id="premedClear">Svuota combinazione</button></div><div class="status" id="premedElapsed" style="margin-top:8px">Tempo dalla premedicazione: —</div><div class="status" id="premedStatus" style="margin-top:8px">Nessuna somministrazione registrata.</div></section>
  <section class="card" id="inductionPanel"><h2>Induzione anestesiologica EV — cane</h2>
   <div class="premed-form">
@@ -1341,6 +1341,11 @@ body:not(.student) #premedPanel > small {display:none!important}
 body:not(.student) #instructorVentLoops .vent-loop-actions{display:flex!important;flex-wrap:wrap;align-items:center;gap:6px!important}
 body:not(.student) #instructorVentLoops .vent-loop-actions button{min-height:34px;white-space:nowrap}
 body:not(.student) #instructorVentLoops .vent-loop-ref-status{flex-basis:100%;font-size:11px}
+</style>
+<style id="sim-time-jumps-grid-v30">
+body:not(.student) #timeControls .sim-time-jumps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;min-width:210px}
+body:not(.student) #timeControls .sim-time-jumps button{min-width:0;min-height:36px;padding:6px 8px;white-space:nowrap}
+@media(max-width:550px){body:not(.student) #timeControls .sim-time-jumps{width:100%}}
 </style>
 </body>
 </html>
