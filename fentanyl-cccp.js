@@ -14,6 +14,30 @@ const rates=[
 [3,3.5,3.8,4.2,4.5,5.1,5.5,6,6.4,7,7.3,7.8,8.2,8.7,9]
 ];
 let runs=[],events=[],active=null;
+// Modello didattico a risposta limitata: esposizione relativa da boli e infusione.
+// Non e' il modello PK di Sano, ne' una stima di Cp clinicamente validata.
+const tauFast=7,tauSlow=55;
+function exposureAt(t){
+ let sum=0;
+ for(const e of events){let age=(t-e.time)/60000;if(age>=0)sum+=e.dose*(.65*Math.exp(-age/tauFast)+.35*Math.exp(-age/tauSlow));}
+ for(const r of runs){
+  const end=Math.min(t,r.end===null?Infinity:r.end);if(end<=r.start)continue;
+  for(let j=0;j<times.length;j++){
+   const start=r.start+times[j]*60000,stop=j+1<times.length?r.start+times[j+1]*60000:end;
+   const b=Math.min(end,stop);if(b<=start)continue;
+   const rate=rates[j][r.col]/60;
+   const d1=(t-b)/60000,d2=(t-start)/60000;
+   sum+=rate*(.65*tauFast*(Math.exp(-d1/tauFast)-Math.exp(-d2/tauFast))+.35*tauSlow*(Math.exp(-d1/tauSlow)-Math.exp(-d2/tauSlow)));
+  }
+ }
+ return Math.max(0,sum);
+}
+window.simFentanylEffects=(t=now())=>{
+ const exposure=exposureAt(t);
+ const intensity=Math.min(1.5,exposure/(2.5+exposure)*1.5);
+ return {exposure,intensity,analgesicIndex:Math.round(100*intensity/1.5)};
+};
+
 const now=()=>typeof window.simVirtualNow==='function'?window.simVirtualNow():performance.now();
 const kg=()=>Math.max(0,Number($('weight').value)||0);
 const fmt=(n,d=2)=>Number(n).toFixed(d).replace('.',',');
@@ -21,6 +45,7 @@ function rateAt(minutes,col){let k=0;while(k+1<times.length&&minutes>=times[k+1]
 function integrate(run,t){let end=Math.min(t,run.end===null?Infinity:run.end);let cursor=run.start;if(end<=cursor)return 0;let sum=0;while(cursor<end){let elapsed=(cursor-run.start)/60000,j=0;while(j+1<times.length&&elapsed>=times[j+1])j++;let boundary=j+1<times.length?run.start+times[j+1]*60000:end,next=Math.min(end,boundary);if(next<=cursor)break;sum+=rates[j][run.col]*(next-cursor)/3600000;cursor=next}return sum}
 function refresh(){const t=now(),r=active&&active.start<=t&&active.end===null?active:null;
 let total=events.filter(e=>e.time<=t).reduce((a,e)=>a+e.dose,0)+runs.reduce((a,v)=>a+integrate(v,t),0);
+$('fentEffect').textContent=window.simFentanylEffects(t).analgesicIndex+' / 100';
 $('fentRate').textContent=fmt(r?rateAt((t-r.start)/60000,r.col):0)+' µg/kg/h';
 $('fentElapsed').textContent=active?fmt(Math.max(0,(Math.min(t,active.end===null?t:active.end)-active.start)/60000),1)+' min':'—';
 $('fentTotal').textContent=fmt(total)+' µg/kg · '+fmt(total*kg())+' µg';
