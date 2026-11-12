@@ -601,7 +601,7 @@ body.student[data-student-tab="meds"] #studentTherapyClocks{display:block}
   <label>Conformazione cranio-facciale<select id="patientMorph"><option value="meso">Mesocefalo</option><option value="brachy">Brachicefalo</option><option value="dolicho">Dolicocefalo</option></select></label>
   <label>Morfotipo corporeo<select id="patientBodyType"><option value="meso">Mesomorfo</option><option value="brachy">Brachimorfo</option><option value="dolicho">Dolicomorfo</option></select></label>
   <label>Body Condition Score (1–9)<input id="patientBCS" type="number" value="5" min="1" max="9" step="1"></label>
- </div><small style="display:block;color:var(--muted);margin-top:8px">Il profilo del paziente modifica compliance, resistenze e curvatura dei loop respiratori. Razza e morfotipo rappresentano archetipi didattici, non previsioni cliniche individuali. Età, BCS e conformazione influenzano anche la risposta dell’EtCO₂.</small><div class="status" id="patientPresetStatus" style="margin-top:8px">Paziente sano · sveglio · non premedicato</div></section>
+ </div><div class="status" id="patientPresetStatus" style="margin-top:8px">Paziente sano · sveglio · non premedicato</div></section>
 
  <section class="card"><h2>Monitoraggio attivo — istruttore</h2>
   <div id="toggles"></div><div class="row" style="margin-top:9px"><button id="allOn">Tutto ON</button><button id="allOff">Tutto OFF</button></div>
@@ -691,7 +691,7 @@ body.student[data-student-tab="meds"] #studentTherapyClocks{display:block}
  <section class="card"><h2>Interventi / trend</h2>
    <div id="eventLog" class="status" style="max-height:150px;overflow:auto">Nessun intervento.</div>
  </section>
-<section class="card"><h2>Preset manuali</h2><div class="status" style="margin-bottom:8px">Il simulatore si avvia con <b>Paziente sano</b>. Seleziona un preset prima di somministrare farmaci; per ripartire da zero ricarica la pagina.</div><div class="preset" id="presets"></div></section>
+<section class="card"><h2>Preset manuali</h2><div class="preset" id="presets"></div></section>
 
 
 </aside>
