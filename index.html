@@ -828,7 +828,7 @@ body.student[data-student-tab="meds"] #studentTherapyClocks{display:block}
 </div>
 </main>
 
-<script src="./app.js?v=300-pv-pause-phys-numbers"></script>
+<script src="./app.js?v=300-fent-pd-reviewed"></script>
 <script src="./ui-v2.4.js"></script>
 <script src="./wave-v2.js?v=29352"></script>
 <script>
@@ -851,17 +851,18 @@ window.addEventListener('DOMContentLoaded',()=>{
    tone+=p.tone*factor;hr+=p.hr*factor;contractility+=p.contractility*factor});
   return {tone:Math.max(-55,Math.min(65,tone)),hr:Math.max(-65,Math.min(45,hr)),contractility:Math.max(-45,Math.min(45,contractility)),active:administrations.some(x=>(now-x.at)<profile[x.drug].minutes*60*5000)};
  };
- window.premedFentanylInteraction=()=>{const now=window.simVirtualNow?window.simVirtualNow():performance.now();let sedation=0,pressor=0;
+ // Interazioni del fentanil distinte per meccanismo; coefficienti didattici, non PK/PD validati.
+ window.premedFentanylInteraction=()=>{const now=window.simVirtualNow?window.simVirtualNow():performance.now();let mu=0,vagal=0,pressor=0,sedation=0;
   administrations.forEach(x=>{if(x.drug==='Butorfanolo')return;const p=profile[x.drug];if(!p)return;const age=(now-x.at)/1000;if(age<0)return;
    const onset=x.route==='EV'?15:180;
    const effect=Math.min(1,Math.max(0,x.dose/p.ref))*(1-Math.exp(-age/onset))*Math.exp(-Math.max(0,age-onset)/(p.minutes*60));
+   if(x.drug==='Metadone'){mu+=.18*effect;vagal+=.10*effect;}
+   if(x.drug==='Dexmedetomidina'){sedation+=.20*effect;vagal+=.06*effect;}
    if(x.drug==='Acepromazina')sedation+=.22*effect;
    if(x.drug==='Midazolam')sedation+=.16*effect;
-   if(x.drug==='Metadone')sedation+=.14*effect;
-   if(x.drug==='Dexmedetomidina')sedation+=.20*effect;
    if(x.drug==='Ketamina')pressor+=.12*effect;
   });
-  return {sedation:Math.min(.4,sedation),pressor:Math.min(.12,pressor)};
+  return {mu:Math.min(.18,mu),vagal:Math.min(.16,vagal),sedation:Math.min(.4,sedation),pressor:Math.min(.12,pressor)};
  };
  window.premedDexEffect=()=>{const now=window.simVirtualNow?window.simVirtualNow():performance.now();return Math.min(1,administrations.filter(x=>x.drug==='Dexmedetomidina').reduce((sum,x)=>{const age=Math.max(0,(now-x.at)/1000),onset=x.route==='EV'?15:180;return sum+Math.min(1,x.dose/3)*(1-Math.exp(-age/onset))*Math.exp(-Math.max(0,age-onset)/3000)},0))};
  // Fase sveglia fino a 20:00 dalla prima somministrazione IM, valutata sul tempo virtuale.
