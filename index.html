@@ -718,11 +718,13 @@ body.student[data-student-tab="meds"] #studentTherapyClocks{display:block}
   <div class="vent-loop-actions">
    <button type="button" class="tiny" id="ventSaveLoop">Memorizza loop di riferimento</button>
    <button type="button" class="tiny" id="ventClearLoop">Rimuovi riferimento</button>
+   <button type="button" class="tiny" id="ventPvFit">Adatta solo P/V</button>
+   <button type="button" class="tiny" id="ventFvFit">Adatta solo F/V</button>
    <span class="vent-loop-ref-status" id="ventLoopRefStatus">Nessun loop di riferimento salvato</span>
   </div>
   <details class="vent-loop-scale-panel" id="ventLoopScalePanel">
    <summary>Regolazione scale P/V e F/V · assi indipendenti e fissi</summary>
-   <p>Le scale sono adattate una sola volta, alla prima ventilazione controllata. In seguito cambiano soltanto da questi controlli, anche sul monitor studenti.</p>
+   
    <div class="vent-loop-axis-grid">
     <fieldset><legend>Loop Pressione / Volume</legend>
      <div class="vent-loop-axis-inputs">
@@ -1334,6 +1336,11 @@ body:not(.student) #ventilationPanel > .status:not([id]),
 body:not(.student) .controls > section.card > small[style*="display:block"],
 body:not(.student) #inductionPanel > small,
 body:not(.student) #premedPanel > small {display:none!important}
+</style>
+<style id="vent-loop-quick-scale-v30">
+body:not(.student) #instructorVentLoops .vent-loop-actions{display:flex!important;flex-wrap:wrap;align-items:center;gap:6px!important}
+body:not(.student) #instructorVentLoops .vent-loop-actions button{min-height:34px;white-space:nowrap}
+body:not(.student) #instructorVentLoops .vent-loop-ref-status{flex-basis:100%;font-size:11px}
 </style>
 </body>
 </html>
