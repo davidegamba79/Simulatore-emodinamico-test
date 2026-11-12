@@ -1025,6 +1025,7 @@ window.addEventListener('DOMContentLoaded',()=>{
    const forward=type=>{
     if(input.type==='checkbox')source.checked=input.checked;
     else source.value=input.value;
+    // Un solo motore: il controllo originale riceve l'evento ed esegue physiology().
     source.dispatchEvent(new Event(type,{bubbles:true}));
     syncPhysiologyMirror();
    };
@@ -1035,8 +1036,10 @@ window.addEventListener('DOMContentLoaded',()=>{
    input.addEventListener('input',syncPhysiologyMirror);
    input.addEventListener('change',syncPhysiologyMirror);
   });
+  // Aggiornamento anche dopo cambiamenti indotti da farmaci/preset, senza
+  // polling che sovrascriva la digitazione sul monitor docente (Safari/iPad).
+  window.addEventListener('sim:physiology-updated',syncPhysiologyMirror);
   panels.therapy.prepend(mirror);
-  setInterval(syncPhysiologyMirror,350);
   syncPhysiologyMirror();
  }
  add('premedPanel','anesthesia');add('inductionPanel','anesthesia');
