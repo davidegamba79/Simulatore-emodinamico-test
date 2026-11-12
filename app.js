@@ -644,7 +644,7 @@ function inductionRows(){
  return r?[{label:'Pre-induzione',sec:0,...r.baseline},...inductionMarks.map(t=>({label:t<60?t+' s':t/60+' min',...r.marks[t]}))]:[];
 }
 function inductionRenderReport(){
- const body=$('inductionReportRows'),info=$('inductionReportInfo'),ext=$('inductionReportExtrema'),btn=$('inductionExportCsv');
+ const body=$('inductionReportRows'),info=$('inductionReportInfo'),ext=$('inductionReportExtrema');
  if(!body||!info||!ext)return;
  const i=v25.induction,r=i.report;
  if(btn)btn.disabled=!r;
@@ -655,18 +655,6 @@ function inductionRenderReport(){
  const extfmt=(o,k,unit,base)=>{if(!o)return '—';const delta=base!=null&&Math.abs(base)>.001?' ('+((o.value-base)/base*100).toFixed(1)+'%)':'';return fmt(o.value,k)+' '+unit+delta+' a '+o.sec.toFixed(0)+' s'};
  ext.textContent='MAP minima: '+extfmt(r.minMap,'map','mmHg',r.baseline.map)+' · SVR minima: '+extfmt(r.minSvr,'svr','dyn·s/cm⁵',r.baseline.svr)+' · FC massima: '+extfmt(r.maxHr,'hr','bpm',r.baseline.hr)+' (primi 10 min).';
 }
-function inductionExportCsv(){
- const i=v25.induction;if(!i.report)return;
- const esc=v=>'"'+String(v).replaceAll('"','""')+'"';
- const meta=[['Farmaco',i.drug],['Dose mg/kg',i.dose],['Somministrazione secondi',i.administrationSeconds],['Finestra minuti',i.windowMinutes]];
- const head=['Fase','Secondi effettivi','FC bpm','SAP mmHg','DAP mmHg','MAP mmHg','CO L/min','SV mL','SVR dyn s/cm5'];
- const rows=inductionRows().map(r=>[r.label,r.sec==null?'':r.sec.toFixed(1),...inductionKeys.map(k=>r[k]==null?'':r[k])]);
- const extrema=[['MAP minima',i.report.minMap?.sec??'',i.report.minMap?.value??''],['SVR minima',i.report.minSvr?.sec??'',i.report.minSvr?.value??''],['FC massima',i.report.maxHr?.sec??'',i.report.maxHr?.value??'']];
- const csv='\uFEFF'+[...meta,head,...rows,[],['Estremo','Secondi','Valore'],...extrema].map(row=>row.map(esc).join(';')).join('\r\n');
- const url=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'})),a=document.createElement('a');
- a.href=url;a.download='induzione-'+i.drug.toLowerCase()+'-v2897.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
-}
-
 function v25Sample(t){let rec={t};v25Metrics.forEach(([k])=>{if(['ppv','spv'].includes(k)&&([AV2,AV3].includes($('rhythm').value)||!(typeof window.simVentValid==='function'&&window.simVentValid())))rec[k]=null;else if(k==='map')rec[k]=map();else if((k==='hr'||k==='spo2')&&($('rhythm').value==='Artefatto massaggio cardiaco 120/min'||$('rhythm').value==='Fibrillazione ventricolare'||$('rhythm').value==='Asistolia'))rec[k]=null;else if(k==='spo2'&&($('rhythm').value==='Tachicardia ventricolare senza polso'||$('rhythm').value==='PEA / attività elettrica'||$('rhythm').value==='Asistolia'))rec[k]=null;else if(['svr','svri','ea','ppv','spv','co','ci','sv','svi','cpo','cce','dpdt'].includes(k)&&$('rhythm').value==='Artefatto massaggio cardiaco 120/min')rec[k]=null;else if(['svr','svri','ea','ppv','spv'].includes(k)&&($('rhythm').value==='Tachicardia ventricolare senza polso'||$('rhythm').value==='Fibrillazione ventricolare'||$('rhythm').value==='PEA / attività elettrica'||$('rhythm').value==='Asistolia'))rec[k]=null;else if(k==='etco2'&&typeof window.simNonIntubated==='function'&&window.simNonIntubated())rec[k]=null;else if(k==='mac')rec[k]=(typeof window.simNonIntubated==='function'&&window.simNonIntubated())?null:+$('mac').value;else if(k==='afterload')rec[k]=phys.vascularTone;else if(k==='preload')rec[k]=phys.preload;else if(k==='contractility')rec[k]=phys.contractility;else rec[k]=+(($(k)&&$(k).value)||state[k]||0)});v25.history.push(rec);if(v25.history.length>1800)v25.history.shift();inductionObserve(rec);try{simCaptureSnapshot()}catch(err){console.warn('Snapshot non disponibile:',err)}}
 const v26Groups=[
  ['vitals',['hr','etco2','spo2']],
