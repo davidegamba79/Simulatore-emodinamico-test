@@ -534,6 +534,8 @@ body.student #trendV25 .trend-head{gap:12px;flex-wrap:wrap}
 <style id="instructor-anesthesia-layout-2934">
 /* MAC nel monitor principale sotto PRAM; visibile solo nella scheda Anestesia. */
 body:not(.student) #instructorInhaledCard{display:none!important;min-width:0}
+body:not(.student) #fentanylPanel{display:none!important;min-width:0}
+body:not(.student)[data-instructor-tab="anesthesia"] #fentanylPanel{display:block!important}
 body:not(.student)[data-instructor-tab="anesthesia"] #instructorInhaledCard{
  display:block!important;margin:0!important;padding:10px 12px;
 }
