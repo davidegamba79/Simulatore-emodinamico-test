@@ -678,7 +678,7 @@ body.student[data-student-tab="meds"] #studentTherapyClocks{display:block}
   
   <label style="margin-top:10px">MAC <input id="mac" type="range" min="0.6" max="2" value="1" step="0.1"><span id="macOut">1,0</span></label><div class="status" id="anesthesiaPhaseStatus" style="margin-top:8px">Fase anestetizzata: MAC attivo.</div>
  </section>
-<section class="card" id="fentanylPanel"><h2>Fentanil EV — schema CCCP</h2><div class="cols"><label>Cp target (ng/mL)<select id="fentTarget"><option value="0.6">0.6</option><option value="0.7">0.7</option><option value="0.8">0.8</option><option value="0.9">0.9</option><option value="1.0" selected>1.0</option><option value="1.1">1.1</option><option value="1.2">1.2</option><option value="1.3">1.3</option><option value="1.4">1.4</option><option value="1.5">1.5</option><option value="1.6">1.6</option><option value="1.7">1.7</option><option value="1.8">1.8</option><option value="1.9">1.9</option><option value="2.0">2.0</option></select></label><label>Bolo aggiuntivo (µg/kg)<input id="fentBolus" type="number" min="0.1" max="20" step="0.1" value="1"></label></div><div class="row" style="margin-top:8px"><button id="fentStart" type="button">Avvia TCI + bolo iniziale</button><button id="fentStop" type="button" disabled>Interrompi TCI</button><button id="fentBolusGive" type="button">Somministra bolo</button></div><div class="status" id="fentState" style="margin-top:8px">TCI non attiva</div><div class="cols" style="margin-top:8px"><div>Velocità attuale<br><b id="fentRate">0 µg/kg/h</b></div><div>Tempo TCI<br><b id="fentElapsed">—</b></div><div>Dose cumulativa<br><b id="fentTotal">0 µg/kg</b></div></div><div class="status" id="fentLog" style="margin-top:8px">Nessuna somministrazione.</div><small style="display:block;margin-top:8px;color:var(--muted)">Schema CCCP fornito dal docente: bolo iniziale e velocità a gradini. Cp target nominale, non concentrazione stimata con modello PK validato. Solo simulazione didattica, non per dosaggio clinico.</small></section><section class="card physiology-engine-card"><h2>Motore fisiologico — emodinamica</h2>
+<section class="card" id="fentanylPanel"><h2>Fentanil EV — schema CCCP</h2><div class="cols"><label>Cp target (ng/mL)<select id="fentTarget"><option value="0.6">0.6</option><option value="0.7">0.7</option><option value="0.8">0.8</option><option value="0.9">0.9</option><option value="1.0" selected>1.0</option><option value="1.1">1.1</option><option value="1.2">1.2</option><option value="1.3">1.3</option><option value="1.4">1.4</option><option value="1.5">1.5</option><option value="1.6">1.6</option><option value="1.7">1.7</option><option value="1.8">1.8</option><option value="1.9">1.9</option><option value="2.0">2.0</option></select></label><label>Bolo aggiuntivo (µg/kg)<input id="fentBolus" type="number" min="0.1" max="20" step="0.1" value="1"></label></div><div class="row" style="margin-top:8px"><button id="fentStart" type="button">Avvia TCI + bolo iniziale</button><button id="fentStop" type="button" disabled>Interrompi TCI</button><button id="fentBolusGive" type="button">Somministra bolo</button></div><div class="status" id="fentState" style="margin-top:8px">TCI non attiva</div><div class="cols" style="margin-top:8px"><div>Velocità attuale<br><b id="fentRate">0 µg/kg/h</b></div><div>Tempo TCI<br><b id="fentElapsed">—</b></div><div>Dose cumulativa<br><b id="fentTotal">0 µg/kg</b></div></div><div class="status">Indice effetto oppioide (didattico): <b id="fentEffect">0 / 100</b></div><div class="status" id="fentLog" style="margin-top:8px">Nessuna somministrazione.</div><small style="display:block;margin-top:8px;color:var(--muted)">Schema CCCP fornito dal docente: bolo iniziale e velocità a gradini. Cp target nominale, non concentrazione stimata con modello PK validato. Effetti emodinamici e indice oppioide illustrativi, non modello farmacodinamico validato. Solo simulazione didattica, non per dosaggio clinico.</small></section><section class="card physiology-engine-card"><h2>Motore fisiologico — emodinamica</h2>
   <div class="cols">
    <label>Precarico <input id="preload" type="range" min="20" max="180" value="100"><span id="preloadOut">100%</span></label>
    <label>Contrattilità <input id="contractility" type="range" min="20" max="180" value="100"><span id="contractilityOut">100%</span></label>
@@ -815,7 +815,7 @@ body.student[data-student-tab="meds"] #studentTherapyClocks{display:block}
 </div>
 </main>
 
-<script src="./app.js?v=300-case-no-advance-20261112"></script>
+<script src="./app.js?v=300-fent-effects-20261112"></script>
 <script src="./ui-v2.4.js"></script>
 <script src="./wave-v2.js?v=29352"></script>
 <script>
@@ -1060,6 +1060,8 @@ window.addEventListener('DOMContentLoaded',()=>{
  if(inhaledCard){
   inhaledCard.id='instructorInhaledCard';
   clinical.append(inhaledCard);
+  const fentanylCard=get('fentanylPanel');
+  if(fentanylCard)clinical.append(fentanylCard);
  }
  const trend=get('trendV25');if(trend){scroll.append(trend);trend.hidden=true}
  // Tempo sempre accessibile, indipendentemente dalla scheda selezionata.
@@ -1351,5 +1353,5 @@ body:not(.student) #timeControls .time-jumps .sim-time-jumps button{min-width:0;
 /* I valori FC, MAP, CO e SVR restano nel monitor; non duplicarli nella barra docente. */
 body:not(.student) .instructor-console-top .quick-values{display:none!important}
 </style>
-<script src="./fentanyl-cccp.js?v=1"></script></body>
+<script src="./fentanyl-cccp.js?v=2"></script></body>
 </html>
