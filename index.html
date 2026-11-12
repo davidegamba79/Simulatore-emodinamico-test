@@ -1305,6 +1305,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   number.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();apply();number.blur()}});
   range.addEventListener('input',sync);
   range.addEventListener('change',sync);
+  window.addEventListener('sim:physiology-updated',sync);
   // Nessun polling: l'aggiornamento periodico interrompeva la digitazione.
   sync();
  }
