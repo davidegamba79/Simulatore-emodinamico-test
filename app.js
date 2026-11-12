@@ -895,10 +895,10 @@ function v25Loop(now){
 v25Setup();simTimeSetup();try{simCaptureSnapshot()}catch(err){console.warn('Snapshot iniziale:',err)}requestAnimationFrame(v25Loop);
 /* ===== end V2.8.2 ===== */
 
-$('modeBtn').onclick=()=>{document.body.classList.toggle('student');let s=document.body.classList.contains('student');$('modeTitle').textContent=s?'Monitor studenti':'Console istruttore';$('modeBtn').textContent=s?'Torna alla console':'Modalità studenti'};
+// La modalità studenti si attiva esclusivamente nella finestra separata.
 $('studentBtn').onclick=()=>{let u=new URL(location.href);u.searchParams.set('student','1');window.open(u.toString(),'_blank')};
 $('fullBtn').onclick=()=>{if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.()};
-if(new URLSearchParams(location.search).get('student')==='1'){$('modeBtn').click()}
+if(new URLSearchParams(location.search).get('student')==='1'){document.body.classList.add('student');$('modeTitle').textContent='Monitor studenti'}
 window.addEventListener('DOMContentLoaded',()=>{if(document.body.classList.contains('student'))simStudentRestore();else{simPublishStudentHistory();simPublishStudentStatus()}});
 
 // Safari/iPad puo' sospendere gli eventi storage quando una finestra
