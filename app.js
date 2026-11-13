@@ -300,7 +300,7 @@ function physiology(){
   const refMAP=healthy?98-33*maintenanceProgress:65;
   const refCO=healthy?3.0-.1*maintenanceProgress:2.9;
   const vent=typeof window.simVentCalc==='function'?window.simVentCalc():null;
- let P=(phys.preload/100)*(vent?.preloadFactor??1),mac=(awakePremed||(typeof window.isInductionPhase==='function'&&window.isInductionPhase()))?1:clamp(+$('mac').value||1,.6,2),md=mac-1,macC=Math.exp(-.28*md-.08*Math.max(md,0)*Math.max(md,0)),macV=Math.exp(-.35*md-.10*Math.max(md,0)*Math.max(md,0));
+ let P=(phys.preload/100)*(vent?.preloadFactor??1),mac=(awakePremed||(typeof window.isInductionPhase==='function'&&window.isInductionPhase())||document.body.dataset.propofolMode==='tiva')?1:clamp(+$('mac').value||1,.6,2),md=mac-1,macC=Math.exp(-.28*md-.08*Math.max(md,0)*Math.max(md,0)),macV=Math.exp(-.35*md-.10*Math.max(md,0)*Math.max(md,0));
  // Compenso vasocostrittore moderato e attenuato dall'anestesia: non corregge la perdita dei battiti ventricolari.
  const fentEffect=typeof window.simFentanylEffects==='function'?window.simFentanylEffects(simClock.virtual):{intensity:0};
   const avCompensation=advancedAV?clamp((80-ventRate)*(avRhythm===AV3?.0040:.0033),0,avRhythm===AV3?.16:.10)*clamp(1-.35*Math.max(0,mac-1),.6,1):0;
@@ -692,7 +692,7 @@ function v25RenderEvents(){$('v25TrendEvents').textContent=v25.events.slice(-5).
 
 // Virtual simulation time is monotonic and independent of the browser clock.
 const simClock={virtual:performance.now(),real:performance.now(),speed:1,paused:false,busy:false,accumulator:0};
-window.simVirtualNow=()=>simClock.virtual; window.simIsPaused=()=>simClock.paused;
+window.simVirtualNow=()=>simClock.virtual; window.simIsPaused=()=>simClock.paused; window.simPropofolState=()=>v25.induction;
 function simAdvancePhysics(seconds){
  const n=Math.ceil(seconds/.25),step=seconds/n;
  for(let i=0;i<n;i++){
