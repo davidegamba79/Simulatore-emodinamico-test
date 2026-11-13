@@ -63,5 +63,5 @@ function setup(){
  sync();requestAnimationFrame(frame);
 }
 window.simPropofolTCI=tci;
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup);else setup();
+if(document.readyState==='complete')setTimeout(setup,0);else document.addEventListener('DOMContentLoaded',()=>setTimeout(setup,0),{once:true});
 })();
