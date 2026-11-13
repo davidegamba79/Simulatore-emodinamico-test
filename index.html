@@ -955,14 +955,22 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(typeof v25Event==='function')v25Event('Induzione EV: '+drug+' '+dose+' mg/kg in '+seconds+' s; finestra '+minutes+' min');
   showPremedElapsed();showInductionStatus();
  };
- // Intubazione indipendente per TIVA, anche senza bolo di induzione.
- window.simTIVAIntubate=()=>{
+ // Induzione TIVA: la TCI parte prima dell'intubazione e resta attiva dopo.
+ window.simTIVAStartInduction=()=>{
   const i=v25.induction;
   if(i.phase==='awake'||!i.startedAt){
    i.drug='Propofol';i.dose=0;i.administrationSeconds=60;
    i.startedAt=window.simVirtualNow();i.propofolStoppedAt=i.startedAt;
    i.pk={central:0,fast:0,slow:0,ce:0,cv:0};
+   i.phase='induction';
+   window.simSetAirwayIntubated?.(false,'induzione TIVA');
+   if(typeof v25Event==='function')v25Event('Induzione TIVA propofol TCI avviata');
   }
+  showInductionStatus();
+ };
+ window.simTIVAIntubate=()=>{
+  const i=v25.induction;
+  if(i.phase!=='induction'||!window.simPropofolTCI?.active)return;
   i.phase='maintenance';i.maintenanceAt=window.simVirtualNow();
   i.propofolStoppedAt=i.maintenanceAt;
   window.simSetAirwayIntubated?.(true,'intubazione TIVA');
@@ -1405,7 +1413,7 @@ body:not(.student) #timeControls .time-jumps .sim-time-jumps button{min-width:0;
 /* I valori FC, MAP, CO e SVR restano nel monitor; non duplicarli nella barra docente. */
 body:not(.student) .instructor-console-top .quick-values{display:none!important}
 </style>
-<style id="propofol-tiva-v30">body:not(.student)[data-propofol-mode="tiva"] #instructorInhaledCard{display:none!important}body:not(.student)[data-instructor-tab="anesthesia"] #inductionPanel{display:block!important}#propofolTCIControl{border-top:1px solid #344652;padding-top:12px;margin-top:12px}#propofolTCIControl .row{display:flex;gap:8px;flex-wrap:wrap}#propofolTCIControl canvas,#fentPKChart{background:#0b1720;border-radius:8px;margin-top:8px}</style><script src="./fentanyl-cccp.js?v=9"></script><script src="./propofol-tci.js?v=10"></script><style id="pk-chart-visibility-v30">body:not(.student)[data-instructor-tab="anesthesia"] #inductionPanel{display:block!important}#propofolTCIControl,#fentPKChart{min-width:0}#propofolTCIControl canvas,#fentPKChart{height:160px!important;min-height:160px!important;display:block!important}#inductionReport{margin-top:8px!important}#inductionReport details summary{cursor:pointer;padding:8px 0;font-weight:600}</style><style id="anesthesia-maintenance-ux-v30">
+<style id="propofol-tiva-v30">body:not(.student)[data-propofol-mode="tiva"] #instructorInhaledCard{display:none!important}body:not(.student)[data-instructor-tab="anesthesia"] #inductionPanel{display:block!important}#propofolTCIControl{border-top:1px solid #344652;padding-top:12px;margin-top:12px}#propofolTCIControl .row{display:flex;gap:8px;flex-wrap:wrap}#propofolTCIControl canvas,#fentPKChart{background:#0b1720;border-radius:8px;margin-top:8px}</style><script src="./fentanyl-cccp.js?v=9"></script><script src="./propofol-tci.js?v=11"></script><style id="pk-chart-visibility-v30">body:not(.student)[data-instructor-tab="anesthesia"] #inductionPanel{display:block!important}#propofolTCIControl,#fentPKChart{min-width:0}#propofolTCIControl canvas,#fentPKChart{height:160px!important;min-height:160px!important;display:block!important}#inductionReport{margin-top:8px!important}#inductionReport details summary{cursor:pointer;padding:8px 0;font-weight:600}</style><style id="anesthesia-maintenance-ux-v30">
 body:not(.student) #maintenanceModeCard{display:none!important}
 body:not(.student)[data-instructor-tab="anesthesia"] #maintenanceModeCard{display:block!important;padding:10px 12px;margin:0!important}
 body:not(.student)[data-propofol-mode="tiva"] #instructorInhaledCard{display:none!important}
