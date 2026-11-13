@@ -1,11 +1,12 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const now=()=>window.simVirtualNow?.()||performance.now();
-const tci={active:false,target:3.5,rate:0,total:0,history:[],lastSample:-Infinity,mode:'inhaled',delivery:'target',manualRate:12,bolusTotal:0,bolus:null};
+const tci={active:false,target:3.5,rate:0,total:0,history:[],lastSample:-Infinity,mode:'inhaled',delivery:'target',manualRate:12,bolusTotal:0,bolus:null,bolusRate:0};
 window.simPropofolTCIRate=(i,p,dt,t)=>{
  if(tci.mode!=='tiva'||!['induction','maintenance'].includes(i.phase))return 0;
  let bolusRate=0;
  if(tci.bolus){const b=tci.bolus;const remaining=Math.max(0,b.dose-b.delivered);const seconds=Math.min(Math.max(0,dt),Math.max(0,(b.endsAt-t)/1000+dt));const delivered=Math.min(remaining,b.dose/30*seconds);b.delivered+=delivered;bolusRate=dt>0?delivered/dt:0;tci.bolusTotal+=delivered;tci.total+=delivered;if(b.delivered>=b.dose-1e-8)tci.bolus=null;}
+ tci.bolusRate=bolusRate;
  if(!tci.active){tci.rate=0;return bolusRate;}
  if(tci.delivery==='manual'){tci.rate=tci.manualRate;return tci.manualRate/3600+bolusRate;}
  const cp=i.pk.central/p.vc,ce=i.pk.ce;
@@ -19,7 +20,7 @@ window.simPropofolTCIRate=(i,p,dt,t)=>{
  return mgKgMin/60+bolusRate;
 };
 window.simPropofolTCIStep=(i,p,dt,rate,t)=>{
- if(tci.active&&['induction','maintenance'].includes(i.phase))tci.total+=Math.max(0,rate-(tci.bolus? tci.bolus.dose/30:0))*dt;
+ if(tci.active&&['induction','maintenance'].includes(i.phase))tci.total+=Math.max(0,rate-tci.bolusRate)*dt;
  if(t-tci.lastSample>=1000){tci.lastSample=t;tci.history.push({t,cp:i.pk.central/p.vc,ce:i.pk.ce});if(tci.history.length>1800)tci.history.shift();}
 };
 function draw(canvas,rows,unit){
