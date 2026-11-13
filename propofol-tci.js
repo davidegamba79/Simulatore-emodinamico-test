@@ -26,7 +26,7 @@ function draw(canvas,rows,unit){
  const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w/dpr,h/dpr);
  const W=w/dpr,H=h/dpr,L=35,R=W-10,T=12,B=H-23;
  ctx.strokeStyle='#52616d';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(L,T);ctx.lineTo(L,B);ctx.lineTo(R,B);ctx.stroke();
- const latest=rows.at(-1)?.t||now(),first=unit==='fentanyl'?(rows[0]?.t||latest):Math.max(rows[0]?.t||latest,latest-30*60000);
+ const latest=rows.at(-1)?.t??now(),first=unit==='fentanyl'?(rows[0]?.t??latest):Math.max(rows[0]?.t??latest,latest-30*60000);
  const pts=rows.filter(p=>p.t>=first),max=Math.max(1,...pts.flatMap(p=>[p.cp||0,p.ce||0]))*1.15;
  ctx.fillStyle='#c4d0dc';ctx.font='11px sans-serif';ctx.fillText(max.toFixed(1),3,18);ctx.fillText('0',19,B);ctx.fillText(unit==='fentanyl'?'0 min':'−30 min',L,B+16);ctx.fillText(unit==='fentanyl'?((latest-first)/60000).toFixed(1)+' min':'Ora',R-45,B+16);
  for(const [key,color] of [['cp','#36c9ff'],['ce','#f3b85c']]){
@@ -37,7 +37,7 @@ function draw(canvas,rows,unit){
 function setup(){
  if(document.body.classList.contains('student'))return;
  const induction=$('inductionPanel'),mac=$('mac'),inhaled=$('instructorInhaledCard'),fent=$('fentanylPanel');if(!induction||!mac||!inhaled)return;
- const modeCard=document.createElement('section');modeCard.id='maintenanceModeCard';modeCard.className='card';modeCard.innerHTML='<label style="display:block">Tipo di mantenimento<select id="propMode" style="width:100%"><option value="inhaled">Inalatorio (MAC)</option><option value="tiva">TIVA — TCI propofol (Ce)</option></select></label>';inhaled.before(modeCard);const control=document.createElement('div');control.id='propofolTCIControl';control.innerHTML='<div class="cols" style="margin-top:8px"><label>Ce target propofol (µg/mL)<input id="propTarget" type="number" min="1" max="8" step="0.1" value="3.5"></label></div><div class="row" style="margin-top:8px"><button type="button" id="propStart">Avvia TCI</button><button type="button" id="propStop">Interrompi TCI</button></div><div class="status" id="propStatus">TCI non attiva</div><div class="status" id="propStats">Cp — · Ce — · Infusione 0 mg/kg/h · Dose TCI 0 mg/kg</div><canvas id="propPKChart" style="width:100%;height:160px;display:block"></canvas><small>Cp azzurro · Ce arancione · Beths/Brás; controllo TCI didattico, non utilizzabile clinicamente.</small>';
+ const modeCard=document.createElement('section');modeCard.id='maintenanceModeCard';modeCard.className='card';modeCard.innerHTML='<label style="display:block">Tipo di mantenimento<select id="propMode" style="width:100%"><option value="inhaled">Inalatorio (MAC)</option><option value="tiva">TIVA — TCI propofol (Ce)</option></select></label>';const main=$('mainAnesthesiaBelowPram');if(main)main.prepend(modeCard);else inhaled.before(modeCard);const control=document.createElement('div');control.id='propofolTCIControl';control.innerHTML='<div class="cols" style="margin-top:8px"><label>Ce target propofol (µg/mL)<input id="propTarget" type="number" min="1" max="8" step="0.1" value="3.5"></label></div><div class="row" style="margin-top:8px"><button type="button" id="propStart">Avvia TCI</button><button type="button" id="propStop">Interrompi TCI</button></div><div class="status" id="propStatus">TCI non attiva</div><div class="status" id="propStats">Cp — · Ce — · Infusione 0 mg/kg/h · Dose TCI 0 mg/kg</div><canvas id="propPKChart" style="width:100%;height:160px;display:block"></canvas><small>Cp azzurro · Ce arancione · Beths/Brás; controllo TCI didattico, non utilizzabile clinicamente.</small>';
  induction.insertBefore(control,$('inductionReport')||null);
  const fentChart=document.createElement('div');fentChart.innerHTML='<div class="status" id="fentPKStats">Cp — · Ce —</div><canvas id="fentPKChart" style="width:100%;height:160px;display:block"></canvas><small>Cp azzurro · Ce arancione · Sano per Cp; Ce illustrativa, non validata.</small>';if(fent){const controls=fent.querySelector('.cols');if(controls)controls.after(fentChart);else fent.append(fentChart);}
  const mode=$('propMode'),target=$('propTarget'),start=$('propStart'),stop=$('propStop');
@@ -54,7 +54,7 @@ function setup(){
   start.disabled=mode.value!=='tiva'||!window.simAirwayIntubated||tci.active;
   stop.disabled=!tci.active;
   document.body.dataset.anesthesiaMaintenance=state?.phase==='maintenance'?'true':'false';if(mode.value==='tiva'){inhaled.style.display='none';mac.disabled=true;}
-  draw($('propPKChart'),tci.history);
+  draw($('propPKChart'),tci.history.length?tci.history:[{t:now(),cp:0,ce:0}]);
   if(typeof window.simFentanylPK==='function'){
    const f=window.simFentanylPK(now());if(f){$('fentPKStats').textContent='Cp '+f.cp.toFixed(2)+' · Ce '+f.ce.toFixed(2)+' ng/mL';draw($('fentPKChart'),f.history,'fentanyl');}
   }
