@@ -1482,5 +1482,38 @@ body:not(.student)[data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #inductio
 body:not(.student)[data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #inductionPanel > .row,
 body:not(.student)[data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #inductionStatus,
 body:not(.student)[data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #inductionReport{display:none!important}
+</style><style id="anesthesia-scroll-ipad-v13">
+/* Un solo contenitore scrollabile nella vista Anestesia; evita rimbalzi e scroll anchoring Safari. */
+body:not(.student)[data-instructor-tab="anesthesia"] .monitor{
+ height:calc(100dvh - var(--instructor-header-height,80px) - 20px)!important;
+ max-height:calc(100dvh - var(--instructor-header-height,80px) - 20px)!important;
+ min-height:0!important;
+ overflow-y:auto!important;
+ overflow-x:hidden!important;
+ overscroll-behavior-y:contain;
+ -webkit-overflow-scrolling:touch;
+ overflow-anchor:none;
+ scroll-behavior:auto;
+}
+body:not(.student)[data-instructor-tab="anesthesia"] .instructor-fixed-monitor,
+body:not(.student)[data-instructor-tab="anesthesia"] .instructor-monitor-scroll{
+ display:contents!important;
+ overflow:visible!important;
+ max-height:none!important;
+}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram{
+ flex:0 0 auto!important;
+ min-height:0!important;
+ height:auto!important;
+ overflow:visible!important;
+ overflow-anchor:none;
+}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram .card{
+ flex:0 0 auto!important;
+ overflow:visible!important;
+}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram canvas{
+ contain:layout paint;
+}
 </style></body>
 </html>
