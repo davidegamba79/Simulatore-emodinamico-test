@@ -35,6 +35,30 @@ function exposureAt(t){
  }
  return Math.max(0,sum);
 }
+// Sano two-compartment plasma model (V1 1.5 L/kg; k10 .05, k12 .09, k21 .05 /min).
+// Effect-site is explicitly illustrative; ke0 is not identified by Sano.
+const fentPK={time:null,a1:0,a2:0,ce:0,history:[],ke0:.15};
+function fentInputAt(t){
+ let input=0;
+ for(const e of events){if(t>=e.time&&t<e.time+(e.duration||bolusDurationMs))input+=e.dose*60000/(e.duration||bolusDurationMs);}
+ for(const r of runs){if(t<r.start||(r.end!==null&&t>=r.end))continue;input+=rateAt((t-r.start)/60000,r.col)/60;}
+ return input;
+}
+function fentComputePK(t){
+ if(fentPK.time===null||t<fentPK.time){fentPK.time=Math.min(t,...events.map(e=>e.time),...runs.map(r=>r.start));fentPK.a1=0;fentPK.a2=0;fentPK.ce=0;fentPK.history=[];}
+ let steps=0;
+ while(fentPK.time<t&&steps<120000){
+  const dt=Math.min(1,(t-fentPK.time)/1000)/60,mid=fentPK.time+dt*30000,cp=fentPK.a1/1.5;
+  const input=fentInputAt(mid);
+  const da1=input-(.05+.09)*fentPK.a1+.05*fentPK.a2,da2=.09*fentPK.a1-.05*fentPK.a2;
+  fentPK.a1=Math.max(0,fentPK.a1+da1*dt);fentPK.a2=Math.max(0,fentPK.a2+da2*dt);
+  fentPK.ce+=((cp+fentPK.a1/1.5)/2-fentPK.ce)*(1-Math.exp(-fentPK.ke0*dt));
+  fentPK.time+=dt*60000;steps++;
+  if(!fentPK.history.length||fentPK.time-fentPK.history.at(-1).t>=1000){fentPK.history.push({t:fentPK.time,cp:fentPK.a1/1.5,ce:fentPK.ce});if(fentPK.history.length>1800)fentPK.history.shift();}
+ }
+ return {cp:fentPK.a1/1.5,ce:fentPK.ce,history:fentPK.history};
+}
+window.simFentanylPK=fentComputePK;
 window.simFentanylEffects=(t=now())=>{
  const exposure=exposureAt(t);
  const intensity=Math.min(1.5,exposure/(2.5+exposure)*1.5);
