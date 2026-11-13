@@ -935,13 +935,17 @@ window.addEventListener('pageshow',()=>{
 // When the student page becomes active again, fetch the latest full trend
 // history rather than relying on storage events missed during Safari suspension.
 let simStudentLastStatusStamp='',simStudentLastHistoryStamp='';
+let simStudentLastHistoryPoll=0;
 setInterval(()=>{
  if(!document.body.classList.contains('student')||document.visibilityState==='hidden')return;
  try{
   const p=localStorage.getItem(studentStatusKey);
   if(p){const d=JSON.parse(p),stamp=String(d.elapsed);if(stamp!==simStudentLastStatusStamp){simStudentLastStatusStamp=stamp;simStudentApplyStatus(d)}}
-  const h=localStorage.getItem(studentHistoryKey);
-  if(h){const d=JSON.parse(h),stamp=String(d.elapsed);if(stamp!==simStudentLastHistoryStamp){simStudentLastHistoryStamp=stamp;simStudentApplyHistory(d)}}
+  if(Date.now()-simStudentLastHistoryPoll>=5000){
+   simStudentLastHistoryPoll=Date.now();
+   const h=localStorage.getItem(studentHistoryKey);
+   if(h){const d=JSON.parse(h),stamp=String(d.elapsed);if(stamp!==simStudentLastHistoryStamp){simStudentLastHistoryStamp=stamp;simStudentApplyHistory(d)}}
+  }
  }catch(err){console.warn('Sincronizzazione studenti:',err)}
 },1000);
 document.addEventListener('visibilitychange',()=>{
