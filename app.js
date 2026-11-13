@@ -909,7 +909,7 @@ setInterval(()=>{
  if(now-simLastInstructorFrame<650)return;
  const elapsed=Math.min(10,Math.max(0,(now-simClock.real)/1000));
  simClock.real=now;
- if(elapsed>0){simAdvancePhysics(elapsed*simClock.speed);simTimeDisplay();simPublishStudentStatus();}
+ if(elapsed>0){simAdvancePhysics(elapsed*simClock.speed);simTimeDisplay();simPublishStudentStatus();simPublishStudentHistory();}
 },500);
 /* ===== end V2.8.2 ===== */
 
@@ -926,6 +926,12 @@ window.addEventListener('DOMContentLoaded',()=>{if(document.body.classList.conta
 window.addEventListener('pageshow',()=>{
  if(document.body.classList.contains('student'))simStudentRestore();
 });
+// When the student page becomes active again, fetch the latest full trend
+// history rather than relying on storage events missed during Safari suspension.
+setInterval(()=>{
+ if(!document.body.classList.contains('student')||document.visibilityState==='hidden')return;
+ simStudentRestore();
+},2000);
 document.addEventListener('visibilitychange',()=>{
  if(document.visibilityState!=='visible')return;
  if(document.body.classList.contains('student'))simStudentRestore();
