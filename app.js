@@ -647,7 +647,6 @@ function inductionRenderReport(){
  const body=$('inductionReportRows'),info=$('inductionReportInfo'),ext=$('inductionReportExtrema');
  if(!body||!info||!ext)return;
  const i=v25.induction,r=i.report;
- if(btn)btn.disabled=!r;
  if(!r){info.textContent='Il report inizia con «Avvia induzione».';body.innerHTML='<tr><td colspan="8">Nessuna induzione registrata.</td></tr>';ext.textContent='MAP minima, SVR minima e FC massima: —';return}
  const fmt=(v,k)=>v==null||!Number.isFinite(v)?'—':k==='co'?v.toFixed(2):Math.round(v).toLocaleString('it-IT');
  body.innerHTML=inductionRows().map(row=>'<tr><th scope="row" style="text-align:left;white-space:nowrap;padding:5px 7px">'+row.label+'</th>'+inductionKeys.map(k=>'<td style="text-align:right;padding:5px 7px">'+fmt(row[k],k)+'</td>').join('')+'</tr>').join('');
