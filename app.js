@@ -420,16 +420,17 @@ function v25Setup(){
  // Ricalibrazione propofol: risposta vascolare sigmoide sensibile al picco di concentrazione,
  // non alla sola dose cumulativa; coefficienti didattici NON validati per uso clinico.
  const inductionPK={
-  Propofol:{vc:.40,vf:.70,vs:3.10,qf:.55,qs:.13,cl:.055,ke0:.723,kv:3.5,ecv:4.5,vascularHill:5,ech:1.9,tone:-46,preload:-13,contractility:-22,hr:-7},
+  Propofol:{vc:.78,vf:.78*.0365/.0312,vs:.78*.0049/.0011,qf:.78*.0365,qs:.78*.0049,cl:.78*.07,ke0:.723,kv:3.5,ecv:4.5,vascularHill:5,ech:1.9,tone:-46,preload:-13,contractility:-22,hr:-7},
   Alfaxalone:{vc:.30,vf:.55,vs:1.20,qf:.45,qs:.10,cl:.059,ke0:1.0,kv:3.5,ecv:1.8,ech:1.65,tone:-27,preload:-7,contractility:-15,hr:12}
  };
  function v25InductionStep(dt,now){
   const i=v25.induction,p=inductionPK[i.drug];
   if(!p||!i.startedAt||!['induction','maintenance'].includes(i.phase))return;
-  const age=(now-i.startedAt)/1000,infusionEnd=i.propofolStoppedAt?Math.min(i.administrationSeconds,(i.propofolStoppedAt-i.startedAt)/1000):i.administrationSeconds,rate=(age>=0&&age<=infusionEnd)?i.dose/Math.max(1,i.administrationSeconds):0;
+  const age=(now-i.startedAt)/1000,infusionEnd=i.propofolStoppedAt?Math.min(i.administrationSeconds,(i.propofolStoppedAt-i.startedAt)/1000):i.administrationSeconds,inductionRate=(age>=0&&age<=infusionEnd)?i.dose/Math.max(1,i.administrationSeconds):0,tciRate=(i.phase==='maintenance'&&i.drug==='Propofol'&&typeof window.simPropofolTCIRate==='function')?window.simPropofolTCIRate(i,p,dt,now):0,rate=inductionRate+tciRate;
   const k=i.pk,cp=k.central/p.vc,cf=k.fast/p.vf,cs=k.slow/p.vs,minutes=dt/60;
   const fast=p.qf*(cp-cf),slow=p.qs*(cp-cs),elim=p.cl*cp;
   k.central=Math.max(0,k.central+rate*dt-(fast+slow+elim)*minutes);
+  if(typeof window.simPropofolTCIStep==='function'&&i.drug==='Propofol')window.simPropofolTCIStep(i,p,dt,rate,now);
   k.fast=Math.max(0,k.fast+fast*minutes);
   k.slow=Math.max(0,k.slow+slow*minutes);
   const plasma=k.central/p.vc;
