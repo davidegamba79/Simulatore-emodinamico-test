@@ -823,6 +823,12 @@ function simStudentApplyStatus(d){
   if(typeof d.airwayIntubated==='boolean')window.simAirwayIntubated=d.airwayIntubated;
  if(typeof d.inductionStarted==='boolean')v25.induction.startedAt=d.inductionStarted?1:0;
  if(d.sample&&Number.isFinite(d.sample.t)){
+  // Mirror authoritative numeric values; previously only trend history changed.
+  for(const key of ['hr','spo2','etco2','rr','sap','dap','co','ci','sv','svi','svr','svri','ppv','spv','dpdt','cce','ea','cpo']){
+   const value=d.sample[key],el=$(key);
+   if(el&&Number.isFinite(value)){el.value=String(value);state[key]=value;}
+  }
+  if(Number.isFinite(d.sample.mac)&&$('mac'))$('mac').value=String(d.sample.mac);
   v25.history=v25.history.filter(x=>x.t<d.sample.t);
   v25.history.push(d.sample);
   if(v25.history.length>1800)v25.history.splice(0,v25.history.length-1800);
@@ -928,10 +934,16 @@ window.addEventListener('pageshow',()=>{
 });
 // When the student page becomes active again, fetch the latest full trend
 // history rather than relying on storage events missed during Safari suspension.
+let simStudentLastStatusStamp='',simStudentLastHistoryStamp='';
 setInterval(()=>{
  if(!document.body.classList.contains('student')||document.visibilityState==='hidden')return;
- simStudentRestore();
-},2000);
+ try{
+  const p=localStorage.getItem(studentStatusKey);
+  if(p){const d=JSON.parse(p),stamp=String(d.elapsed);if(stamp!==simStudentLastStatusStamp){simStudentLastStatusStamp=stamp;simStudentApplyStatus(d)}}
+  const h=localStorage.getItem(studentHistoryKey);
+  if(h){const d=JSON.parse(h),stamp=String(d.elapsed);if(stamp!==simStudentLastHistoryStamp){simStudentLastHistoryStamp=stamp;simStudentApplyHistory(d)}}
+ }catch(err){console.warn('Sincronizzazione studenti:',err)}
+},1000);
 document.addEventListener('visibilitychange',()=>{
  if(document.visibilityState!=='visible')return;
  if(document.body.classList.contains('student'))simStudentRestore();
