@@ -54,7 +54,7 @@ function fentComputePK(t){
   fentPK.a1=Math.max(0,fentPK.a1+da1*dt);fentPK.a2=Math.max(0,fentPK.a2+da2*dt);
   fentPK.ce+=((cp+fentPK.a1/1.5)/2-fentPK.ce)*(1-Math.exp(-fentPK.ke0*dt));
   fentPK.time+=dt*60000;steps++;
-  if(!fentPK.history.length||fentPK.time-fentPK.history.at(-1).t>=1000){fentPK.history.push({t:fentPK.time,cp:fentPK.a1/1.5,ce:fentPK.ce});if(fentPK.history.length>1800)fentPK.history.shift();}
+  if(!fentPK.history.length||fentPK.time-fentPK.history.at(-1).t>=1000){fentPK.history.push({t:fentPK.time,cp:fentPK.a1/1.5,ce:fentPK.ce});if(fentPK.history.length>21600)fentPK.history.shift();}
  }
  return {cp:fentPK.a1/1.5,ce:fentPK.ce,history:fentPK.history};
 }
