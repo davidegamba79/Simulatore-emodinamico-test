@@ -689,7 +689,7 @@ body.student[data-student-tab="meds"] #studentTherapyClocks{display:block}
  </section>
 <section class="card"><h2>Anestesia inalatoria</h2>
   
-  <label style="margin-top:10px">MAC <input id="mac" type="range" min="0.6" max="2" value="1" step="0.1"><span id="macOut">1,0</span></label><div class="status" id="anesthesiaPhaseStatus" style="margin-top:8px">Fase anestetizzata: MAC attivo.</div>
+  <label style="margin-top:10px">MAC <input id="mac" type="range" min="0" max="2" value="1" step="0.1"><span id="macOut">1,0</span></label><div class="status" id="anesthesiaPhaseStatus" style="margin-top:8px">Fase anestetizzata: MAC attivo.</div>
  </section>
 <section class="card" id="fentanylPanel"><h2>Fentanil EV — schema CCCP</h2><div class="cols"><label>Cp target (ng/mL)<input id="fentTarget" type="number" inputmode="decimal" min="0.6" max="2.0" step="0.1" value="1.0"></label><label>Bolo aggiuntivo (µg/kg)<input id="fentBolus" type="number" inputmode="decimal" min="0.1" max="20" step="0.1" value="1.0"></label></div><div class="row" style="margin-top:8px"><button id="fentStart" type="button">Avvia TCI + bolo iniziale</button><button id="fentStop" type="button" disabled>Interrompi TCI</button><button id="fentBolusGive" type="button">Somministra bolo</button><span class="therapy-clock" id="fentBolusClock" aria-live="off">Pronto · 00:00 / 00:30</span></div><div class="status" id="fentState" style="margin-top:8px">TCI non attiva</div><div class="fentanyl-stats" style="margin-top:8px"><div>Velocità attuale<br><b id="fentRate">0 µg/kg/h</b></div><div>Tempo TCI<br><b id="fentElapsed">—</b></div><div>Dose cumulativa<br><b id="fentTotal">0 µg/kg</b></div></div><div class="status" id="fentLog" style="margin-top:8px">Nessuna somministrazione.</div></section><section class="card physiology-engine-card"><h2>Motore fisiologico — emodinamica</h2>
   <div class="cols">
@@ -1385,5 +1385,17 @@ body:not(.student) #timeControls .time-jumps .sim-time-jumps button{min-width:0;
 /* I valori FC, MAP, CO e SVR restano nel monitor; non duplicarli nella barra docente. */
 body:not(.student) .instructor-console-top .quick-values{display:none!important}
 </style>
-<style id="propofol-tiva-v30">body:not(.student)[data-propofol-mode="tiva"] #instructorInhaledCard{display:none!important}body:not(.student)[data-instructor-tab="anesthesia"] #inductionPanel{display:block!important}#propofolTCIControl{border-top:1px solid #344652;padding-top:12px;margin-top:12px}#propofolTCIControl .row{display:flex;gap:8px;flex-wrap:wrap}#propofolTCIControl canvas,#fentPKChart{background:#0b1720;border-radius:8px;margin-top:8px}</style><script src="./fentanyl-cccp.js?v=9"></script><script src="./propofol-tci.js?v=4"></script><style id="pk-chart-visibility-v30">body:not(.student)[data-instructor-tab="anesthesia"] #inductionPanel{display:block!important}#propofolTCIControl,#fentPKChart{min-width:0}#propofolTCIControl canvas,#fentPKChart{height:160px!important;min-height:160px!important;display:block!important}#inductionReport{margin-top:8px!important}#inductionReport details summary{cursor:pointer;padding:8px 0;font-weight:600}</style></body>
+<style id="propofol-tiva-v30">body:not(.student)[data-propofol-mode="tiva"] #instructorInhaledCard{display:none!important}body:not(.student)[data-instructor-tab="anesthesia"] #inductionPanel{display:block!important}#propofolTCIControl{border-top:1px solid #344652;padding-top:12px;margin-top:12px}#propofolTCIControl .row{display:flex;gap:8px;flex-wrap:wrap}#propofolTCIControl canvas,#fentPKChart{background:#0b1720;border-radius:8px;margin-top:8px}</style><script src="./fentanyl-cccp.js?v=9"></script><script src="./propofol-tci.js?v=5"></script><style id="pk-chart-visibility-v30">body:not(.student)[data-instructor-tab="anesthesia"] #inductionPanel{display:block!important}#propofolTCIControl,#fentPKChart{min-width:0}#propofolTCIControl canvas,#fentPKChart{height:160px!important;min-height:160px!important;display:block!important}#inductionReport{margin-top:8px!important}#inductionReport details summary{cursor:pointer;padding:8px 0;font-weight:600}</style><style id="anesthesia-maintenance-ux-v30">
+body:not(.student) #maintenanceModeCard{display:none!important}
+body:not(.student)[data-instructor-tab="anesthesia"] #maintenanceModeCard{display:block!important;padding:10px 12px;margin:0!important}
+body:not(.student)[data-propofol-mode="tiva"] #instructorInhaledCard{display:none!important}
+body:not(.student)[data-propofol-mode="inhaled"] #propofolTCIControl .cols,
+body:not(.student)[data-propofol-mode="inhaled"] #propofolTCIControl .row,
+body:not(.student)[data-propofol-mode="inhaled"] #propStatus,
+body:not(.student)[data-propofol-mode="inhaled"] #propStats{display:none!important}
+body:not(.student)[data-propofol-mode="tiva"][data-anesthesia-maintenance="true"] #inductionPanel .premed-form,
+body:not(.student)[data-propofol-mode="tiva"][data-anesthesia-maintenance="true"] #inductionPanel #inductionIntubate{display:none!important}
+body:not(.student)[data-propofol-mode="tiva"][data-anesthesia-maintenance="true"] #inductionPanel > .row:has(#inductionIntubate){display:none!important}
+body:not(.student) #propofolTCIControl canvas{width:100%;display:block}
+</style></body>
 </html>
