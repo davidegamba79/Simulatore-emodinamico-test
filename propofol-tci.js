@@ -37,11 +37,11 @@ function draw(canvas,rows,unit){
 function setup(){
  if(document.body.classList.contains('student'))return;
  const induction=$('inductionPanel'),mac=$('mac'),inhaled=$('instructorInhaledCard'),fent=$('fentanylPanel');if(!induction||!mac||!inhaled)return;
- const control=document.createElement('div');control.id='propofolTCIControl';control.innerHTML='<div class="row"><label style="width:100%">Mantenimento<select id="propMode"><option value="inhaled">Inalatorio (MAC)</option><option value="tiva">TIVA — TCI propofol (Ce)</option></select></label></div><div class="cols" style="margin-top:8px"><label>Ce target propofol (µg/mL)<input id="propTarget" type="number" min="1" max="8" step="0.1" value="3.5"></label></div><div class="row" style="margin-top:8px"><button type="button" id="propStart">Avvia TCI</button><button type="button" id="propStop">Interrompi TCI</button></div><div class="status" id="propStatus">TCI non attiva</div><div class="status" id="propStats">Cp — · Ce — · Infusione 0 mg/kg/h · Dose TCI 0 mg/kg</div><canvas id="propPKChart" style="width:100%;height:160px;display:block"></canvas><small>Cp azzurro · Ce arancione · Beths/Brás; controllo TCI didattico, non utilizzabile clinicamente.</small>';
+ const modeCard=document.createElement('section');modeCard.id='maintenanceModeCard';modeCard.className='card';modeCard.innerHTML='<label style="display:block">Tipo di mantenimento<select id="propMode" style="width:100%"><option value="inhaled">Inalatorio (MAC)</option><option value="tiva">TIVA — TCI propofol (Ce)</option></select></label>';inhaled.before(modeCard);const control=document.createElement('div');control.id='propofolTCIControl';control.innerHTML='<div class="cols" style="margin-top:8px"><label>Ce target propofol (µg/mL)<input id="propTarget" type="number" min="1" max="8" step="0.1" value="3.5"></label></div><div class="row" style="margin-top:8px"><button type="button" id="propStart">Avvia TCI</button><button type="button" id="propStop">Interrompi TCI</button></div><div class="status" id="propStatus">TCI non attiva</div><div class="status" id="propStats">Cp — · Ce — · Infusione 0 mg/kg/h · Dose TCI 0 mg/kg</div><canvas id="propPKChart" style="width:100%;height:160px;display:block"></canvas><small>Cp azzurro · Ce arancione · Beths/Brás; controllo TCI didattico, non utilizzabile clinicamente.</small>';
  induction.insertBefore(control,$('inductionReport')||null);
  const fentChart=document.createElement('div');fentChart.innerHTML='<div class="status" id="fentPKStats">Cp — · Ce —</div><canvas id="fentPKChart" style="width:100%;height:160px;display:block"></canvas><small>Cp azzurro · Ce arancione · Sano per Cp; Ce illustrativa, non validata.</small>';if(fent){const controls=fent.querySelector('.cols');if(controls)controls.after(fentChart);else fent.append(fentChart);}
  const mode=$('propMode'),target=$('propTarget'),start=$('propStart'),stop=$('propStop');
- const sync=()=>{tci.mode=mode.value;const tiva=tci.mode==='tiva';inhaled.style.display=tiva?'none':'';mac.disabled=tiva;document.body.dataset.propofolMode=tci.mode;if(!tiva){tci.active=false;tci.rate=0;}};
+ const sync=()=>{tci.mode=mode.value;const tiva=tci.mode==='tiva';inhaled.style.display=tiva?'none':'';mac.disabled=tiva;document.body.dataset.propofolMode=tci.mode;if(tiva){mac.value='0';mac.dispatchEvent(new Event('input',{bubbles:true}));}else{mac.value='1';mac.dispatchEvent(new Event('input',{bubbles:true}));tci.active=false;tci.rate=0;}};
  mode.onchange=sync;
  start.onclick=()=>{const n=Number(target.value);if(mode.value!=='tiva'||!Number.isFinite(n)||n<1||n>8||!window.simAirwayIntubated)return;tci.target=n;tci.active=true;};
  stop.onclick=()=>{tci.active=false;tci.rate=0;};
@@ -53,7 +53,7 @@ function setup(){
   $('propStatus').textContent=tci.active?'TCI attiva · Ce target '+tci.target.toFixed(1)+' µg/mL':'TCI non attiva';
   start.disabled=mode.value!=='tiva'||!window.simAirwayIntubated||tci.active;
   stop.disabled=!tci.active;
-  if(mode.value==='tiva'){inhaled.style.display='none';mac.disabled=true;}
+  document.body.dataset.anesthesiaMaintenance=state?.phase==='maintenance'?'true':'false';if(mode.value==='tiva'){inhaled.style.display='none';mac.disabled=true;}
   draw($('propPKChart'),tci.history);
   if(typeof window.simFentanylPK==='function'){
    const f=window.simFentanylPK(now());if(f){$('fentPKStats').textContent='Cp '+f.cp.toFixed(2)+' · Ce '+f.ce.toFixed(2)+' ng/mL';draw($('fentPKChart'),f.history,'fentanyl');}
