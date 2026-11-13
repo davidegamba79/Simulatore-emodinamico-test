@@ -21,8 +21,9 @@ window.simPropofolTCIRate=(i,p,dt,t)=>{
 };
 window.simPropofolTCIStep=(i,p,dt,rate,t)=>{
  if(tci.active&&['induction','maintenance'].includes(i.phase))tci.total+=Math.max(0,rate-tci.bolusRate)*dt;
- if(t-tci.lastSample>=1000){tci.lastSample=t;tci.history.push({t,cp:i.pk.central/p.vc,ce:i.pk.ce});if(tci.history.length>1800)tci.history.shift();}
+ if(t-tci.lastSample>=1000){tci.lastSample=t;tci.history.push({t,cp:i.pk.central/p.vc,ce:i.pk.ce});if(tci.history.length>21600)tci.history.shift();}
 };
+const chartViews={prop:{offset:0},fent:{offset:0}};
 function draw(canvas,rows,unit){
  if(!canvas)return;
  const rect=canvas.getBoundingClientRect();if(rect.width<10)return;
@@ -31,9 +32,9 @@ function draw(canvas,rows,unit){
  const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w/dpr,h/dpr);
  const W=w/dpr,H=h/dpr,L=35,R=W-10,T=12,B=H-23;
  ctx.strokeStyle='#52616d';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(L,T);ctx.lineTo(L,B);ctx.lineTo(R,B);ctx.stroke();
- const latest=rows.at(-1)?.t??now(),first=unit==='fentanyl'?(rows[0]?.t??latest):Math.max(rows[0]?.t??latest,latest-30*60000);
- const pts=rows.filter(p=>p.t>=first),max=Math.max(1,...pts.flatMap(p=>[p.cp||0,p.ce||0]))*1.15;
- ctx.fillStyle='#c4d0dc';ctx.font='11px sans-serif';ctx.fillText(max.toFixed(1),3,18);ctx.fillText('0',19,B);ctx.fillText(unit==='fentanyl'?'0 min':'−30 min',L,B+16);ctx.fillText(unit==='fentanyl'?((latest-first)/60000).toFixed(1)+' min':'Ora',R-45,B+16);
+ const view=chartViews[unit==='fentanyl'?'fent':'prop'];const end=rows.at(-1)?.t??now();const latest=Math.max(rows[0]?.t??end,end-view.offset*60000);const first=Math.max(rows[0]?.t??latest,latest-30*60000);
+ const pts=rows.filter(p=>p.t>=first&&p.t<=latest),max=Math.max(1,...pts.flatMap(p=>[p.cp||0,p.ce||0]))*1.15;
+ ctx.fillStyle='#c4d0dc';ctx.font='11px sans-serif';ctx.fillText(max.toFixed(1),3,18);ctx.fillText('0',19,B);ctx.fillText(((first-(rows[0]?.t??first))/60000).toFixed(0)+' min',L,B+16);ctx.fillText(view.offset?'−'+view.offset+' min':'Ora',R-55,B+16);
  for(const [key,color] of [['cp','#36c9ff'],['ce','#f3b85c']]){
   ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();
   pts.forEach((p,j)=>{const x=L+(p.t-first)/Math.max(1000,latest-first)*(R-L),y=B-(Math.max(0,p[key]||0)/max)*(B-T);if(j===0)ctx.moveTo(x,y);else ctx.lineTo(x,y)});ctx.stroke();
@@ -49,6 +50,18 @@ function setup(){
  control.querySelector('#propStop').insertAdjacentHTML('afterend','<button type="button" id="tivaIntubate">Intuba paziente</button>');
  induction.insertBefore(control,$('inductionReport')||null);
  const fentChart=document.createElement('div');fentChart.innerHTML='<div class="status" id="fentPKStats">Cp — · Ce —</div><canvas id="fentPKChart" style="width:100%;height:160px;display:block"></canvas><small>Cp azzurro · Ce arancione · Sano per Cp; Ce illustrativa, non validata.</small>';if(fent){const controls=fent.querySelector('.cols');if(controls)controls.after(fentChart);else fent.append(fentChart);}
+ function addChartNavigation(canvasId,viewKey){
+  const canvas=$(canvasId);if(!canvas)return;
+  const nav=document.createElement('div');nav.className='row';nav.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:8px 0';
+  nav.innerHTML='<button type="button" data-back>◀ −5 min</button><button type="button" data-forward>+5 min ▶</button><button type="button" data-live>Ora</button><small data-label>Visualizzazione in tempo reale</small>';
+  canvas.after(nav);
+  const view=chartViews[viewKey];
+  nav.querySelector('[data-back]').onclick=()=>{view.offset=Math.min(360,view.offset+5);};
+  nav.querySelector('[data-forward]').onclick=()=>{view.offset=Math.max(0,view.offset-5);};
+  nav.querySelector('[data-live]').onclick=()=>{view.offset=0;};
+  view.update=(rows)=>{const span=Math.max(0,((rows?.at(-1)?.t??0)-(rows?.[0]?.t??0))/60000);view.offset=Math.min(view.offset,Math.ceil(span/5)*5);nav.querySelector('[data-back]').disabled=span<=view.offset+0.1;nav.querySelector('[data-forward]').disabled=view.offset===0;nav.querySelector('[data-live]').disabled=view.offset===0;nav.querySelector('[data-label]').textContent=view.offset?'Storico: '+view.offset+' min prima di ora':'Visualizzazione in tempo reale';};
+ }
+ addChartNavigation('propPKChart','prop');addChartNavigation('fentPKChart','fent');
  const mode=$('propMode'),target=$('propTarget'),start=$('propStart'),stop=$('propStop'),intubate=$('tivaIntubate'),delivery=$('propDelivery'),manual=$('propManualRate'),bolus=$('propBolusDose'),give=$('propGiveBolus');
  delivery.onchange=()=>{tci.delivery=delivery.value;manual.value=String(tci.manualRate);};
  manual.oninput=()=>{const v=Number(manual.value);if(manual.value!==''&&Number.isFinite(v)&&v>=0&&v<=60){tci.manualRate=v;tci.delivery='manual';delivery.value='manual';}};
@@ -69,9 +82,9 @@ function setup(){
   start.textContent=tci.active?'Infusione in corso':'Avvia infusione propofol';start.disabled=mode.value!=='tiva'||tci.active;target.disabled=mode.value!=='tiva'||tci.delivery!=='target';manual.disabled=mode.value!=='tiva';delivery.disabled=mode.value!=='tiva';give.disabled=mode.value!=='tiva'||!tci.active||Boolean(tci.bolus);const b=tci.bolus;$('propBolusTimer').textContent=b?'Bolo in corso: '+Math.min(30,Math.max(0,(now()-b.startedAt)/1000)).toFixed(0)+' / 30 s · '+b.delivered.toFixed(2)+' / '+b.dose.toFixed(2)+' mg/kg' :tci.lastBolus?'Ultimo bolo completato: '+tci.lastBolus.dose.toFixed(2)+' mg/kg in 30 s':'Bolo non in corso';
   stop.disabled=!tci.active;
   document.body.dataset.anesthesiaMaintenance=state?.phase==='maintenance'?'true':'false';if(mode.value==='tiva'){inhaled.style.display='none';mac.disabled=true;}
-  draw($('propPKChart'),tci.history.length?tci.history:[{t:now(),cp:0,ce:0}]);
+  chartViews.prop.update?.(tci.history);draw($('propPKChart'),tci.history.length?tci.history:[{t:now(),cp:0,ce:0}]);
   if(typeof window.simFentanylPK==='function'){
-   const f=window.simFentanylPK(now());if(f){$('fentPKStats').textContent='Cp '+f.cp.toFixed(2)+' · Ce '+f.ce.toFixed(2)+' ng/mL';draw($('fentPKChart'),f.history,'fentanyl');}
+   const f=window.simFentanylPK(now());if(f){$('fentPKStats').textContent='Cp '+f.cp.toFixed(2)+' · Ce '+f.ce.toFixed(2)+' ng/mL';chartViews.fent.update?.(f.history);draw($('fentPKChart'),f.history,'fentanyl');}
   }
   requestAnimationFrame(frame);
  }
