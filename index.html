@@ -1086,13 +1086,16 @@ window.addEventListener('DOMContentLoaded',()=>{
  // nel monitor principale e soltanto nella scheda Anestesia.
  if(inhaledCard){
   inhaledCard.id='instructorInhaledCard';
-  // Tutti i controlli anestesiologici restano esclusivamente nella scheda Anestesia.
-  // Non aggiungerli al monitor fisso, che e' condiviso dalle altre schede.
-  panels.anesthesia.append(inhaledCard);
+  // Controlli anestesia nella zona PRINCIPALE sotto PRAM, non nella barra laterale.
+  const mainAnesthesia=document.createElement('div');
+  mainAnesthesia.id='mainAnesthesiaBelowPram';
+  mainAnesthesia.className='main-anesthesia-below-pram';
+  clinical.append(mainAnesthesia);
   const propofolCard=get('inductionPanel');
-  if(propofolCard)panels.anesthesia.append(propofolCard);
   const fentanylCard=get('fentanylPanel');
-  if(fentanylCard)panels.anesthesia.append(fentanylCard);
+  if(propofolCard)mainAnesthesia.append(propofolCard);
+  mainAnesthesia.append(inhaledCard);
+  if(fentanylCard)mainAnesthesia.append(fentanylCard);
  }
  const trend=get('trendV25');if(trend){scroll.append(trend);trend.hidden=true}
  // Tempo sempre accessibile, indipendentemente dalla scheda selezionata.
@@ -1387,7 +1390,7 @@ body:not(.student) #timeControls .time-jumps .sim-time-jumps button{min-width:0;
 /* I valori FC, MAP, CO e SVR restano nel monitor; non duplicarli nella barra docente. */
 body:not(.student) .instructor-console-top .quick-values{display:none!important}
 </style>
-<style id="propofol-tiva-v30">body:not(.student)[data-propofol-mode="tiva"] #instructorInhaledCard{display:none!important}body:not(.student)[data-instructor-tab="anesthesia"] #inductionPanel{display:block!important}#propofolTCIControl{border-top:1px solid #344652;padding-top:12px;margin-top:12px}#propofolTCIControl .row{display:flex;gap:8px;flex-wrap:wrap}#propofolTCIControl canvas,#fentPKChart{background:#0b1720;border-radius:8px;margin-top:8px}</style><script src="./fentanyl-cccp.js?v=9"></script><script src="./propofol-tci.js?v=6"></script><style id="pk-chart-visibility-v30">body:not(.student)[data-instructor-tab="anesthesia"] #inductionPanel{display:block!important}#propofolTCIControl,#fentPKChart{min-width:0}#propofolTCIControl canvas,#fentPKChart{height:160px!important;min-height:160px!important;display:block!important}#inductionReport{margin-top:8px!important}#inductionReport details summary{cursor:pointer;padding:8px 0;font-weight:600}</style><style id="anesthesia-maintenance-ux-v30">
+<style id="propofol-tiva-v30">body:not(.student)[data-propofol-mode="tiva"] #instructorInhaledCard{display:none!important}body:not(.student)[data-instructor-tab="anesthesia"] #inductionPanel{display:block!important}#propofolTCIControl{border-top:1px solid #344652;padding-top:12px;margin-top:12px}#propofolTCIControl .row{display:flex;gap:8px;flex-wrap:wrap}#propofolTCIControl canvas,#fentPKChart{background:#0b1720;border-radius:8px;margin-top:8px}</style><script src="./fentanyl-cccp.js?v=9"></script><script src="./propofol-tci.js?v=7"></script><style id="pk-chart-visibility-v30">body:not(.student)[data-instructor-tab="anesthesia"] #inductionPanel{display:block!important}#propofolTCIControl,#fentPKChart{min-width:0}#propofolTCIControl canvas,#fentPKChart{height:160px!important;min-height:160px!important;display:block!important}#inductionReport{margin-top:8px!important}#inductionReport details summary{cursor:pointer;padding:8px 0;font-weight:600}</style><style id="anesthesia-maintenance-ux-v30">
 body:not(.student) #maintenanceModeCard{display:none!important}
 body:not(.student)[data-instructor-tab="anesthesia"] #maintenanceModeCard{display:block!important;padding:10px 12px;margin:0!important}
 body:not(.student)[data-propofol-mode="tiva"] #instructorInhaledCard{display:none!important}
@@ -1414,5 +1417,30 @@ body:not(.student)[data-propofol-mode="inhaled"] #propofolTCIControl .cols,
 body:not(.student)[data-propofol-mode="inhaled"] #propofolTCIControl .row,
 body:not(.student)[data-propofol-mode="inhaled"] #propStatus,
 body:not(.student)[data-propofol-mode="inhaled"] #propStats{display:none!important}
+</style><style id="anesthesia-main-pram-v7">
+/* Il pannello anestesia sta nella zona principale immediatamente dopo onde e PRAM. */
+body:not(.student) #mainAnesthesiaBelowPram{display:none!important}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram{
+ display:flex!important;flex-direction:column;gap:10px;min-width:0;width:100%;padding:0 0 16px;
+}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram > .card{
+ display:block!important;min-width:0;width:100%;box-sizing:border-box;margin:0!important;
+}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram #maintenanceModeCard{display:block!important}
+body:not(.student)[data-instructor-tab="anesthesia"][data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #instructorInhaledCard{display:none!important}
+body:not(.student)[data-instructor-tab="anesthesia"][data-propofol-mode="inhaled"] #mainAnesthesiaBelowPram #instructorInhaledCard{display:block!important}
+body:not(.student)[data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #inductionPanel .premed-form,
+body:not(.student)[data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #inductionPanel > .row,
+body:not(.student)[data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #inductionStatus,
+body:not(.student)[data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #inductionReport{display:none!important}
+body:not(.student)[data-propofol-mode="inhaled"] #mainAnesthesiaBelowPram #propofolTCIControl .cols,
+body:not(.student)[data-propofol-mode="inhaled"] #mainAnesthesiaBelowPram #propofolTCIControl .row,
+body:not(.student)[data-propofol-mode="inhaled"] #mainAnesthesiaBelowPram #propStatus,
+body:not(.student)[data-propofol-mode="inhaled"] #mainAnesthesiaBelowPram #propStats{display:none!important}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram #propPKChart,
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram #fentPKChart{
+ display:block!important;width:100%!important;height:180px!important;min-height:180px!important;
+}
+body:not(.student)[data-instructor-tab="anesthesia"] .monitor{overflow-y:auto!important;max-height:none!important}
 </style></body>
 </html>
