@@ -215,7 +215,12 @@ function draw(){
  const hr=Math.max(1,N("hr")||90),rr=Math.max(1,N("rr")||18),et=C(N("etco2")||38,3,80);
  const rh=E("rhythm")?.value||"Ritmo sinusale",av=rh.startsWith("Blocco AV "),timing=av?avTiming(rh,hr):null;
  const clock= document.body.classList.contains('student')?window.simStudentWaveClock:null;
- const now=clock&&Number.isFinite(clock.time)&&Number.isFinite(clock.sentAt)?clock.time+Math.max(0,(Date.now()-clock.sentAt)/1000):performance.now()/1000-t0-wavePausedTotal;
+ // Keep student wave phase continuous: a fresh instructor status packet must
+ // not jump the ECG/ART/pleth/capnography timeline on every sync.
+ const localWaveTime=performance.now()/1000-t0-wavePausedTotal;
+ const instructorWaveTime=clock&&Number.isFinite(clock.time)&&Number.isFinite(clock.sentAt)?clock.time+Math.max(0,(Date.now()-clock.sentAt)/1000):null;
+ if(!Number.isFinite(window.simStudentWaveOffset)&&Number.isFinite(instructorWaveTime))window.simStudentWaveOffset=instructorWaveTime-localWaveTime;
+ const now=document.body.classList.contains('student')?localWaveTime+(window.simStudentWaveOffset||0):localWaveTime;
  window.simWaveTimeSeconds=now;
  window.simWaveFrameTimestamp=performance.now();
  const vent=typeof window.simVentCalc==='function'?window.simVentCalc():null;
