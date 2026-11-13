@@ -23,7 +23,7 @@ function draw(canvas,rows,unit){
  const rect=canvas.getBoundingClientRect();if(rect.width<10)return;
  const dpr=Math.min(2,window.devicePixelRatio||1),w=Math.round(rect.width*dpr),h=Math.round(160*dpr);
  if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h;}
- const ctx=canvas.getContext('2d');ctx.clearRect(0,0,w,h);ctx.scale(dpr,dpr);
+ const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w/dpr,h/dpr);
  const W=w/dpr,H=h/dpr,L=35,R=W-10,T=12,B=H-23;
  ctx.strokeStyle='#52616d';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(L,T);ctx.lineTo(L,B);ctx.lineTo(R,B);ctx.stroke();
  const latest=rows.at(-1)?.t||now(),first=Math.max(rows[0]?.t||latest,latest-30*60000);
@@ -38,8 +38,8 @@ function setup(){
  if(document.body.classList.contains('student'))return;
  const induction=$('inductionPanel'),mac=$('mac'),inhaled=$('instructorInhaledCard'),fent=$('fentanylPanel');if(!induction||!mac||!inhaled)return;
  const control=document.createElement('div');control.id='propofolTCIControl';control.innerHTML='<div class="cols"><label>Mantenimento<select id="propMode"><option value="inhaled">Inalatorio (MAC)</option><option value="tiva">TIVA — TCI propofol (Ce)</option></select></label><label>Ce target (µg/mL)<input id="propTarget" type="number" min="1" max="8" step="0.1" value="3.5"></label></div><div class="row" style="margin-top:8px"><button type="button" id="propStart">Avvia TCI</button><button type="button" id="propStop">Interrompi TCI</button></div><div class="status" id="propStatus">TCI non attiva</div><div class="status" id="propStats">Cp — · Ce — · Infusione 0 mg/kg/h · Dose TCI 0 mg/kg</div><canvas id="propPKChart" style="width:100%;height:160px;display:block"></canvas><small>Cp azzurro · Ce arancione · Beths/Brás; controllo TCI didattico, non utilizzabile clinicamente.</small>';
- induction.append(control);
- const fentChart=document.createElement('div');fentChart.innerHTML='<div class="status" id="fentPKStats">Cp — · Ce —</div><canvas id="fentPKChart" style="width:100%;height:160px;display:block"></canvas><small>Cp azzurro · Ce arancione · Sano per Cp; Ce illustrativa, non validata.</small>';fent?.append(fentChart);
+ induction.insertBefore(control,induction.firstElementChild?.nextSibling||null);
+ const fentChart=document.createElement('div');fentChart.innerHTML='<div class="status" id="fentPKStats">Cp — · Ce —</div><canvas id="fentPKChart" style="width:100%;height:160px;display:block"></canvas><small>Cp azzurro · Ce arancione · Sano per Cp; Ce illustrativa, non validata.</small>';if(fent){const controls=fent.querySelector('.cols');if(controls)controls.after(fentChart);else fent.append(fentChart);}
  const mode=$('propMode'),target=$('propTarget'),start=$('propStart'),stop=$('propStop');
  const sync=()=>{tci.mode=mode.value;const tiva=tci.mode==='tiva';inhaled.style.display=tiva?'none':'';mac.disabled=tiva;document.body.dataset.propofolMode=tci.mode;if(!tiva){tci.active=false;tci.rate=0;}};
  mode.onchange=sync;
