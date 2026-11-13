@@ -41,7 +41,7 @@ function setup(){
  induction.insertBefore(control,$('inductionReport')||null);
  const fentChart=document.createElement('div');fentChart.innerHTML='<div class="status" id="fentPKStats">Cp — · Ce —</div><canvas id="fentPKChart" style="width:100%;height:160px;display:block"></canvas><small>Cp azzurro · Ce arancione · Sano per Cp; Ce illustrativa, non validata.</small>';if(fent){const controls=fent.querySelector('.cols');if(controls)controls.after(fentChart);else fent.append(fentChart);}
  const mode=$('propMode'),target=$('propTarget'),start=$('propStart'),stop=$('propStop');
- const sync=()=>{tci.mode=mode.value;const tiva=tci.mode==='tiva';inhaled.style.display=tiva?'none':'';mac.disabled=tiva;document.body.dataset.propofolMode=tci.mode;if(tiva){mac.value='0';mac.dispatchEvent(new Event('input',{bubbles:true}));}else{mac.value='1';mac.dispatchEvent(new Event('input',{bubbles:true}));tci.active=false;tci.rate=0;}};
+ // Il selettore rimane nella scheda Anestesia; i controlli TCI sono nascosti in inalatoria.\n const sync=()=>{tci.mode=mode.value;const tiva=tci.mode==='tiva';inhaled.style.display=tiva?'none':'';mac.disabled=tiva;document.body.dataset.propofolMode=tci.mode;if(tiva){mac.value='0';mac.dispatchEvent(new Event('input',{bubbles:true}));}else{mac.value='1';mac.dispatchEvent(new Event('input',{bubbles:true}));tci.active=false;tci.rate=0;}};
  mode.onchange=sync;
  start.onclick=()=>{const n=Number(target.value);if(mode.value!=='tiva'||!Number.isFinite(n)||n<1||n>8||!window.simAirwayIntubated)return;tci.target=n;tci.active=true;};
  stop.onclick=()=>{tci.active=false;tci.rate=0;};
