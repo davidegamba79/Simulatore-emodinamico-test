@@ -1,10 +1,13 @@
 (()=>{'use strict';
 const $=id=>document.getElementById(id);
 const now=()=>window.simVirtualNow?.()||performance.now();
-const tci={active:false,target:3.5,rate:0,total:0,history:[],lastSample:-Infinity,mode:'inhaled',delivery:'target',manualRate:12,bolusTotal:0};
+const tci={active:false,target:3.5,rate:0,total:0,history:[],lastSample:-Infinity,mode:'inhaled',delivery:'target',manualRate:12,bolusTotal:0,bolus:null};
 window.simPropofolTCIRate=(i,p,dt,t)=>{
- if(!tci.active||tci.mode!=='tiva'||!['induction','maintenance'].includes(i.phase))return 0;
- if(tci.delivery==='manual'){tci.rate=tci.manualRate;return tci.manualRate/3600;}
+ if(tci.mode!=='tiva'||!['induction','maintenance'].includes(i.phase))return 0;
+ let bolusRate=0;
+ if(tci.bolus){const b=tci.bolus;const remaining=Math.max(0,b.dose-b.delivered);const seconds=Math.min(Math.max(0,dt),Math.max(0,(b.endsAt-t)/1000+dt));const delivered=Math.min(remaining,b.dose/30*seconds);b.delivered+=delivered;bolusRate=dt>0?delivered/dt:0;tci.bolusTotal+=delivered;tci.total+=delivered;if(b.delivered>=b.dose-1e-8)tci.bolus=null;}
+ if(!tci.active){tci.rate=0;return bolusRate;}
+ if(tci.delivery==='manual'){tci.rate=tci.manualRate;return tci.manualRate/3600+bolusRate;}
  const cp=i.pk.central/p.vc,ce=i.pk.ce;
  // Predictive effect-site controller, 30 s horizon, positive infusion only.
  // This is a teaching algorithm, not a validated clinical pump.
@@ -13,10 +16,10 @@ window.simPropofolTCIRate=(i,p,dt,t)=>{
  const peripheral=(p.qf*(cp-i.pk.fast/p.vf)+p.qs*(cp-i.pk.slow/p.vs)+p.cl*cp);
  const mgKgMin=Math.max(0,Math.min(.8,(desiredCp-cp)*p.vc/horizon+peripheral));
  tci.rate=mgKgMin*60;
- return mgKgMin/60;
+ return mgKgMin/60+bolusRate;
 };
 window.simPropofolTCIStep=(i,p,dt,rate,t)=>{
- if(tci.active&&['induction','maintenance'].includes(i.phase))tci.total+=rate*dt;
+ if(tci.active&&['induction','maintenance'].includes(i.phase))tci.total+=Math.max(0,rate-(tci.bolus? tci.bolus.dose/30:0))*dt;
  if(t-tci.lastSample>=1000){tci.lastSample=t;tci.history.push({t,cp:i.pk.central/p.vc,ce:i.pk.ce});if(tci.history.length>1800)tci.history.shift();}
 };
 function draw(canvas,rows,unit){
@@ -40,6 +43,7 @@ function setup(){
  const induction=$('inductionPanel'),mac=$('mac'),inhaled=$('instructorInhaledCard'),fent=$('fentanylPanel');if(!induction||!mac||!inhaled)return;
  const modeCard=document.createElement('section');modeCard.id='maintenanceModeCard';modeCard.className='card';modeCard.innerHTML='<label style="display:block">Tipo di mantenimento<select id="propMode" style="width:100%"><option value="inhaled">Inalatorio (MAC)</option><option value="tiva">TIVA — TCI propofol (Ce)</option></select></label>';modeCard.insertAdjacentHTML('beforeend','<div class="status" id="tivaAirwayStatus" style="margin-top:8px">Paziente non intubato</div>');const main=$('mainAnesthesiaBelowPram');if(main)main.prepend(modeCard);else inhaled.before(modeCard);const control=document.createElement('div');control.id='propofolTCIControl';control.innerHTML='<div class="cols" style="margin-top:8px"><label>Ce target propofol (µg/mL)<input id="propTarget" type="number" min="1" max="8" step="0.1" value="3.5"></label></div><div class="row" style="margin-top:8px"><button type="button" id="propStart">Avvia induzione TIVA</button><button type="button" id="propStop">Interrompi TCI</button></div><div class="status" id="propStatus">TCI non attiva</div><div class="status" id="propStats">Cp — · Ce — · Infusione 0 mg/kg/h · Dose TCI 0 mg/kg</div><canvas id="propPKChart" style="width:100%;height:160px;display:block"></canvas><small>Cp azzurro · Ce arancione · Beths/Brás; controllo TCI didattico, non utilizzabile clinicamente.</small>';
  const actions=document.createElement('div');actions.id='propTIVAExtra';actions.innerHTML='<div class="cols" style="margin-top:8px"><label>Modalità infusione<select id="propDelivery"><option value="target">TCI — Ce target</option><option value="manual">Infusione manuale</option></select></label><label>Velocità infusione (mg/kg/h)<input id="propManualRate" type="number" min="0" max="60" step="0.5" value="12"></label></div><div class="row" style="margin-top:8px"><label>Bolo aggiuntivo (mg/kg)<input id="propBolusDose" type="number" min="0.1" max="5" step="0.1" value="0.5"></label><button type="button" id="propGiveBolus">Somministra bolo</button></div>';
+ actions.insertAdjacentHTML('beforeend','<div class="status" id="propBolusTimer" role="status">Bolo non in corso</div>');
  control.insertBefore(actions,control.querySelector('#propStatus'));
  control.querySelector('#propStop').insertAdjacentHTML('afterend','<button type="button" id="tivaIntubate">Intuba paziente</button>');
  induction.insertBefore(control,$('inductionReport')||null);
@@ -48,8 +52,8 @@ function setup(){
  delivery.onchange=()=>{tci.delivery=delivery.value;};
  manual.oninput=()=>{const v=Number(manual.value);if(manual.value!==''&&Number.isFinite(v)&&v>=0&&v<=60){tci.manualRate=v;tci.delivery='manual';delivery.value='manual';}};
  manual.onchange=()=>{const v=Number(manual.value);if(manual.value===''||!Number.isFinite(v)||v<0||v>60)manual.value=String(tci.manualRate);};
- give.onclick=()=>{const d=Number(bolus.value),state=window.simPropofolState?.();if(mode.value!=='tiva'||!tci.active||!state||state.drug!=='Propofol'||!Number.isFinite(d)||d<0.1||d>5)return;state.pk.central+=d;tci.bolusTotal+=d;tci.total+=d;const t=now();tci.history.push({t,cp:state.pk.central/.78,ce:state.pk.ce});};
- intubate.onclick=()=>{if(mode.value==='tiva'&&tci.active)window.simTIVAIntubate?.();};
+ give.onclick=()=>{const d=Number(bolus.value),state=window.simPropofolState?.();if(mode.value!=='tiva'||!tci.active||tci.bolus||!state||state.drug!=='Propofol'||!Number.isFinite(d)||d<0.1||d>5)return;const t=now();tci.bolus={dose:d,delivered:0,startedAt:t,endsAt:t+30000};};
+ intubate.onclick=()=>{if(mode.value==='tiva'&&tci.active){window.simTIVAIntubate?.();}};
  // Il selettore rimane nella scheda Anestesia; i controlli TCI sono nascosti in inalatoria.
  const sync=()=>{tci.mode=mode.value;const tiva=tci.mode==='tiva';inhaled.style.display=tiva?'none':'';mac.disabled=tiva;document.body.dataset.propofolMode=tci.mode;if(tiva){mac.value='0';mac.dispatchEvent(new Event('input',{bubbles:true}));}else{mac.value='1';mac.dispatchEvent(new Event('input',{bubbles:true}));tci.active=false;tci.rate=0;}};
  mode.onchange=sync;
@@ -61,7 +65,7 @@ function setup(){
   const state=i();const p=state?.pk;intubate.hidden=mode.value!=='tiva'||Boolean(window.simAirwayIntubated);intubate.disabled=!tci.active;$('tivaAirwayStatus').hidden=mode.value!=='tiva';$('tivaAirwayStatus').textContent=window.simAirwayIntubated?'Paziente intubato · SPONT':tci.active?'Induzione TIVA attiva · intubare quando opportuno':'Avviare induzione TIVA';
   if(p){const cp=p.central/.78;const ce=p.ce;$('propStats').textContent='Cp '+cp.toFixed(2)+' · Ce '+ce.toFixed(2)+' µg/mL · Infusione '+(tci.active?tci.rate:0).toFixed(2)+' mg/kg/h · Dose totale '+tci.total.toFixed(2)+' mg/kg (boli '+tci.bolusTotal.toFixed(2)+')';}
   $('propStatus').textContent=tci.active?(tci.delivery==='target'?'TCI attiva · Ce target '+tci.target.toFixed(1)+' µg/mL':'Infusione manuale attiva · '+tci.manualRate.toFixed(1)+' mg/kg/h'):'TCI non attiva';
-  start.disabled=mode.value!=='tiva'||tci.active;target.disabled=mode.value!=='tiva'||tci.delivery!=='target';manual.disabled=mode.value!=='tiva';delivery.disabled=mode.value!=='tiva';give.disabled=mode.value!=='tiva'||!tci.active;
+  start.disabled=mode.value!=='tiva'||tci.active;target.disabled=mode.value!=='tiva'||tci.delivery!=='target';manual.disabled=mode.value!=='tiva';delivery.disabled=mode.value!=='tiva';give.disabled=mode.value!=='tiva'||!tci.active||Boolean(tci.bolus);const b=tci.bolus;$('propBolusTimer').textContent=b?'Bolo in corso: '+Math.min(30,Math.max(0,(now()-b.startedAt)/1000)).toFixed(0)+' / 30 s · '+b.delivered.toFixed(2)+' / '+b.dose.toFixed(2)+' mg/kg':'Bolo non in corso';
   stop.disabled=!tci.active;
   document.body.dataset.anesthesiaMaintenance=state?.phase==='maintenance'?'true':'false';if(mode.value==='tiva'){inhaled.style.display='none';mac.disabled=true;}
   draw($('propPKChart'),tci.history.length?tci.history:[{t:now(),cp:0,ce:0}]);
