@@ -959,6 +959,8 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(v25.induction.phase!=='induction')return;
   v25.induction.phase='maintenance';
   v25.induction.maintenanceAt=window.simVirtualNow();
+  // Stop further EV delivery immediately; distribution/elimination continue.
+  v25.induction.propofolStoppedAt=v25.induction.maintenanceAt;
   // L'intubazione da sola non attiva il ventilatore: si inizia in SPONT.
   if(typeof window.simVentOnIntubation==='function')window.simVentOnIntubation();
   if(typeof v25Event==='function')v25Event('Intubazione eseguita — respirazione spontanea; selezionare VCV/PCV per ventilazione controllata');
@@ -1084,6 +1086,8 @@ window.addEventListener('DOMContentLoaded',()=>{
  // nel monitor principale e soltanto nella scheda Anestesia.
  if(inhaledCard){
   inhaledCard.id='instructorInhaledCard';
+  const propofolCard=get('inductionPanel');
+  if(propofolCard)clinical.append(propofolCard);
   clinical.append(inhaledCard);
   const fentanylCard=get('fentanylPanel');
   if(fentanylCard)clinical.append(fentanylCard);
