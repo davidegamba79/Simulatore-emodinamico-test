@@ -877,6 +877,7 @@ function simTimeSetup(){
 }
 
 function v25Loop(now){
+ if(!document.body.classList.contains('student'))simLastInstructorFrame=now;
  if(document.body.classList.contains('student')){simClock.real=now;requestAnimationFrame(v25Loop);return}
  // Safari/iPadOS may throttle requestAnimationFrame when the instructor window is not foreground.
  // Preserve elapsed wall time instead of silently discarding everything beyond 0.5 s.
@@ -902,8 +903,6 @@ v25Setup();simTimeSetup();try{simCaptureSnapshot()}catch(err){console.warn('Snap
 // fallback keeps the single authoritative simulation clock and infusions alive.
 // No independent physics runs in the read-only student window.
 let simLastInstructorFrame=performance.now();
-const simOriginalLoop=v25Loop;
-v25Loop=function(now){if(!document.body.classList.contains('student'))simLastInstructorFrame=now;return simOriginalLoop(now)};
 setInterval(()=>{
  if(document.body.classList.contains('student')||simClock.paused||simClock.busy)return;
  const now=performance.now();
