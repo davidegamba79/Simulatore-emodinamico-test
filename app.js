@@ -426,7 +426,7 @@ function v25Setup(){
  function v25InductionStep(dt,now){
   const i=v25.induction,p=inductionPK[i.drug];
   if(!p||!i.startedAt||!['induction','maintenance'].includes(i.phase))return;
-  const age=(now-i.startedAt)/1000,infusionEnd=i.propofolStoppedAt?Math.min(i.administrationSeconds,(i.propofolStoppedAt-i.startedAt)/1000):i.administrationSeconds,inductionRate=(age>=0&&age<=infusionEnd)?i.dose/Math.max(1,i.administrationSeconds):0,tciRate=(i.phase==='maintenance'&&i.drug==='Propofol'&&typeof window.simPropofolTCIRate==='function')?window.simPropofolTCIRate(i,p,dt,now):0,rate=inductionRate+tciRate;
+  const age=(now-i.startedAt)/1000,infusionEnd=i.propofolStoppedAt?Math.min(i.administrationSeconds,(i.propofolStoppedAt-i.startedAt)/1000):i.administrationSeconds,inductionRate=(age>=0&&age<=infusionEnd)?i.dose/Math.max(1,i.administrationSeconds):0,tciRate=(['induction','maintenance'].includes(i.phase)&&i.drug==='Propofol'&&typeof window.simPropofolTCIRate==='function')?window.simPropofolTCIRate(i,p,dt,now):0,rate=inductionRate+tciRate;
   const k=i.pk,cp=k.central/p.vc,cf=k.fast/p.vf,cs=k.slow/p.vs,minutes=dt/60;
   const fast=p.qf*(cp-cf),slow=p.qs*(cp-cs),elim=p.cl*cp;
   k.central=Math.max(0,k.central+rate*dt-(fast+slow+elim)*minutes);
