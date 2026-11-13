@@ -878,7 +878,10 @@ function simTimeSetup(){
 
 function v25Loop(now){
  if(document.body.classList.contains('student')){simClock.real=now;requestAnimationFrame(v25Loop);return}
- const elapsed=Math.min(.5,Math.max(0,(now-simClock.real)/1000));simClock.real=now;
+ // Safari/iPadOS may throttle requestAnimationFrame when the instructor window is not foreground.
+ // Preserve elapsed wall time instead of silently discarding everything beyond 0.5 s.
+ // Limit catch-up to 30 simulated real seconds per frame to protect the UI.
+ const elapsed=Math.min(30,Math.max(0,(now-simClock.real)/1000));simClock.real=now;
  if(!simClock.busy&&!simClock.paused){
   // Accumulate animation-frame time: at 60 fps a single frame is only
   // ~0.016 s, so the former 0.05 s threshold discarded every frame.
@@ -913,7 +916,7 @@ window.addEventListener('pageshow',()=>{
 document.addEventListener('visibilitychange',()=>{
  if(document.visibilityState!=='visible')return;
  if(document.body.classList.contains('student'))simStudentRestore();
- else{simClock.real=performance.now();simPublishStudentHistory();simPublishStudentStatus()}
+ else{simPublishStudentHistory();simPublishStudentStatus()}
 });
 
 window.addEventListener('storage',e=>{
