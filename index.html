@@ -592,10 +592,7 @@ body.student[data-student-tab="meds"] #studentTherapyClocks{display:block}
 #therapyV25 .therapy>.v30-confirm-rate{grid-area:confirm!important;width:100%!important;margin:0!important;min-height:30px!important;position:relative!important;z-index:1!important}
 #therapyV25 .therapy>.therapy-clock{grid-area:clock!important;display:block!important;margin:2px 0 0!important;white-space:normal!important}
 </style>
-<style id="induction-central-anesthesia-v30">
-body:not(.student) #instructorInductionCard{display:none!important;min-width:0}
-body:not(.student)[data-instructor-tab="anesthesia"] #instructorInductionCard{display:block!important}
-</style></head>
+</head>
 <body>
 
 <header>
@@ -1086,9 +1083,6 @@ window.addEventListener('DOMContentLoaded',()=>{
  // MAC e mantenimento inalatorio immediatamente sotto i valori PRAM,
  // nel monitor principale e soltanto nella scheda Anestesia.
  if(inhaledCard){
-  // Induzione/propofol sopra la MAC, esclusivamente nella scheda Anestesia.
-  const inductionCard=get('inductionPanel');
-  if(inductionCard){inductionCard.id='instructorInductionCard';clinical.append(inductionCard);}
   inhaledCard.id='instructorInhaledCard';
   clinical.append(inhaledCard);
   const fentanylCard=get('fentanylPanel');
