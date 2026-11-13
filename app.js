@@ -898,6 +898,20 @@ function v25Loop(now){
  requestAnimationFrame(v25Loop);
 }
 v25Setup();simTimeSetup();try{simCaptureSnapshot()}catch(err){console.warn('Snapshot iniziale:',err)}requestAnimationFrame(v25Loop);
+// iPadOS: when Safari throttles the instructor animation loop, a periodic
+// fallback keeps the single authoritative simulation clock and infusions alive.
+// No independent physics runs in the read-only student window.
+let simLastInstructorFrame=performance.now();
+const simOriginalLoop=v25Loop;
+v25Loop=function(now){if(!document.body.classList.contains('student'))simLastInstructorFrame=now;return simOriginalLoop(now)};
+setInterval(()=>{
+ if(document.body.classList.contains('student')||simClock.paused||simClock.busy)return;
+ const now=performance.now();
+ if(now-simLastInstructorFrame<650)return;
+ const elapsed=Math.min(10,Math.max(0,(now-simClock.real)/1000));
+ simClock.real=now;
+ if(elapsed>0){simAdvancePhysics(elapsed*simClock.speed);simTimeDisplay();simPublishStudentStatus();}
+},500);
 /* ===== end V2.8.2 ===== */
 
 // La modalità studenti si attiva esclusivamente nella finestra separata.
