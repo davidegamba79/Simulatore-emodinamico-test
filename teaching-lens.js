@@ -1,10 +1,10 @@
 (()=>{'use strict';
 /* Lente didattica sperimentale: istanza di sola lettura, attivata solo su richiesta. */
-if(window.top!==window)return;
+if(window.top!==window||new URLSearchParams(location.search).has('lensMirror'))return;
 const KEY='simTeachingLensV1';
 const student=document.body.classList.contains('student');
 const state={enabled:false,x:.5,y:.5,zoom:2.5,locked:false,updated:0};
-let host,glass,frame,toolbar;
+let glass,frame,toolbar,lastPoint=null;
 function publish(){if(student)return;try{localStorage.setItem(KEY,JSON.stringify({...state,updated:Date.now()}));}catch(_){}}
 function setup(){
  const style=document.createElement('style');
@@ -27,7 +27,7 @@ function setup(){
   lock.onclick=()=>{state.locked=!state.locked;lock.textContent=state.locked?'Sblocca':'Blocca';publish();};
   document.addEventListener('pointermove',e=>{
    if(!state.enabled||state.locked||toolbar.contains(e.target))return;
-   state.x=Math.min(1,Math.max(0,e.clientX/innerWidth));state.y=Math.min(1,Math.max(0,e.clientY/innerHeight));publish();update();
+   lastPoint={x:e.clientX,y:e.clientY};state.x=Math.min(1,Math.max(0,e.clientX/innerWidth));state.y=Math.min(1,Math.max(0,e.clientY/innerHeight));publish();update();
   },{passive:true});
   document.addEventListener('pointerdown',e=>{if(e.pointerType==='pen'&&state.enabled&&!toolbar.contains(e.target)){state.x=e.clientX/innerWidth;state.y=e.clientY/innerHeight;publish();update();}},{passive:true});
  }else{
@@ -45,10 +45,12 @@ function update(){
  glass.style.top=Math.max(0,Math.min(innerHeight-226,cy-113))+'px';
  if(!frame){
   frame=document.createElement('iframe');frame.setAttribute('aria-hidden','true');
-  frame.tabIndex=-1;frame.src=location.pathname+'?student=1&lensMirror=1';
+  frame.tabIndex=-1;frame.src=location.pathname+'?lensMirror=1';
   glass.append(frame);
+  frame.addEventListener('load',()=>{try{frame.contentWindow.document.documentElement.style.scrollBehavior='auto';}catch(_){}});
  }
  const z=state.zoom;
+ if(!student){try{const source=document.querySelector('.monitor');const mirrored=frame.contentDocument?.querySelector('.monitor');if(source&&mirrored){mirrored.scrollTop=source.scrollTop;mirrored.scrollLeft=source.scrollLeft;}frame.contentWindow?.scrollTo(window.scrollX,window.scrollY);}catch(_){}}
  frame.style.width=innerWidth+'px';frame.style.height=innerHeight+'px';
  frame.style.transform='translate('+ (110-cx*z)+'px,'+(110-cy*z)+'px) scale('+z+')';
 }
