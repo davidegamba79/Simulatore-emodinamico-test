@@ -4,7 +4,7 @@ if(window.top!==window||new URLSearchParams(location.search).has('lensMirror'))r
 const KEY='simTeachingLensV1';
 const student=document.body.classList.contains('student');
 const state={enabled:false,x:.5,y:.5,zoom:2.5,locked:false,updated:0};
-let glass,frame,toolbar,lastPoint=null;
+let glass,frame,toolbar,lastPoint=null,lastTab='';
 function publish(){if(student)return;try{localStorage.setItem(KEY,JSON.stringify({...state,updated:Date.now()}));}catch(_){}}
 function setup(){
  const style=document.createElement('style');
@@ -29,6 +29,7 @@ function setup(){
    if(!state.enabled||state.locked||toolbar.contains(e.target))return;
    lastPoint={x:e.clientX,y:e.clientY};state.x=Math.min(1,Math.max(0,e.clientX/innerWidth));state.y=Math.min(1,Math.max(0,e.clientY/innerHeight));publish();update();
   },{passive:true});
+  const tabObserver=new MutationObserver(()=>{if(state.enabled)update();});tabObserver.observe(document.body,{attributes:true,attributeFilter:['data-instructor-tab']});
   document.addEventListener('pointerdown',e=>{if(e.pointerType==='pen'&&state.enabled&&!toolbar.contains(e.target)){state.x=e.clientX/innerWidth;state.y=e.clientY/innerHeight;publish();update();}},{passive:true});
  }else{
   window.addEventListener('storage',e=>{if(e.key!==KEY)return;try{Object.assign(state,JSON.parse(e.newValue||'{}'));update();}catch(_){}});
@@ -47,10 +48,10 @@ function update(){
   frame=document.createElement('iframe');frame.setAttribute('aria-hidden','true');
   frame.tabIndex=-1;frame.src=location.pathname+'?lensMirror=1';
   glass.append(frame);
-  frame.addEventListener('load',()=>{try{frame.contentWindow.document.documentElement.style.scrollBehavior='auto';}catch(_){}});
+  frame.addEventListener('load',()=>{lastTab='';try{frame.contentWindow.document.documentElement.style.scrollBehavior='auto';}catch(_){}});
  }
  const z=state.zoom;
- if(!student){try{const source=document.querySelector('.monitor');const mirrored=frame.contentDocument?.querySelector('.monitor');if(source&&mirrored){mirrored.scrollTop=source.scrollTop;mirrored.scrollLeft=source.scrollLeft;}frame.contentWindow?.scrollTo(window.scrollX,window.scrollY);}catch(_){}}
+ if(!student){try{const source=document.querySelector('.monitor');const mirrored=frame.contentDocument?.querySelector('.monitor');if(source&&mirrored){mirrored.scrollTop=source.scrollTop;mirrored.scrollLeft=source.scrollLeft;}const tab=document.body.dataset.instructorTab||'patient';if(tab!==lastTab){const button=frame.contentDocument?.getElementById('instructor-tab-'+tab);if(button){button.click();lastTab=tab;}}frame.contentWindow?.scrollTo(window.scrollX,window.scrollY);}catch(_){}}
  frame.style.width=innerWidth+'px';frame.style.height=innerHeight+'px';
  frame.style.transform='translate('+ (110-cx*z)+'px,'+(110-cy*z)+'px) scale('+z+')';
 }
