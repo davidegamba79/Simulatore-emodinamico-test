@@ -1523,38 +1523,37 @@ body:not(.student)[data-propofol-mode="inhaled"] #propofolTCIControl > .cols,
 body:not(.student)[data-propofol-mode="inhaled"] #propofolTCIControl > .row{display:none!important}
 body:not(.student)[data-propofol-mode="tiva"] #propofolTCIControl > .cols,
 body:not(.student)[data-propofol-mode="tiva"] #propofolTCIControl > .row{display:flex!important}
-</style><script>(()=>{'use strict';
-const STUDENT=document.body.classList.contains('student'),KEY='simNumericFocusExperimentV1';
-const css=document.createElement('style');css.textContent=`
-#nfDock{position:fixed;z-index:99997;bottom:12px;left:50%;transform:translateX(-50%);width:min(520px,calc(100vw - 24px));padding:12px 16px;background:#092532f5;border:2px solid #8cd8f5;border-radius:15px;box-shadow:0 7px 35px #000b;color:#f5fcff;font:16px system-ui;pointer-events:none}
-#nfDock[hidden]{display:none!important}#nfDock .nfHead{font-size:13px;color:#a6d3e7;margin-bottom:3px}#nfDock .nfNumber{font-size:clamp(34px,5vw,60px);line-height:1.15;font-weight:750;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}#nfDock .nfUnit{font-size:17px;color:#c6dce7}#nfTools{position:fixed;right:12px;bottom:12px;z-index:99998;background:#123441;border:1px solid #5c9ab4;border-radius:12px;padding:8px;display:flex;gap:8px;align-items:center;color:white;font:13px system-ui}#nfTools button{background:#1a5064;border:1px solid #72aec5;color:white;border-radius:8px;padding:8px 11px;min-height:40px}body.student #nfTools{display:none!important}body.student #nfDock{bottom:16px}body:not(.student) #nfDock{bottom:68px} .nfTarget{outline:2px solid #82d9ff!important;outline-offset:3px!important}
-`;document.head.append(css);
-const dock=document.createElement('div');dock.id='nfDock';dock.hidden=true;dock.innerHTML='<div class="nfHead" id="nfHead"></div><div class="nfNumber" id="nfNumber"></div><div class="nfUnit" id="nfUnit"></div>';document.body.append(dock);
-const head=dock.querySelector('#nfHead'),num=dock.querySelector('#nfNumber'),unit=dock.querySelector('#nfUnit');let selection=null,remote=null,active=false,marker=null;
-function info(el){if(!el)return null;const input=el.matches('input,select,textarea')?el:null;const wave=el.closest('.wave');const metric=el.closest('.metric,.clock-item,.fentanyl-stats>div');const label=input?.closest('label')||metric||wave||el.closest('.card');
-const labelText=(wave?.querySelector('.wlabel')?.textContent||metric?.querySelector('small')?.textContent||input?.closest('label')?.textContent||label?.querySelector('h2,h3')?.textContent||el.id||'Parametro').replace(/\\s+/g,' ').trim().slice(0,90);
-const value=input?(input.type==='checkbox'?(input.checked?'Sì':'No'):input.value):el.textContent.trim();
-return {id:el.id||null,selector:el.id?'#'+CSS.escape(el.id):null,label:labelText,value:value.slice(0,110),unit:input?.dataset.unit||''};}
-function display(d){if(!d){dock.hidden=true;return;}dock.hidden=false;head.textContent=d.label;num.textContent=d.value;unit.textContent=d.unit||'';}
-function publish(d){try{localStorage.setItem(KEY,JSON.stringify({enabled:active,data:d,at:Date.now()}));}catch(e){}}
-function select(el){if(!active||STUDENT)return;if(marker)marker.classList.remove('nfTarget');marker=el;marker.classList.add('nfTarget');selection=el;const d=info(el);display(d);publish(d);}
-function numericTarget(node){const el=node.nodeType===1?node:node.parentElement;if(!el||el.closest('#nfTools,#nfDock'))return null;
-const input=el.closest('input:not([type=hidden]),select,textarea');if(input)return input;
-const exact=el.closest('.values .big,.values span[id],.metric b,.clock-item b,.quick-values b,.fentanyl-stats b,[id$="Out"],[id$="Value"],[id$="Rate"],[id$="Elapsed"],[id$="Total"],[id$="State"]');
-if(exact)return exact;
-const v=el.closest('.values');if(v)return v.querySelector('.big')||v;
-return null;}
-if(!STUDENT){
- const tools=document.createElement('div');tools.id='nfTools';tools.innerHTML='<button id="nfToggle" type="button">Numeri grandi: OFF</button><button id="nfClear" type="button">Chiudi dato</button>';document.body.append(tools);
-const toggle=tools.querySelector('#nfToggle');toggle.onclick=()=>{active=!active;toggle.textContent='Numeri grandi: '+(active?'ON':'OFF');if(!active){selection=null;if(marker)marker.classList.remove('nfTarget');marker=null;display(null);}publish(active&&selection?info(selection):null);};
-tools.querySelector('#nfClear').onclick=()=>{selection=null;if(marker)marker.classList.remove('nfTarget');marker=null;display(null);publish(null);};
-document.addEventListener('pointerdown',e=>{if(!active)return;const el=numericTarget(e.target);if(el)select(el);},{capture:true,passive:true});
-document.addEventListener('focusin',e=>{if(active){const el=numericTarget(e.target);if(el)select(el);}});
-}else{try{remote=JSON.parse(localStorage.getItem(KEY)||'null');if(remote?.enabled)display(remote.data);}catch(e){}}
-window.addEventListener('storage',e=>{if(STUDENT&&e.key===KEY){try{remote=JSON.parse(e.newValue||'null');display(remote?.enabled?remote.data:null);}catch(_){}}});
-setInterval(()=>{if(STUDENT){if(remote?.enabled&&remote.data?.id){const el=document.getElementById(remote.data.id);if(el){const d=info(el);if(d){d.label=remote.data.label;display(d);return;}}}if(remote?.enabled)display(remote.data);return;}
-if(active&&selection?.isConnected){const d=info(selection);display(d);publish(d);}
-},250);
-})();</script>
-</body>
-</html>
+</style><script>
+(()=>{'use strict';
+const student=document.body.classList.contains('student'),KEY='simNumericInlineV2',PAT=/^[+−-]?(?:\\d+(?:[.,]\\d+)?|[.,]\\d+)\\s*(?:%|mmHg|cmH₂O|mL|L\\/min|bpm|kg|µg\\/kg\\/min)?$/i;
+const style=document.createElement('style');style.textContent=`
+.nf-inline{font-size:clamp(23px,2.4vw,38px)!important;line-height:1.2!important;font-weight:800!important;color:#fff!important;background:#15546b!important;outline:2px solid #81dbff!important;outline-offset:2px!important;border-radius:5px!important;box-shadow:0 0 0 5px #0c3745!important;min-width:0!important;max-width:100%!important;overflow-wrap:anywhere!important}
+input.nf-inline,select.nf-inline{height:auto!important;min-height:58px!important;padding:7px!important;box-sizing:border-box!important}
+.nf-inline:is(span,b,strong){display:inline-block!important;padding:3px 5px!important}
+#nfInlineTools{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:12px;color:#d4e9f3}
+#nfInlineTools button,#nfInlineTools select{border:1px solid #719bb0;border-radius:7px;background:#164354;color:#fff;padding:8px;min-height:38px}
+body.student #nfInlineTools{display:none!important}
+`;document.head.append(style);
+let current=null,active=false,scale='normal',remote=null;
+const selectors=['.values .big','.values span[id]','.metric b','.clock-item b','.quick-values b','.fentanyl-stats b','[id$="Out"]','[id$="Value"]','[id$="Rate"]','[id$="Elapsed"]','[id$="Total"]'];
+const candidates=()=>Array.from(document.querySelectorAll(selectors.join(','))).filter(e=>e.id!=='nfInlineTools'&&e.closest('#nfInlineTools')===null);
+function valid(el){if(!el)return false;if(el.matches('input,textarea,select')){if(el.type==='checkbox'||el.type==='range'||el.type==='radio'||el.type==='hidden')return false;return PAT.test((el.value||'').trim());}
+if(el.matches('button'))return false;return PAT.test((el.textContent||'').trim());}
+function key(el){if(el.id)return 'id:'+el.id;const arr=candidates();const idx=arr.indexOf(el);return idx>=0?'index:'+idx:null;}
+function resolve(k){if(!k)return null;if(k.startsWith('id:'))return document.getElementById(k.slice(3));if(k.startsWith('index:'))return candidates()[Number(k.slice(6))]||null;return null;}
+function mark(el){if(current)current.classList.remove('nf-inline');current=el;if(current)current.classList.add('nf-inline');}
+function broadcast(k){try{localStorage.setItem(KEY,JSON.stringify({active,key:k,at:Date.now()}));}catch(e){}}
+function target(node){const e=node?.nodeType===1?node:node?.parentElement;if(!e||e.closest('#nfInlineTools'))return null;const input=e.closest('input,textarea,select');if(input)return valid(input)?input:null;
+const v=e.closest(selectors.join(','));if(v&&valid(v))return v;
+const metric=e.closest('.metric,.clock-item,.quick-values>*,.values');if(metric){const x=metric.querySelector(selectors.join(','));if(valid(x))return x;}return null;}
+if(!student){const header=document.querySelector('header .row')||document.querySelector('header')||document.body;const bar=document.createElement('div');bar.id='nfInlineTools';bar.innerHTML='<button type="button" id="nfInlineToggle">Ingrandimento: OFF</button><button type="button" id="nfInlineClear">Ripristina</button>';header.append(bar);
+const button=bar.querySelector('#nfInlineToggle');button.onclick=()=>{active=!active;button.textContent='Ingrandimento: '+(active?'ON':'OFF');if(!active)mark(null);broadcast(active&&current?key(current):null);};
+bar.querySelector('#nfInlineClear').onclick=()=>{mark(null);broadcast(null);};
+document.addEventListener('pointerdown',e=>{if(!active)return;const t=target(e.target);if(!t)return;mark(t);broadcast(key(t));},{capture:true,passive:true});
+document.addEventListener('focusin',e=>{if(!active)return;const t=target(e.target);if(t){mark(t);broadcast(key(t));}});
+}else{try{remote=JSON.parse(localStorage.getItem(KEY)||'null');if(remote?.active)mark(resolve(remote.key));}catch(e){}}
+window.addEventListener('storage',e=>{if(!student||e.key!==KEY)return;try{remote=JSON.parse(e.newValue||'null');mark(remote?.active?resolve(remote.key):null);}catch(e){}});
+setInterval(()=>{if(current&&!current.isConnected){mark(null);if(!student)broadcast(null);}if(student&&remote?.active&&remote.key&&!current){const e=resolve(remote.key);if(e)mark(e);}},500);
+})();
+</script>
+</body></html>
