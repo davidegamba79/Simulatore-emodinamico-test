@@ -1525,7 +1525,7 @@ body:not(.student)[data-propofol-mode="tiva"] #propofolTCIControl > .cols,
 body:not(.student)[data-propofol-mode="tiva"] #propofolTCIControl > .row{display:flex!important}
 </style><script>
 (()=>{'use strict';
-const student=document.body.classList.contains('student'),KEY='simNumericInlineV2',PAT=/^[+−-]?[0-9]+(?:[.,][0-9]+)?(?:\\s*(?:%|mmHg|cmH₂O|mL|bpm|kg))?$/i;
+const student=new URLSearchParams(location.search).get('student')==='1'||document.body.classList.contains('student'),KEY='simNumericInlineV2',PAT=/^[+−-]?[0-9]+(?:[.,][0-9]+)?(?:\\s*(?:%|mmHg|cmH₂O|mL|bpm|kg))?$/i;
 const style=document.createElement('style');style.textContent=`
 .nf-inline{font-size:var(--nf-size,34px)!important;line-height:1.2!important;font-weight:800!important;color:#fff!important;background:#15546b!important;outline:1px solid #81dbff!important;outline-offset:-1px!important;border-radius:5px!important;box-shadow:none!important;min-width:0!important;max-width:100%!important;box-sizing:border-box!important;white-space:nowrap!important;overflow-wrap:normal!important;letter-spacing:-.02em!important}
 input.nf-inline,select.nf-inline{height:auto!important;min-height:58px!important;padding:7px!important;box-sizing:border-box!important}
