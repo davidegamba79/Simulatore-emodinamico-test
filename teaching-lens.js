@@ -27,6 +27,25 @@ function syncAllScroll(){
  const target=doc.scrollingElement,source=document.scrollingElement;
  if(target&&source){target.scrollTop=source.scrollTop;target.scrollLeft=source.scrollLeft;}
 }
+function pointAlignment(cx,cy){
+ const doc=frame?.contentDocument;if(!doc)return {dx:0,dy:0};
+ const source=document.elementFromPoint(cx,cy);
+ if(!source||source===glass||glass?.contains(source)||source===toolbar||toolbar?.contains(source))return {dx:0,dy:0};
+ // Confronta il rettangolo dell'elemento effettivamente indicato nelle due viste.
+ // Non presume che il layout della seconda pagina coincida con quello principale.
+ let node=source;
+ while(node&&node!==document.body){
+  const match=counterpart(node);
+  if(match){
+   const a=node.getBoundingClientRect(),b=match.getBoundingClientRect();
+   if(a.width>0&&a.height>0&&b.width>0&&b.height>0){
+    return {dx:a.left-b.left,dy:a.top-b.top};
+   }
+  }
+  node=node.parentElement;
+ }
+ return {dx:0,dy:0};
+}
 function scheduleSync(){
  if(!state.enabled)return;
  if(scheduleSync.pending)return;
@@ -84,7 +103,8 @@ function update(){
  const z=state.zoom;
  if(!student){try{const source=document.querySelector('.monitor');const mirrored=frame.contentDocument?.querySelector('.monitor');const tab=document.body.dataset.instructorTab||'patient';if(tab!==lastTab){const button=frame.contentDocument?.getElementById('instructor-tab-'+tab);if(button){button.click();lastTab=tab;requestAnimationFrame(scheduleSync);}}syncAllScroll();if(tab!==''&&tab===lastTab&&source&&mirrored){mirrored.scrollTop=source.scrollTop;mirrored.scrollLeft=source.scrollLeft;}frame.contentWindow?.scrollTo(window.scrollX,window.scrollY);}catch(_){}}
  frame.style.width=innerWidth+'px';frame.style.height=innerHeight+'px';
- frame.style.transform='translate('+ (110-cx*z)+'px,'+(110-cy*z)+'px) scale('+z+')';
+ const align=!student?pointAlignment(cx,cy):{dx:0,dy:0};
+ frame.style.transform='translate('+ (110-(cx-align.dx)*z)+'px,'+(110-(cy-align.dy)*z)+'px) scale('+z+')';
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup,{once:true});else setup();
 })();
