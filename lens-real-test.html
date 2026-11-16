@@ -1,0 +1,34 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>V3.0 — prova lente contestuale reale</title><style>
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07131a;font-family:system-ui;color:#e9f5fb}#sim{position:absolute;inset:0;width:100%;height:100%;border:0}.bar{position:fixed;top:4px;left:50%;transform:translateX(-50%);z-index:99;pointer-events:none;border:1px solid #628ba0;background:#123442e8;border-radius:8px;padding:4px 12px;font-size:12px}.preview{position:fixed;bottom:14px;right:14px;z-index:99;width:min(450px,calc(100vw - 28px));max-height:50vh;overflow:auto;border:2px solid #ccecff;background:#102d3bf5;border-radius:14px;box-shadow:0 8px 35px #000b;padding:12px}.top{display:flex;justify-content:space-between;align-items:center;gap:8px}.top h2{font-size:15px;margin:0}.top button{background:#214a60;border:1px solid #739bb0;border-radius:7px;color:white;padding:8px;cursor:pointer}.info{font-size:12px;color:#bdd2de;margin:8px 0}#graph{display:none;width:100%;height:170px;background:#06141c;border:1px solid #315262;border-radius:8px}#value{font-size:24px;font-weight:700;margin-top:7px;overflow-wrap:anywhere}#message{color:#b8d0dc;font-size:13px}.preview.collapsed #graph,.preview.collapsed #value,.preview.collapsed #message,.preview.collapsed .info{display:none!important}.preview.collapsed{width:auto}@media(max-width:650px){.preview{max-height:38vh}#graph{height:125px}}
+</style></head><body><iframe id="sim" title="Simulatore Anestesia V3.0 — console reale" src="./index.html?contextualLensExperiment=1"></iframe><div class="bar">PROVA ISOLATA — lente contestuale</div><section id="preview" class="preview"><div class="top"><h2 id="title">Lente contestuale</h2><button id="collapse">Riduci</button></div><div class="info">Tocca un'onda, un grafico o un valore nella console. Puoi continuare a usare i comandi normalmente.</div><canvas id="graph"></canvas><div id="value"></div><div id="message">In attesa di selezione…</div></section>
+<script>
+(()=>{'use strict';
+const frame=document.getElementById('sim'),preview=document.getElementById('preview'),graph=document.getElementById('graph'),ctx=graph.getContext('2d'),title=document.getElementById('title'),value=document.getElementById('value'),msg=document.getElementById('message');let source=null,host=null,doc=null;
+document.getElementById('collapse').onclick=()=>{preview.classList.toggle('collapsed');document.getElementById('collapse').textContent=preview.classList.contains('collapsed')?'Espandi':'Riduci';};
+function visible(el){if(!el||!el.isConnected)return false;const r=el.getBoundingClientRect();return r.width>0&&r.height>0&&getComputedStyle(el).visibility!=='hidden';}
+function pick(target){if(!(target instanceof frame.contentWindow.Element))return;const c=target.closest('canvas');const svg=target.closest('svg');const control=target.closest('input,select,textarea,button');const parent=target.closest('.wave, .chart-card, .chart-wrap, .panel, .card, section');
+let selected=c||svg;
+if(!selected&&parent){const canvases=[...parent.querySelectorAll('canvas,svg')].filter(visible);if(canvases.length===1)selected=canvases[0];}
+if(!selected&&control){source=null;host=control;title.textContent=control.getAttribute('aria-label')||control.closest('label')?.textContent?.trim()||control.id||control.tagName;graph.style.display='none';msg.textContent='Valore originale del controllo';value.textContent=control.value??control.textContent?.trim()??'';return;}
+if(!selected)return;
+source=selected;host=selected.closest('.wave')||selected.closest('.panel,.card,section')||selected.parentElement;
+const label=host?.querySelector('.wlabel,.label,h2,h3,.chart-title,legend');title.textContent=label?.textContent?.trim()||selected.id||'Grafico del simulatore';
+graph.style.display='block';msg.textContent='Visualizzazione diretta del grafico originale';value.textContent='';
+}
+function update(){if(!doc)return;
+if(source&&!visible(source)){source=null;graph.style.display='none';msg.textContent='Grafico non visibile: seleziona un elemento della sezione corrente.';value.textContent='';}
+if(source){const rect=graph.getBoundingClientRect(),dpr=Math.min(2,devicePixelRatio||1),w=Math.max(1,Math.round(rect.width*dpr)),h=Math.max(1,Math.round(rect.height*dpr));if(graph.width!==w||graph.height!==h){graph.width=w;graph.height=h;}ctx.setTransform(1,0,0,1,0,0);ctx.fillStyle='#06141c';ctx.fillRect(0,0,w,h);
+try{if(source.tagName.toLowerCase()==='canvas'){ctx.drawImage(source,0,0,source.width,source.height,0,0,w,h);}else{msg.textContent='Grafico SVG selezionato: anteprima non ancora supportata in questa prova.';}}catch(e){msg.textContent='Impossibile leggere il grafico: '+e.message;}
+if(host?.classList.contains('wave')){const v=host.querySelector('.values');value.textContent=v?.innerText?.replace(/\s+/g,' ').trim()||'';}
+}else if(host&&visible(host)&&'value'in host){value.textContent=host.value;}
+}
+function attach(){try{doc=frame.contentDocument;if(!doc)throw Error('documento non accessibile');
+doc.addEventListener('pointerdown',e=>pick(e.target),{passive:true,capture:true});
+doc.addEventListener('pointerover',e=>{if(e.pointerType==='mouse'||e.pointerType==='pen')pick(e.target)},{passive:true,capture:true});
+doc.addEventListener('input',e=>{if(e.target===host)value.textContent=e.target.value;},{passive:true,capture:true});
+const legacy=doc.getElementById('teachingLensToggle');if(legacy&&legacy.textContent.includes('ON'))legacy.click();
+msg.textContent='Simulatore reale caricato. Seleziona un elemento.';setInterval(update,90);
+}catch(e){msg.textContent='Impossibile collegare la lente al simulatore: '+e.message;}}
+frame.addEventListener('load',attach);
+})();
+</script></body></html>
