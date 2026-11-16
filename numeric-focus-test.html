@@ -1527,12 +1527,12 @@ body:not(.student)[data-propofol-mode="tiva"] #propofolTCIControl > .row{display
 (()=>{'use strict';
 const student=document.body.classList.contains('student'),KEY='simNumericInlineV2',PAT=/^[+−-]?[0-9]+(?:[.,][0-9]+)?(?:\\s*(?:%|mmHg|cmH₂O|mL|bpm|kg))?$/i;
 const style=document.createElement('style');style.textContent=`
-.nf-inline{font-size:var(--nf-size,34px)!important;line-height:1.2!important;font-weight:800!important;color:#fff!important;background:#15546b!important;outline:2px solid #81dbff!important;outline-offset:2px!important;border-radius:5px!important;box-shadow:0 0 0 5px #0c3745!important;min-width:0!important;max-width:100%!important;overflow-wrap:anywhere!important}
+.nf-inline{font-size:var(--nf-size,34px)!important;line-height:1.2!important;font-weight:800!important;color:#fff!important;background:#15546b!important;outline:2px solid #81dbff!important;outline-offset:2px!important;border-radius:5px!important;box-shadow:0 0 0 5px #0c3745!important;min-width:0!important;max-width:100%!important;white-space:nowrap!important;overflow-wrap:normal!important;letter-spacing:-.02em!important}
 input.nf-inline,select.nf-inline{height:auto!important;min-height:58px!important;padding:7px!important;box-sizing:border-box!important}
 .nf-inline:is(span,b,strong){display:inline-block!important;padding:3px 5px!important}
-#nfInlineTools{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:12px;color:#d4e9f3}
-#nfInlineTools button,#nfInlineTools select{border:1px solid #719bb0;border-radius:7px;background:#164354;color:#fff;padding:8px;min-height:38px}
-body.student #nfInlineTools{display:none!important}
+#nfInlineTools{display:flex;align-items:center;gap:5px;flex-wrap:nowrap;white-space:nowrap;min-width:0;font-size:12px;color:#d4e9f3}
+#nfInlineTools button,#nfInlineTools select{border:1px solid #719bb0;border-radius:7px;background:#164354;color:#fff;padding:6px 8px;min-height:34px;width:auto!important;min-width:0!important;max-width:none!important;flex:0 0 auto!important;font-size:12px!important}
+body.student #nfInlineTools{display:none!important}#nfInlineScale{width:64px!important;max-width:64px!important;min-width:64px!important;padding:5px!important}#nfInlineTools button{white-space:nowrap!important}
 `;document.head.append(style);
 let current=null,active=false,scale=2,remote=null;const baseSizes=new WeakMap();
 const selectors=['#egaMetrics > div > div','#ventilationPanel .vent-readouts b','#ventilationPanel .vent-readouts div > b','.values .big','.values span[id]','.metric b','.clock-item b','.quick-values b','.fentanyl-stats b','[id$="Out"]','[id$="Value"]','[id$="Rate"]','[id$="Elapsed"]','[id$="Total"]'];
@@ -1541,19 +1541,20 @@ function valid(el){if(!el)return false;if(el.matches('input,textarea,select')){i
 if(el.matches('button'))return false;return PAT.test((el.textContent||'').trim());}
 function key(el){if(el.id)return 'id:'+el.id;const arr=candidates();const idx=arr.indexOf(el);return idx>=0?'index:'+idx:null;}
 function resolve(k){if(!k)return null;if(k.startsWith('id:'))return document.getElementById(k.slice(3));if(k.startsWith('index:'))return candidates()[Number(k.slice(6))]||null;return null;}
-function mark(el){if(current)current.classList.remove('nf-inline');current=el;if(current){if(!baseSizes.has(current))baseSizes.set(current,parseFloat(getComputedStyle(current).fontSize)||17);current.style.setProperty('--nf-size',(baseSizes.get(current)*scale)+'px');current.classList.add('nf-inline');}}
+function fitSize(el){const base=baseSizes.get(el)||17;const parent=el.parentElement;if(!parent)return base*scale;const style=getComputedStyle(el);const text=el.matches('input,select')?el.value:el.textContent;const probe=document.createElement('canvas').getContext('2d');probe.font=style.fontWeight+' '+(base*scale)+'px '+style.fontFamily;const measured=probe.measureText(text||'0').width;const avail=Math.max(30,parent.clientWidth-18);return Math.max(base,Math.min(base*scale,(base*scale)*avail/Math.max(1,measured)));}
+function mark(el){if(current)current.classList.remove('nf-inline');current=el;if(current){if(!baseSizes.has(current))baseSizes.set(current,parseFloat(getComputedStyle(current).fontSize)||17);current.style.setProperty('--nf-size',fitSize(current)+'px');current.classList.add('nf-inline');}}
 function broadcast(k){try{localStorage.setItem(KEY,JSON.stringify({active,key:k,scale,at:Date.now()}));}catch(e){}}
 function target(node){const e=node?.nodeType===1?node:node?.parentElement;if(!e||e.closest('#nfInlineTools'))return null;const input=e.closest('input,textarea,select');if(input)return valid(input)?input:null;
 const v=e.closest(selectors.join(','));if(v&&valid(v))return v;
 const metric=e.closest('#egaMetrics > div,#ventilationPanel .vent-readouts > div,.metric,.clock-item,.quick-values>*,.values');if(metric){const x=metric.querySelector(selectors.join(','));if(valid(x))return x;}return null;}
-if(!student){const header=document.querySelector('header .row')||document.querySelector('header')||document.body;const bar=document.createElement('div');bar.id='nfInlineTools';bar.innerHTML='<button type="button" id="nfInlineToggle">Numeri grandi: OFF</button><select id="nfInlineScale" aria-label="Ingrandimento"><option value="2" selected>2×</option><option value="4">4×</option></select><button type="button" id="nfInlineClear">Ripristina</button>';header.append(bar);
-const scaleSelect=bar.querySelector('#nfInlineScale');scaleSelect.onchange=()=>{scale=Number(scaleSelect.value);if(current)mark(current);broadcast(active&&current?key(current):null);};const button=bar.querySelector('#nfInlineToggle');button.onclick=()=>{active=!active;button.textContent='Numeri grandi: '+(active?'ON':'OFF');if(!active)mark(null);broadcast(active&&current?key(current):null);};
+if(!student){const header=document.querySelector('header .row')||document.querySelector('header')||document.body;const bar=document.createElement('div');bar.id='nfInlineTools';bar.innerHTML='<button type="button" id="nfInlineToggle">Zoom: OFF</button><select id="nfInlineScale" aria-label="Ingrandimento"><option value="2" selected>2×</option><option value="4">4×</option></select><button type="button" id="nfInlineClear">Ripristina</button>';header.append(bar);
+const scaleSelect=bar.querySelector('#nfInlineScale');scaleSelect.onchange=()=>{scale=Number(scaleSelect.value);if(current)mark(current);broadcast(active&&current?key(current):null);};const button=bar.querySelector('#nfInlineToggle');button.onclick=()=>{active=!active;button.textContent='Zoom: '+(active?'ON':'OFF');if(!active)mark(null);broadcast(active&&current?key(current):null);};
 bar.querySelector('#nfInlineClear').onclick=()=>{mark(null);broadcast(null);};
 document.addEventListener('pointerdown',e=>{if(!active)return;const t=target(e.target);if(!t)return;mark(t);broadcast(key(t));},{capture:true,passive:true});
 document.addEventListener('focusin',e=>{if(!active)return;const t=target(e.target);if(t){mark(t);broadcast(key(t));}});
 }else{try{remote=JSON.parse(localStorage.getItem(KEY)||'null');if(remote?.active){scale=remote.scale===4?4:2;mark(resolve(remote.key));}}catch(e){}}
 window.addEventListener('storage',e=>{if(!student||e.key!==KEY)return;try{remote=JSON.parse(e.newValue||'null');scale=remote?.scale===4?4:2;mark(remote?.active?resolve(remote.key):null);}catch(e){}});
-setInterval(()=>{if(current&&!current.isConnected){mark(null);if(!student)broadcast(null);}if(student&&remote?.active&&remote.key&&!current){const e=resolve(remote.key);if(e)mark(e);}},500);
+setInterval(()=>{if(current&&current.isConnected){const fitted=fitSize(current);if(Math.abs(parseFloat(current.style.getPropertyValue('--nf-size'))-fitted)>0.5)current.style.setProperty('--nf-size',fitted+'px');}if(current&&!current.isConnected){mark(null);if(!student)broadcast(null);}if(student&&remote?.active&&remote.key&&!current){const e=resolve(remote.key);if(e)mark(e);}},500);
 })();
 </script>
 </body></html>
