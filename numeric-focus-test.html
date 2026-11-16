@@ -1534,7 +1534,7 @@ input.nf-inline,select.nf-inline{height:auto!important;min-height:58px!important
 #nfInlineTools button,#nfInlineTools select{border:1px solid #719bb0;border-radius:7px;background:#164354;color:#fff;padding:6px 8px;min-height:34px;width:auto!important;min-width:0!important;max-width:none!important;flex:0 0 auto!important;font-size:12px!important}
 body.student #nfInlineTools{display:none!important}#nfInlineScale{width:64px!important;max-width:64px!important;min-width:64px!important;padding:5px!important}#nfInlineTools button{white-space:nowrap!important}
 `;document.head.append(style);
-let current=null,active=false,scale=2,remote=null;const baseSizes=new WeakMap();
+let current=null,active=false,scale=2,remote=null;const baseSizes=new WeakMap();const channel=typeof BroadcastChannel!=='undefined'?new BroadcastChannel('sim-numeric-focus-v8'):null;
 const selectors=['#egaMetrics > div > div','#ventilationPanel .vent-readouts b','#ventilationPanel .vent-readouts div > b','.values .big','.values span[id]','.metric b','.clock-item b','.quick-values b','.fentanyl-stats b','[id$="Out"]','[id$="Value"]','[id$="Rate"]','[id$="Elapsed"]','[id$="Total"]'];
 const candidates=()=>Array.from(document.querySelectorAll(selectors.join(','))).filter(e=>e.id!=='nfInlineTools'&&e.closest('#nfInlineTools')===null);
 function valid(el){if(!el)return false;if(el.matches('input,textarea,select')){if(el.type==='checkbox'||el.type==='range'||el.type==='radio'||el.type==='hidden')return false;return PAT.test((el.value||'').trim());}
@@ -1543,18 +1543,22 @@ function key(el){if(el.id)return 'id:'+el.id;const arr=candidates();const idx=ar
 function resolve(k){if(!k)return null;if(k.startsWith('id:'))return document.getElementById(k.slice(3));if(k.startsWith('index:'))return candidates()[Number(k.slice(6))]||null;return null;}
 function fitSize(el){const base=baseSizes.get(el)||17;const parent=el.parentElement;if(!parent)return base*scale;const ps=getComputedStyle(parent),es=getComputedStyle(el);const inner=parent.clientWidth-(parseFloat(ps.paddingLeft)||0)-(parseFloat(ps.paddingRight)||0);const avail=Math.max(12,inner-18);const text=el.matches('input,select')?el.value:el.textContent;const ctx=document.createElement('canvas').getContext('2d');const family=es.fontFamily||'system-ui';const weight='800';ctx.font=weight+' '+(base*scale)+'px '+family;const measured=ctx.measureText(text||'0').width+14;const fitted=Math.min(base*scale,(base*scale)*avail/Math.max(1,measured));return Math.max(10,Math.floor(fitted*0.97));}
 function mark(el){if(current)current.classList.remove('nf-inline');current=el;if(current){if(!baseSizes.has(current))baseSizes.set(current,parseFloat(getComputedStyle(current).fontSize)||17);current.classList.add('nf-inline');current.style.setProperty('--nf-size',fitSize(current)+'px');}}
-function broadcast(k){try{localStorage.setItem(KEY,JSON.stringify({active,key:k,scale,at:Date.now()}));}catch(e){}}
+function broadcast(k){const data={active,key:k,scale,at:Date.now()};try{localStorage.setItem(KEY,JSON.stringify(data));}catch(e){}try{channel?.postMessage(data);}catch(e){}}
 function target(node){const e=node?.nodeType===1?node:node?.parentElement;if(!e||e.closest('#nfInlineTools'))return null;const input=e.closest('input,textarea,select');if(input)return valid(input)?input:null;
 const v=e.closest(selectors.join(','));if(v&&valid(v))return v;
 const metric=e.closest('#egaMetrics > div,#ventilationPanel .vent-readouts > div,.metric,.clock-item,.quick-values>*,.values');if(metric){const x=metric.querySelector(selectors.join(','));if(valid(x))return x;}return null;}
+function applyRemote(data){remote=data||null;if(!student)return;scale=remote?.scale===4?4:2;const el=remote?.active?resolve(remote.key):null;if(el!==current)mark(el);else if(el)el.style.setProperty('--nf-size',fitSize(el)+'px');}
+if(channel)channel.onmessage=e=>{if(student)applyRemote(e.data);};
 if(!student){const header=document.querySelector('header .row')||document.querySelector('header')||document.body;const bar=document.createElement('div');bar.id='nfInlineTools';bar.innerHTML='<button type="button" id="nfInlineToggle">Zoom: OFF</button><select id="nfInlineScale" aria-label="Ingrandimento"><option value="2" selected>2×</option><option value="4">4×</option></select><button type="button" id="nfInlineClear">Ripristina</button>';header.append(bar);
 const scaleSelect=bar.querySelector('#nfInlineScale');scaleSelect.onchange=()=>{scale=Number(scaleSelect.value);if(current)mark(current);broadcast(active&&current?key(current):null);};const button=bar.querySelector('#nfInlineToggle');button.onclick=()=>{active=!active;button.textContent='Zoom: '+(active?'ON':'OFF');if(!active)mark(null);broadcast(active&&current?key(current):null);};
 bar.querySelector('#nfInlineClear').onclick=()=>{mark(null);broadcast(null);};
 document.addEventListener('pointerdown',e=>{if(!active)return;const t=target(e.target);if(!t)return;mark(t);broadcast(key(t));},{capture:true,passive:true});
 document.addEventListener('focusin',e=>{if(!active)return;const t=target(e.target);if(t){mark(t);broadcast(key(t));}});
-}else{try{remote=JSON.parse(localStorage.getItem(KEY)||'null');if(remote?.active){scale=remote.scale===4?4:2;mark(resolve(remote.key));}}catch(e){}}
-window.addEventListener('storage',e=>{if(!student||e.key!==KEY)return;try{remote=JSON.parse(e.newValue||'null');scale=remote?.scale===4?4:2;mark(remote?.active?resolve(remote.key):null);}catch(e){}});
-setInterval(()=>{if(current&&current.isConnected){const fitted=fitSize(current);if(Math.abs(parseFloat(current.style.getPropertyValue('--nf-size'))-fitted)>0.5)current.style.setProperty('--nf-size',fitted+'px');}if(current&&!current.isConnected){mark(null);if(!student)broadcast(null);}if(student&&remote?.active&&remote.key&&!current){const e=resolve(remote.key);if(e)mark(e);}},500);
+}else{try{applyRemote(JSON.parse(localStorage.getItem(KEY)||'null'));}catch(e){}}
+window.addEventListener('storage',e=>{if(!student||e.key!==KEY)return;try{applyRemote(JSON.parse(e.newValue||'null'));}catch(e){}});
+setInterval(()=>{if(student){try{const stored=JSON.parse(localStorage.getItem(KEY)||'null');if(stored&&(!remote||stored.at>remote.at))applyRemote(stored);}catch(e){}if(remote?.active){const el=resolve(remote.key);if(el!==current)mark(el);else if(el){const fitted=fitSize(el);el.style.setProperty('--nf-size',fitted+'px');}}else if(current)mark(null);return;}
+if(current&&current.isConnected){const fitted=fitSize(current);if(Math.abs(parseFloat(current.style.getPropertyValue('--nf-size'))-fitted)>0.5)current.style.setProperty('--nf-size',fitted+'px');}if(current&&!current.isConnected){mark(null);broadcast(null);}
+},350);
 })();
 </script>
 </body></html>
