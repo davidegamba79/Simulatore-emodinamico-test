@@ -52,7 +52,7 @@ function textNode(c,node,css){
  while((m=re.exec(value))&&count++<250){range.setStart(node,m.index);range.setEnd(node,m.index+m[0].length);const r=range.getBoundingClientRect();if(r.width)drawText(c,m[0],r.left,r.top+(r.height+fs)*.5,css,r.width+3);}
 }
 function drawControl(c,el,r,css){
- if(el instanceof HTMLCanvasElement){try{c.drawImage(el,r.left,r.top,r.width,r.height);}catch(_){}return true;}
+ if(el instanceof HTMLCanvasElement)return true; // Passata separata: le onde devono stare sopra gli sfondi
  if(el instanceof HTMLInputElement){
   if(el.type==='checkbox'||el.type==='radio'){if(el.checked){c.fillStyle='#168dff';c.fillRect(r.left,r.top,r.width,r.height);c.fillStyle='white';c.font='bold '+Math.max(10,r.height*.8)+'px sans-serif';c.fillText('✓',r.left+2,r.bottom-2);}return true;}
   if(el.type==='range'){const min=Number(el.min)||0,max=Number(el.max)||100,val=Number(el.value)||0,f=Math.max(0,Math.min(1,(val-min)/(max-min||1)));c.strokeStyle='#a7b5c2';c.lineWidth=4;c.beginPath();c.moveTo(r.left+8,r.top+r.height/2);c.lineTo(r.right-8,r.top+r.height/2);c.stroke();c.fillStyle='#e9f2f6';c.beginPath();c.arc(r.left+8+(r.width-16)*f,r.top+r.height/2,8,0,Math.PI*2);c.fill();return true;}
@@ -86,6 +86,29 @@ function drawTree(c,root,viewport){
  }
  walk(root);
 }
+function drawLiveCanvases(c,viewport){
+ const list=document.querySelectorAll('canvas');
+ for(const source of list){
+  if(source===canvas||glass.contains(source)||source.width===0||source.height===0)continue;
+  const r=source.getBoundingClientRect();if(!visible(r,viewport))continue;
+  const style=getComputedStyle(source);if(style.display==='none'||style.visibility==='hidden')continue;
+  c.save();
+  // Rispetta il ritaglio della colonna scrollabile, ma non nasconde le onde
+  // dietro al fondo dei pannelli ridisegnati nella passata precedente.
+  let p=source.parentElement;
+  while(p&&p!==document.body){
+   const ps=getComputedStyle(p);
+   if(ps.display==='none'||ps.visibility==='hidden'){c.restore();p=null;break;}
+   if(['auto','scroll','hidden','clip'].includes(ps.overflowX)||['auto','scroll','hidden','clip'].includes(ps.overflowY)){
+    const pr=p.getBoundingClientRect();c.beginPath();c.rect(pr.left,pr.top,pr.width,pr.height);c.clip();
+   }
+   p=p.parentElement;
+  }
+  if(p===null)continue;
+  try{c.drawImage(source,0,0,source.width,source.height,r.left,r.top,r.width,r.height);}catch(err){console.warn('Lente: canvas non acquisibile',source.id,err);}
+  c.restore();
+ }
+}
 function paint(){
  if(!glass||!ctx)return;
  glass.style.display='block';
@@ -96,7 +119,7 @@ function paint(){
  ctx.setTransform(dpr,0,0,dpr,0,0);ctx.fillStyle='#081721';ctx.fillRect(0,0,220,220);
  ctx.save();ctx.translate(110,110);ctx.scale(z,z);ctx.translate(-cx,-cy);
  const radius=110/z,viewport={left:cx-radius,top:cy-radius,right:cx+radius,bottom:cy+radius};
- try{drawTree(ctx,document.body,viewport);}catch(err){console.warn('Lente didattica: errore rendering',err);}
+ try{drawTree(ctx,document.body,viewport);drawLiveCanvases(ctx,viewport);}catch(err){console.warn('Lente didattica: errore rendering',err);}
  ctx.restore();
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup,{once:true});else setup();
