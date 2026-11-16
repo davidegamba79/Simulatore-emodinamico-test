@@ -1535,12 +1535,18 @@ const css=document.createElement('style');css.textContent=`
 body.student #pauseLensBar{display:none}
 `;document.head.append(css);
 const lens=document.createElement('div');lens.id='pauseLensCircle';const content=document.createElement('div');content.id='pauseLensContent';lens.append(content);document.body.append(lens);
-let enabled=false,zoom=2,point=null,source=null,last=0;
+let enabled=false,zoom=2,point=null,source=null,last=0;const LENS_KEY='pauseLensCrossWindowV4';
+function share(){if(student)return;try{localStorage.setItem(LENS_KEY,JSON.stringify({enabled,zoom,at:Date.now()}));}catch(_){}}
+function accept(raw){if(!student)return;try{const data=JSON.parse(raw||'null');enabled=!!data?.enabled;zoom=data?.zoom===4?4:2;if(!enabled){point=null;lens.style.display='none';}}catch(_){}}
+if(student){try{accept(localStorage.getItem(LENS_KEY));}catch(_){}window.addEventListener('storage',e=>{if(e.key===LENS_KEY)accept(e.newValue)});}
 const bar=document.createElement('div');bar.id='pauseLensBar';bar.innerHTML='<button id="pauseLensToggle">Lente OFF</button><select id="pauseLensZoom"><option value="2">2×</option><option value="4">4×</option></select>';(document.querySelector('header .row')||document.querySelector('header')||document.body).append(bar);
-const toggle=bar.querySelector('#pauseLensToggle');toggle.onclick=()=>{if(!enabled&&!paused()){const p=document.getElementById('simPause');if(p&&p.textContent.trim()==='Pausa')p.click();}enabled=!enabled;toggle.textContent=enabled?'Lente ON':'Lente OFF';if(!enabled){lens.style.display='none';point=null;}else{point={x:Math.round(innerWidth*.5),y:Math.round(innerHeight*.45)};}};
-bar.querySelector('#pauseLensZoom').onchange=e=>{zoom=Number(e.target.value)};
+const toggle=bar.querySelector('#pauseLensToggle');toggle.onclick=()=>{if(!enabled&&!paused()){const p=document.getElementById('simPause');if(p&&p.textContent.trim()==='Pausa')p.click();}enabled=!enabled;toggle.textContent=enabled?'Lente ON':'Lente OFF';if(!enabled){lens.style.display='none';point=null;}else{point={x:Math.round(innerWidth*.5),y:Math.round(innerHeight*.45)};}share();};
+bar.querySelector('#pauseLensZoom').onchange=e=>{zoom=Number(e.target.value);share();};
 const paused=()=>typeof window.simIsPaused==='function'&&window.simIsPaused();
 function locate(e){if(!enabled||!paused()||bar.contains(e.target))return;point={x:e.clientX,y:e.clientY};}
+document.addEventListener('pointerleave',()=>{point=null;lens.style.display='none';});
+window.addEventListener('blur',()=>{point=null;lens.style.display='none';});
+document.addEventListener('pointerenter',e=>{if(enabled&&paused())point={x:e.clientX,y:e.clientY};},{passive:true});
 document.addEventListener('pointermove',locate,{passive:true});
 document.addEventListener('pointerdown',locate,{passive:true});
 function frame(t){requestAnimationFrame(frame);if(!enabled||!paused()||!point){lens.style.display='none';return;}if(t-last<90)return;last=t;
