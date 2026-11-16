@@ -1530,12 +1530,12 @@ const style=document.createElement('style');style.textContent=`
 .nf-inline{font-size:clamp(23px,2.4vw,38px)!important;line-height:1.2!important;font-weight:800!important;color:#fff!important;background:#15546b!important;outline:2px solid #81dbff!important;outline-offset:2px!important;border-radius:5px!important;box-shadow:0 0 0 5px #0c3745!important;min-width:0!important;max-width:100%!important;overflow-wrap:anywhere!important}
 input.nf-inline,select.nf-inline{height:auto!important;min-height:58px!important;padding:7px!important;box-sizing:border-box!important}
 .nf-inline:is(span,b,strong){display:inline-block!important;padding:3px 5px!important}
-#nfInlineTools{position:fixed;z-index:999999;left:12px;bottom:12px;background:#113440f5;border:2px solid #7cc5df;border-radius:12px;padding:8px;box-shadow:0 5px 22px #000a;display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:12px;color:#d4e9f3}
+#nfInlineTools{display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:12px;color:#d4e9f3}
 #nfInlineTools button,#nfInlineTools select{border:1px solid #719bb0;border-radius:7px;background:#164354;color:#fff;padding:8px;min-height:38px}
 body.student #nfInlineTools{display:none!important}
 `;document.head.append(style);
 let current=null,active=false,scale='normal',remote=null;
-const selectors=['.values .big','.values span[id]','.metric b','.clock-item b','.quick-values b','.fentanyl-stats b','[id$="Out"]','[id$="Value"]','[id$="Rate"]','[id$="Elapsed"]','[id$="Total"]'];
+const selectors=['#egaMetrics > div > div','#ventilationPanel .vent-readouts b','#ventilationPanel .vent-readouts div > b','.values .big','.values span[id]','.metric b','.clock-item b','.quick-values b','.fentanyl-stats b','[id$="Out"]','[id$="Value"]','[id$="Rate"]','[id$="Elapsed"]','[id$="Total"]'];
 const candidates=()=>Array.from(document.querySelectorAll(selectors.join(','))).filter(e=>e.id!=='nfInlineTools'&&e.closest('#nfInlineTools')===null);
 function valid(el){if(!el)return false;if(el.matches('input,textarea,select')){if(el.type==='checkbox'||el.type==='range'||el.type==='radio'||el.type==='hidden')return false;return PAT.test((el.value||'').trim());}
 if(el.matches('button'))return false;return PAT.test((el.textContent||'').trim());}
@@ -1545,8 +1545,8 @@ function mark(el){if(current)current.classList.remove('nf-inline');current=el;if
 function broadcast(k){try{localStorage.setItem(KEY,JSON.stringify({active,key:k,at:Date.now()}));}catch(e){}}
 function target(node){const e=node?.nodeType===1?node:node?.parentElement;if(!e||e.closest('#nfInlineTools'))return null;const input=e.closest('input,textarea,select');if(input)return valid(input)?input:null;
 const v=e.closest(selectors.join(','));if(v&&valid(v))return v;
-const metric=e.closest('.metric,.clock-item,.quick-values>*,.values');if(metric){const x=metric.querySelector(selectors.join(','));if(valid(x))return x;}return null;}
-if(!student){const header=document.body;const bar=document.createElement('div');bar.id='nfInlineTools';bar.innerHTML='<button type="button" id="nfInlineToggle">Numeri grandi: OFF</button><button type="button" id="nfInlineClear">Ripristina</button>';header.append(bar);
+const metric=e.closest('#egaMetrics > div,#ventilationPanel .vent-readouts > div,.metric,.clock-item,.quick-values>*,.values');if(metric){const x=metric.querySelector(selectors.join(','));if(valid(x))return x;}return null;}
+if(!student){const header=document.querySelector('header .row')||document.querySelector('header')||document.body;const bar=document.createElement('div');bar.id='nfInlineTools';bar.innerHTML='<button type="button" id="nfInlineToggle">Numeri grandi: OFF</button><button type="button" id="nfInlineClear">Ripristina</button>';header.append(bar);
 const button=bar.querySelector('#nfInlineToggle');button.onclick=()=>{active=!active;button.textContent='Numeri grandi: '+(active?'ON':'OFF');if(!active)mark(null);broadcast(active&&current?key(current):null);};
 bar.querySelector('#nfInlineClear').onclick=()=>{mark(null);broadcast(null);};
 document.addEventListener('pointerdown',e=>{if(!active)return;const t=target(e.target);if(!t)return;mark(t);broadcast(key(t));},{capture:true,passive:true});
