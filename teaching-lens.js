@@ -1,110 +1,78 @@
 (()=>{'use strict';
-/* Lente didattica sperimentale: istanza di sola lettura, attivata solo su richiesta. */
-if(window.top!==window||new URLSearchParams(location.search).has('lensMirror'))return;
+if(new URLSearchParams(location.search).has('lensMirror'))return;
 const KEY='simTeachingLensV1';
 const student=document.body.classList.contains('student');
-const state={enabled:false,x:.5,y:.5,zoom:2.5,locked:false,updated:0};
-let glass,frame,toolbar,lastPoint=null,lastTab='';
-function counterpart(el){
- const doc=frame?.contentDocument;if(!doc||!el||el.nodeType!==1)return null;
- if(el.id){const found=doc.getElementById(el.id);if(found)return found;}
- const path=[];let node=el;
- while(node&&node!==document.body){const parent=node.parentElement;if(!parent)return null;path.unshift(Array.prototype.indexOf.call(parent.children,node));node=parent;}
- if(node!==document.body)return null;
- node=doc.body;for(const index of path){node=node?.children[index];if(!node)return null;}return node;
-}
-function syncAllScroll(){
- const doc=frame?.contentDocument;if(!doc)return;
- // Sincronizza tutti i contenitori scrollabili, anche quando la posizione e' zero.
- // L'iframe e' un secondo documento: il suo scroll non segue quello della console.
- for(const el of document.body.querySelectorAll('*')){
-  if(el===glass||glass?.contains(el)||el===toolbar||toolbar?.contains(el))continue;
-  if(el.scrollHeight<=el.clientHeight+1&&el.scrollWidth<=el.clientWidth+1)continue;
-  const target=counterpart(el);if(!target)continue;
-  if(target.scrollTop!==el.scrollTop)target.scrollTop=el.scrollTop;
-  if(target.scrollLeft!==el.scrollLeft)target.scrollLeft=el.scrollLeft;
- }
- const target=doc.scrollingElement,source=document.scrollingElement;
- if(target&&source){target.scrollTop=source.scrollTop;target.scrollLeft=source.scrollLeft;}
-}
-function pointAlignment(cx,cy){
- const doc=frame?.contentDocument;if(!doc)return {dx:0,dy:0};
- const source=document.elementFromPoint(cx,cy);
- if(!source||source===glass||glass?.contains(source)||source===toolbar||toolbar?.contains(source))return {dx:0,dy:0};
- // Confronta il rettangolo dell'elemento effettivamente indicato nelle due viste.
- // Non presume che il layout della seconda pagina coincida con quello principale.
- let node=source;
- while(node&&node!==document.body){
-  const match=counterpart(node);
-  if(match){
-   const a=node.getBoundingClientRect(),b=match.getBoundingClientRect();
-   if(a.width>0&&a.height>0&&b.width>0&&b.height>0){
-    return {dx:a.left-b.left,dy:a.top-b.top};
-   }
-  }
-  node=node.parentElement;
- }
- return {dx:0,dy:0};
-}
-function scheduleSync(){
- if(!state.enabled)return;
- if(scheduleSync.pending)return;
- scheduleSync.pending=true;
- requestAnimationFrame(()=>{scheduleSync.pending=false;update();});
-}
-
+const state={enabled:false,x:.5,y:.5,zoom:2.5,locked:false};
+let glass,stage,toolbar,lastDraw=0;
 function publish(){if(student)return;try{localStorage.setItem(KEY,JSON.stringify({...state,updated:Date.now()}));}catch(_){}}
 function setup(){
  const style=document.createElement('style');
  style.textContent=`
  #teachingLensToolbar{position:fixed;right:12px;bottom:12px;z-index:99990;background:#0b2632;border:1px solid #79a3b6;border-radius:10px;padding:7px;display:flex;gap:7px;align-items:center;color:#fff;font:13px system-ui;box-shadow:0 3px 18px #0009}
  #teachingLensToolbar button,#teachingLensToolbar select{background:#153b4a;color:white;border:1px solid #527a8b;border-radius:7px;padding:7px}
- #teachingLensGlass{position:fixed;z-index:99980;width:220px;height:220px;border:3px solid #e0f6ff;border-radius:50%;overflow:hidden;pointer-events:none;box-shadow:0 5px 30px #000b;display:none;background:#081721}
- #teachingLensGlass iframe{position:absolute;border:0;pointer-events:none;transform-origin:0 0}
+ #teachingLensGlass{position:fixed;z-index:99980;width:220px;height:220px;border:3px solid #e0f6ff;border-radius:50%;overflow:hidden;pointer-events:none;box-shadow:0 5px 30px #000b;background:#081721;display:none}
+ #teachingLensStage{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+ #teachingLensStage .lens-copy{position:absolute;transform-origin:top left;pointer-events:none;max-width:none!important;max-height:none!important}
  body.student #teachingLensToolbar{display:none}
  `;
  document.head.append(style);
- glass=document.createElement('div');glass.id='teachingLensGlass';document.body.append(glass);
+ glass=document.createElement('div');glass.id='teachingLensGlass';
+ stage=document.createElement('div');stage.id='teachingLensStage';glass.append(stage);document.body.append(glass);
  if(!student){
   toolbar=document.createElement('div');toolbar.id='teachingLensToolbar';
   toolbar.innerHTML='<button type="button" id="lensToggle" aria-pressed="false">Lente: OFF</button><label>Zoom <select id="lensZoom"><option>1.5</option><option>2</option><option selected>2.5</option><option>3</option><option>4</option></select></label><button type="button" id="lensLock">Blocca</button>';
   document.body.append(toolbar);
   const toggle=toolbar.querySelector('#lensToggle'),lock=toolbar.querySelector('#lensLock');
-  toggle.onclick=()=>{state.enabled=!state.enabled;state.locked=false;toggle.textContent=state.enabled?'Lente: ON':'Lente: OFF';toggle.setAttribute('aria-pressed',String(state.enabled));publish();update();};
-  toolbar.querySelector('#lensZoom').onchange=e=>{state.zoom=Number(e.target.value);publish();update();};
+  toggle.onclick=()=>{state.enabled=!state.enabled;state.locked=false;toggle.textContent=state.enabled?'Lente: ON':'Lente: OFF';toggle.setAttribute('aria-pressed',String(state.enabled));publish();render();};
+  toolbar.querySelector('#lensZoom').onchange=e=>{state.zoom=Number(e.target.value);publish();render();};
   lock.onclick=()=>{state.locked=!state.locked;lock.textContent=state.locked?'Sblocca':'Blocca';publish();};
-  document.addEventListener('pointermove',e=>{
-   if(!state.enabled||state.locked||toolbar.contains(e.target))return;
-   lastPoint={x:e.clientX,y:e.clientY};state.x=Math.min(1,Math.max(0,e.clientX/innerWidth));state.y=Math.min(1,Math.max(0,e.clientY/innerHeight));publish();update();
-  },{passive:true});
-  document.addEventListener('scroll',scheduleSync,{capture:true,passive:true});
-  window.addEventListener('scroll',scheduleSync,{passive:true});
-  const tabObserver=new MutationObserver(scheduleSync);tabObserver.observe(document.body,{attributes:true,attributeFilter:['data-instructor-tab']});
-  document.addEventListener('pointerdown',e=>{if(e.pointerType==='pen'&&state.enabled&&!toolbar.contains(e.target)){state.x=e.clientX/innerWidth;state.y=e.clientY/innerHeight;publish();update();}},{passive:true});
+  document.addEventListener('pointermove',e=>{if(!state.enabled||state.locked||toolbar.contains(e.target))return;state.x=Math.max(0,Math.min(1,e.clientX/innerWidth));state.y=Math.max(0,Math.min(1,e.clientY/innerHeight));publish();render();},{passive:true});
+  document.addEventListener('pointerdown',e=>{if(!state.enabled||state.locked||toolbar.contains(e.target))return;if(e.pointerType==='pen'||e.pointerType==='touch'){state.x=e.clientX/innerWidth;state.y=e.clientY/innerHeight;publish();render();}},{passive:true});
  }else{
-  window.addEventListener('storage',e=>{if(e.key!==KEY)return;try{Object.assign(state,JSON.parse(e.newValue||'{}'));update();}catch(_){}});
+  window.addEventListener('storage',e=>{if(e.key!==KEY)return;try{Object.assign(state,JSON.parse(e.newValue||'{}'));render();}catch(_){}});
   try{Object.assign(state,JSON.parse(localStorage.getItem(KEY)||'{}'));}catch(_){}
  }
- update();
+ function tick(t){if(state.enabled&&t-lastDraw>150){lastDraw=t;render();}requestAnimationFrame(tick);}
+ requestAnimationFrame(tick);render();
 }
-function update(){
- if(!glass)return;
- glass.style.display=state.enabled?'block':'none';
- if(!state.enabled)return;
- const cx=state.x*innerWidth,cy=state.y*innerHeight;
- glass.style.left=Math.max(0,Math.min(innerWidth-226,cx-113))+'px';
- glass.style.top=Math.max(0,Math.min(innerHeight-226,cy-113))+'px';
- if(!frame){
-  frame=document.createElement('iframe');frame.setAttribute('aria-hidden','true');
-  frame.tabIndex=-1;frame.src=location.pathname+'?lensMirror=1';
-  glass.append(frame);
-  frame.addEventListener('load',()=>{lastTab='';try{frame.contentWindow.document.documentElement.style.scrollBehavior='auto';}catch(_){} scheduleSync();});
+function chooseSource(x,y){
+ const el=document.elementFromPoint(x,y);
+ if(!el||el===glass||glass.contains(el)||el===toolbar||toolbar?.contains(el))return null;
+ // Il contenuto e' copiato direttamente dalla console visibile, mai da una seconda pagina.
+ const card=el.closest('.card,.metric,.wave,.hemo-wrap,.therapy,.student-tab-panel,.controls,.monitor,section');
+ if(card&&card!==document.body)return card;
+ return el.parentElement||el;
+}
+function copyValues(src,dst){
+ const originals=[src,...src.querySelectorAll('*')],copies=[dst,...dst.querySelectorAll('*')];
+ for(let i=0;i<Math.min(originals.length,copies.length);i++){
+  const a=originals[i],b=copies[i];
+  if(a instanceof HTMLCanvasElement&&b instanceof HTMLCanvasElement){
+   try{b.width=a.width;b.height=a.height;b.getContext('2d')?.drawImage(a,0,0);}catch(_){}
+  }
+  if(a instanceof HTMLInputElement&&b instanceof HTMLInputElement){b.value=a.value;b.checked=a.checked;}
+  if(a instanceof HTMLSelectElement&&b instanceof HTMLSelectElement)b.value=a.value;
+  if(a instanceof HTMLTextAreaElement&&b instanceof HTMLTextAreaElement)b.value=a.value;
  }
- const z=state.zoom;
- if(!student){try{const source=document.querySelector('.monitor');const mirrored=frame.contentDocument?.querySelector('.monitor');const tab=document.body.dataset.instructorTab||'patient';if(tab!==lastTab){const button=frame.contentDocument?.getElementById('instructor-tab-'+tab);if(button){button.click();lastTab=tab;requestAnimationFrame(scheduleSync);}}syncAllScroll();if(tab!==''&&tab===lastTab&&source&&mirrored){mirrored.scrollTop=source.scrollTop;mirrored.scrollLeft=source.scrollLeft;}frame.contentWindow?.scrollTo(window.scrollX,window.scrollY);}catch(_){}}
- frame.style.width=innerWidth+'px';frame.style.height=innerHeight+'px';
- const align=!student?pointAlignment(cx,cy):{dx:0,dy:0};
- frame.style.transform='translate('+ (110-(cx-align.dx)*z)+'px,'+(110-(cy-align.dy)*z)+'px) scale('+z+')';
+ dst.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+ dst.querySelectorAll('script,iframe,video').forEach(el=>el.remove());
+}
+function render(){
+ if(!glass)return;
+ glass.style.display=state.enabled?'block':'none';if(!state.enabled){stage.replaceChildren();return;}
+ const cx=state.x*innerWidth,cy=state.y*innerHeight;
+ const left=Math.max(0,Math.min(innerWidth-226,cx-113)),top=Math.max(0,Math.min(innerHeight-226,cy-113));
+ glass.style.left=left+'px';glass.style.top=top+'px';
+ const src=chooseSource(cx,cy);if(!src){stage.replaceChildren();return;}
+ const rect=src.getBoundingClientRect();if(!rect.width||!rect.height)return;
+ const clone=src.cloneNode(true);copyValues(src,clone);clone.classList.add('lens-copy');
+ const css=getComputedStyle(src);clone.style.width=rect.width+'px';clone.style.height=rect.height+'px';
+ clone.style.margin='0';clone.style.boxSizing='border-box';clone.style.position='absolute';
+ clone.style.overflow='visible';clone.style.transform='scale('+state.zoom+')';
+ clone.style.left=(110-(cx-rect.left)*state.zoom)+'px';
+ clone.style.top=(110-(cy-rect.top)*state.zoom)+'px';
+ // Gli elementi fuori dalla porzione visibile non devono comparire come contenuto inventato.
+ stage.replaceChildren(clone);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup,{once:true});else setup();
 })();
