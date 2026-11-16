@@ -1537,7 +1537,7 @@ body.student #pauseLensBar{display:none}
 const lens=document.createElement('div');lens.id='pauseLensCircle';const content=document.createElement('div');content.id='pauseLensContent';lens.append(content);document.body.append(lens);
 let enabled=false,zoom=2,point=null,source=null,last=0;
 const bar=document.createElement('div');bar.id='pauseLensBar';bar.innerHTML='<button id="pauseLensToggle">Lente OFF</button><select id="pauseLensZoom"><option value="2">2×</option><option value="4">4×</option></select>';(document.querySelector('header .row')||document.querySelector('header')||document.body).append(bar);
-const toggle=bar.querySelector('#pauseLensToggle');toggle.onclick=()=>{enabled=!enabled;toggle.textContent=enabled?'Lente ON':'Lente OFF';if(!enabled)lens.style.display='none'};
+const toggle=bar.querySelector('#pauseLensToggle');toggle.onclick=()=>{if(!enabled&&!paused()){const p=document.getElementById('simPause');if(p&&p.textContent.trim()==='Pausa')p.click();}enabled=!enabled;toggle.textContent=enabled?'Lente ON':'Lente OFF';if(!enabled){lens.style.display='none';point=null;}else{point={x:Math.round(innerWidth*.5),y:Math.round(innerHeight*.45)};}};
 bar.querySelector('#pauseLensZoom').onchange=e=>{zoom=Number(e.target.value)};
 const paused=()=>typeof window.simIsPaused==='function'&&window.simIsPaused();
 function locate(e){if(!enabled||!paused()||bar.contains(e.target))return;point={x:e.clientX,y:e.clientY};}
@@ -1549,7 +1549,7 @@ lens.style.left=Math.max(0,Math.min(innerWidth-226,x-110))+'px';lens.style.top=M
 lens.style.visibility='hidden';const el=document.elementFromPoint(x,y);lens.style.visibility='';
 if(!el||el===lens||el.closest('#pauseLensBar'))return;
 const root=el.closest('.metric,.lv-pv-value,.vent-readouts>div,.card,.wave,.student-pv-side')||el;
-if(root!==source){source=root;content.replaceChildren();const clone=root.cloneNode(true);clone.removeAttribute('id');clone.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));content.append(clone);}
+if(root!==source||t-last>300){source=root;content.replaceChildren();const clone=root.cloneNode(true);clone.removeAttribute('id');clone.querySelectorAll('[id]').forEach(n=>n.removeAttribute('id'));content.append(clone);}
 const rect=root.getBoundingClientRect(),lr=lens.getBoundingClientRect();content.style.width=rect.width+'px';content.style.height=rect.height+'px';content.style.transform='translate('+(110-(x-rect.left)*zoom)+'px,'+(110-(y-rect.top)*zoom)+'px) scale('+zoom+')';
 const originalCanvas=root.matches('canvas')?[root]:[...root.querySelectorAll('canvas')];const copiedCanvas=[...content.querySelectorAll('canvas')];originalCanvas.forEach((c,i)=>{const dest=copiedCanvas[i];if(!dest)return;try{dest.width=c.width;dest.height=c.height;dest.getContext('2d').drawImage(c,0,0);}catch(_){}});
 }
