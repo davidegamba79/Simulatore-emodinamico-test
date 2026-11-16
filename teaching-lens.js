@@ -45,20 +45,8 @@ function chooseSource(x,y){
 }
 function copyValues(src,dst){
  const originals=[src,...src.querySelectorAll('*')],copies=[dst,...dst.querySelectorAll('*')];
- // Congela lo stile calcolato PRIMA di rimuovere gli ID: la pagina usa selettori
- // CSS specifici e layout responsive che non devono ricalcolarsi nella lente.
  for(let i=0;i<Math.min(originals.length,copies.length);i++){
-  const a=originals[i],b=copies[i],cs=getComputedStyle(a),r=a.getBoundingClientRect();
-  for(let j=0;j<cs.length;j++){const name=cs[j];if(name==='transform'||name==='transition'||name==='animation'||name==='position')continue;b.style.setProperty(name,cs.getPropertyValue(name),'important');}
-  b.style.setProperty('width',r.width+'px','important');
-  b.style.setProperty('height',r.height+'px','important');
-  b.style.setProperty('min-width','0px','important');
-  b.style.setProperty('max-width','none','important');
-  b.style.setProperty('min-height','0px','important');
-  b.style.setProperty('max-height','none','important');
-  b.style.setProperty('flex-shrink','0','important');
-  b.style.setProperty('transition','none','important');
-  b.style.setProperty('animation','none','important');
+  const a=originals[i],b=copies[i];
   if(a instanceof HTMLCanvasElement&&b instanceof HTMLCanvasElement){
    try{b.width=a.width;b.height=a.height;b.getContext('2d')?.drawImage(a,0,0);}catch(_){}
   }
@@ -69,7 +57,6 @@ function copyValues(src,dst){
  dst.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
  dst.querySelectorAll('script,iframe,video').forEach(el=>el.remove());
 }
-
 function render(){
  if(!glass)return;
  glass.style.display=state.enabled?'block':'none';if(!state.enabled){stage.replaceChildren();return;}
@@ -79,8 +66,8 @@ function render(){
  const src=chooseSource(cx,cy);if(!src){stage.replaceChildren();return;}
  const rect=src.getBoundingClientRect();if(!rect.width||!rect.height)return;
  const clone=src.cloneNode(true);copyValues(src,clone);clone.classList.add('lens-copy');
- clone.style.setProperty('width',rect.width+'px','important');clone.style.setProperty('height',rect.height+'px','important');
- clone.style.setProperty('margin','0','important');clone.style.setProperty('box-sizing','border-box','important');clone.style.setProperty('position','absolute','important');
+ const css=getComputedStyle(src);clone.style.width=rect.width+'px';clone.style.height=rect.height+'px';
+ clone.style.margin='0';clone.style.boxSizing='border-box';clone.style.position='absolute';
  clone.style.overflow='visible';clone.style.transform='scale('+state.zoom+')';
  clone.style.left=(110-(cx-rect.left)*state.zoom)+'px';
  clone.style.top=(110-(cy-rect.top)*state.zoom)+'px';
