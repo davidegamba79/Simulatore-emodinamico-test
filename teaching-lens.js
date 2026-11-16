@@ -5,6 +5,25 @@ const KEY='simTeachingLensV1';
 const student=document.body.classList.contains('student');
 const state={enabled:false,x:.5,y:.5,zoom:2.5,locked:false,updated:0};
 let glass,frame,toolbar,lastPoint=null,lastTab='';
+function counterpart(el){
+ const doc=frame?.contentDocument;if(!doc||!el||el.nodeType!==1)return null;
+ if(el.id){const match=doc.getElementById(el.id);if(match)return match;}
+ const indices=[];let node=el;
+ while(node&&node!==document.body){const parent=node.parentElement;if(!parent)return null;indices.unshift(Array.prototype.indexOf.call(parent.children,node));node=parent;}
+ if(node!==document.body)return null;
+ node=doc.body;
+ for(const index of indices){node=node?.children[index];if(!node)return null;}
+ return node;
+}
+function syncScroll(el){
+ if(!frame?.contentDocument||!el||el===document)return;
+ try{const mirror=counterpart(el);if(mirror&&mirror!==frame.contentDocument.body){mirror.scrollTop=el.scrollTop;mirror.scrollLeft=el.scrollLeft;}}catch(_){}
+}
+function syncAllScroll(){
+ if(!frame?.contentDocument)return;
+ document.querySelectorAll('body *').forEach(el=>{if((el.scrollTop||el.scrollLeft)&&el!==glass&&!glass.contains(el)&&el!==toolbar&&!toolbar?.contains(el))syncScroll(el);});
+}
+
 function publish(){if(student)return;try{localStorage.setItem(KEY,JSON.stringify({...state,updated:Date.now()}));}catch(_){}}
 function setup(){
  const style=document.createElement('style');
@@ -29,6 +48,8 @@ function setup(){
    if(!state.enabled||state.locked||toolbar.contains(e.target))return;
    lastPoint={x:e.clientX,y:e.clientY};state.x=Math.min(1,Math.max(0,e.clientX/innerWidth));state.y=Math.min(1,Math.max(0,e.clientY/innerHeight));publish();update();
   },{passive:true});
+  document.addEventListener('scroll',e=>{if(!state.enabled)return;syncScroll(e.target);update();},{capture:true,passive:true});
+  window.addEventListener('scroll',()=>{if(state.enabled)update();},{passive:true});
   const tabObserver=new MutationObserver(()=>{if(state.enabled)update();});tabObserver.observe(document.body,{attributes:true,attributeFilter:['data-instructor-tab']});
   document.addEventListener('pointerdown',e=>{if(e.pointerType==='pen'&&state.enabled&&!toolbar.contains(e.target)){state.x=e.clientX/innerWidth;state.y=e.clientY/innerHeight;publish();update();}},{passive:true});
  }else{
@@ -48,10 +69,10 @@ function update(){
   frame=document.createElement('iframe');frame.setAttribute('aria-hidden','true');
   frame.tabIndex=-1;frame.src=location.pathname+'?lensMirror=1';
   glass.append(frame);
-  frame.addEventListener('load',()=>{lastTab='';try{frame.contentWindow.document.documentElement.style.scrollBehavior='auto';}catch(_){}});
+  frame.addEventListener('load',()=>{lastTab='';try{frame.contentWindow.document.documentElement.style.scrollBehavior='auto';}catch(_){} update();});
  }
  const z=state.zoom;
- if(!student){try{const source=document.querySelector('.monitor');const mirrored=frame.contentDocument?.querySelector('.monitor');if(source&&mirrored){mirrored.scrollTop=source.scrollTop;mirrored.scrollLeft=source.scrollLeft;}const tab=document.body.dataset.instructorTab||'patient';if(tab!==lastTab){const button=frame.contentDocument?.getElementById('instructor-tab-'+tab);if(button){button.click();lastTab=tab;}}frame.contentWindow?.scrollTo(window.scrollX,window.scrollY);}catch(_){}}
+ if(!student){try{const source=document.querySelector('.monitor');const mirrored=frame.contentDocument?.querySelector('.monitor');const tab=document.body.dataset.instructorTab||'patient';if(tab!==lastTab){const button=frame.contentDocument?.getElementById('instructor-tab-'+tab);if(button){button.click();lastTab=tab;}}if(source&&mirrored){mirrored.scrollTop=source.scrollTop;mirrored.scrollLeft=source.scrollLeft;}syncAllScroll();frame.contentWindow?.scrollTo(window.scrollX,window.scrollY);}catch(_){}}
  frame.style.width=innerWidth+'px';frame.style.height=innerHeight+'px';
  frame.style.transform='translate('+ (110-cx*z)+'px,'+(110-cy*z)+'px) scale('+z+')';
 }
