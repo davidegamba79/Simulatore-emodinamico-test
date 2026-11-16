@@ -1528,7 +1528,7 @@ body:not(.student)[data-propofol-mode="tiva"] #propofolTCIControl > .row{display
 (()=>{'use strict';
 const student=new URLSearchParams(location.search).get('student')==='1';
 const css=document.createElement('style');css.textContent=`
-#pauseLensBar{position:fixed;right:12px;bottom:12px;z-index:999999;background:#102a38;color:#fff;border:1px solid #6c9cb3;border-radius:9px;padding:7px;display:flex;gap:7px;align-items:center;font:12px system-ui}
+#pauseLensBar{position:static;z-index:999999;background:transparent;color:#fff;border:0;border-radius:0;padding:0;display:flex;gap:6px;align-items:center;flex-wrap:nowrap;white-space:nowrap;font:12px system-ui}
 #pauseLensBar button,#pauseLensBar select{background:#194357;color:white;border:1px solid #628ba0;border-radius:6px;padding:7px}
 #pauseLensCircle{position:fixed;width:220px;height:220px;border:3px solid #c6f3ff;border-radius:50%;overflow:hidden;pointer-events:none;z-index:999998;display:none;background:#081721;box-shadow:0 6px 25px #000a}
 #pauseLensContent{position:absolute;transform-origin:0 0;pointer-events:none}
@@ -1536,7 +1536,7 @@ body.student #pauseLensBar{display:none}
 `;document.head.append(css);
 const lens=document.createElement('div');lens.id='pauseLensCircle';const content=document.createElement('div');content.id='pauseLensContent';lens.append(content);document.body.append(lens);
 let enabled=false,zoom=2,point=null,source=null,last=0;
-const bar=document.createElement('div');bar.id='pauseLensBar';bar.innerHTML='<button id="pauseLensToggle">Lente OFF</button><select id="pauseLensZoom"><option value="2">2×</option><option value="4">4×</option></select><span id="pauseLensStatus">Attiva solo in pausa</span>';document.body.append(bar);
+const bar=document.createElement('div');bar.id='pauseLensBar';bar.innerHTML='<button id="pauseLensToggle">Lente OFF</button><select id="pauseLensZoom"><option value="2">2×</option><option value="4">4×</option></select>';(document.querySelector('header .row')||document.querySelector('header')||document.body).append(bar);
 const toggle=bar.querySelector('#pauseLensToggle');toggle.onclick=()=>{enabled=!enabled;toggle.textContent=enabled?'Lente ON':'Lente OFF';if(!enabled)lens.style.display='none'};
 bar.querySelector('#pauseLensZoom').onchange=e=>{zoom=Number(e.target.value)};
 const paused=()=>typeof window.simIsPaused==='function'&&window.simIsPaused();
