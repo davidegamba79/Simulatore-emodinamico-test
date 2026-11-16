@@ -109,6 +109,25 @@ function drawLiveCanvases(c,viewport){
   c.restore();
  }
 }
+function drawWaveReadout(c,cx,cy,z){
+ const under=document.elementFromPoint(cx,cy);
+ const wave=under?.closest?.('.wave');
+ if(!wave)return;
+ const label=wave.querySelector('.wlabel');
+ const value=wave.querySelector('.values');
+ if(!label&&!value)return;
+ // HUD separato: numeri e unita' restano leggibili anche quando sono
+ // all'estremita' opposta della striscia ECG/IBP/SpO2.
+ const name=(label?.innerText||label?.textContent||'').trim().replace(/\\s+/g,' ');
+ const reading=(value?.innerText||value?.textContent||'').trim().replace(/\\s+/g,' ');
+ const color=getComputedStyle(value||label).color||'#fff';
+ c.save();c.setTransform(canvas.width/220,0,0,canvas.height/220,0,0);
+ c.fillStyle='rgba(5,20,28,.94)';c.fillRect(0,0,220,46);
+ c.fillStyle=getComputedStyle(label||value).color||'#d7e5eb';
+ c.font='600 12px system-ui';c.textBaseline='middle';c.fillText(name,9,12,203);
+ c.fillStyle=color;c.font='bold 20px system-ui';c.fillText(reading||'—',9,32,204);
+ c.restore();
+}
 function paint(){
  if(!glass||!ctx)return;
  glass.style.display='block';
@@ -121,6 +140,7 @@ function paint(){
  const radius=110/z,viewport={left:cx-radius,top:cy-radius,right:cx+radius,bottom:cy+radius};
  try{drawTree(ctx,document.body,viewport);drawLiveCanvases(ctx,viewport);}catch(err){console.warn('Lente didattica: errore rendering',err);}
  ctx.restore();
+ drawWaveReadout(ctx,cx,cy,z);
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',setup,{once:true});else setup();
 })();
