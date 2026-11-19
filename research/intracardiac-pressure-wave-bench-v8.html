@@ -1,0 +1,93 @@
+<!doctype html><html lang="it"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Banco prova onde pressorie — V3.0 TEST</title><style>
+:root{color-scheme:dark}body{margin:0;background:#07131b;color:#dcecf4;font:14px system-ui,sans-serif}main{max-width:1100px;margin:auto;padding:18px}h1{font-size:21px}h2{font-size:16px;margin:0 0 12px}.card{background:#10232e;border:1px solid #2c4c5d;border-radius:12px;padding:16px;margin:12px 0}.controls{display:flex;flex-wrap:wrap;gap:12px;align-items:end}label{display:grid;gap:5px;font-size:12px}input,select,button{background:#183544;border:1px solid #426479;border-radius:6px;color:#fff;padding:8px;font:inherit}input{width:90px}button{cursor:pointer}.readout{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0;color:#b9d9e7}.readout strong{color:#fff}canvas{display:block;width:100%;height:360px;background:#071821;border-radius:8px}.note{color:#a7c4d1;line-height:1.5}a{color:#8ed5ff}</style></head><body><main><h1>Banco prova V8 — onde pressorie intracardiache e arteriose</h1><p class="note">Versione V8: i parametri emodinamici non sono modificabili qui; i valori di prova sono interni e saranno sostituiti dal paziente simulato. Scala comune in mmHg, morfologie a controllo di continuità, opzione sequenza catetere. Basata sul riferimento di cateterismo fornito: morfologia ventricolare ripida, profilo arterioso arrotondato e incisura dicrota, possibilità di osservare una sola sede alla volta. Prototipo isolato nel repository TEST. Non modifica il simulatore principale né rappresenta ancora una procedura integrata. Curve generate dallo stesso orologio cardiaco e da eventi valvolari condivisi; morfologie didattiche da validare prima dell'integrazione.</p><div id="sourceState" style="padding:6px 0;color:#a4d4e7">Modalità autonoma: valori di prova (non collegati alla V3.0)</div><div class="card"><div class="controls"><label>Scenario<select id="scenario"><option value="pda">PDA aperto</option><option value="closed">PDA occluso</option><option value="ps">Stenosi polmonare</option><option value="dilated">Dopo valvuloplastica</option></select></label><label>Vista<select id="view"><option value="all">Quattro sedi</option><option value="0">LV</option><option value="1">Aorta</option><option value="2">RV</option><option value="3">Arteria polmonare</option><option value="sequence">Sequenza catetere: Ao → LV → RV → PA</option><option value="custom" selected>Selezione libera</option></select></label><button id="pause">Pausa</button><div id="waveChecks" style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;width:100%;padding:8px 0"><strong>Onde contemporanee:</strong><label style="display:flex;align-items:center;gap:5px;color:#f3bd62"><input type="checkbox" data-wave="0" checked style="width:auto">LV</label><label style="display:flex;align-items:center;gap:5px;color:#f4717a"><input type="checkbox" data-wave="1" checked style="width:auto">Aorta</label><label style="display:flex;align-items:center;gap:5px;color:#6ebded"><input type="checkbox" data-wave="2" style="width:auto">RV</label><label style="display:flex;align-items:center;gap:5px;color:#70d9ac"><input type="checkbox" data-wave="3" style="width:auto">AP</label></div></div><div class="readout"><span>Ao <strong id="aoVal"></strong></span><span>LV <strong id="lvVal"></strong></span><span>RV <strong id="rvVal"></strong></span><span>PA <strong id="paVal"></strong></span><span>Gradiente RV–PA <strong id="gradient"></strong></span></div></div><div class="card"><h2>Onde pressorie — scala pressoria comune (mmHg)</h2><div class="controls"><label>Scala verticale massima (mmHg)<input id="scale" type="number" min="60" max="240" value="160" step="10"></label><label>Velocità carta (s)<input id="span" type="number" min="2" max="12" value="6" step="1"></label></div><canvas id="scope"></canvas><p class="note">LV giallo · Aorta rosso · RV azzurro · Arteria polmonare verde. Seleziona liberamente LV, Aorta, RV e AP per sovrapporle sulla stessa scala. Scala verticale comune per tutte le onde, con riferimenti a 0 e 100 mmHg. Nella vista sequenziale i quattro segmenti simulano posizioni successive del catetere; non sono dati clinici registrati. Il tracciato aortico mostra incisura dicrota e decadimento diastolico; LV e RV mostrano salita, eiezione e rilassamento isovolumetrico. La curva RV aumenta nella stenosi polmonare, mentre la PA rimane distinta.</p></div><p class="note">Verifica necessaria: confrontare forme d'onda e tempi valvolari con tracciati invasivi veterinari reali; non usare il prototipo per decisioni cliniche.</p></main><script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id),patient={hr:90,sap:125,dap:48,lvedp:14},canvas=$('scope'),ctx=canvas.getContext('2d');let paused=false,t0=performance.now(),freeze=0;
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x)),smooth=x=>{x=clamp(x,0,1);return x*x*(3-2*x)},gauss=(x,c,w)=>Math.exp(-Math.pow((x-c)/w,2));
+function profile(){let s=$('scenario').value,ps=s==='ps',dil=s==='dilated',open=s==='pda',sap=clamp(patient.sap,40,220),dap=clamp(patient.dap,15,160),lvedp=clamp(patient.lvedp,1,35);return {s,sap,dap,lvedp,rvSys:ps?105:dil?39:32,rvDia:ps?11:6,paSys:ps?28:dil?28:31,paDia:ps?12:dil?12:15,open}};
+function pressure(p,c){
+ // Shared valvular timing and continuously joined waveforms.
+ // Reconstructed morphology; reference figure is not a digitized dataset.
+ const aoOpen=.145,aoClose=.405,paOpen=.165,paClose=.445;
+ const mix=(a,b,t)=>a+(b-a)*smooth(t);
+ function ventricular(sys,edp,base,open,close,right){
+   const atrial=(edp-base)*gauss(c,.91,.050);
+   const rest=base+atrial+(.5*gauss(c,.72,.10));
+   const begin=.080,fallEnd=close+(right?.11:.105);
+   const pre=rest;
+   if(c<begin)return rest;
+   if(c<open)return mix(pre,sys*(right?.88:.91),(c-begin)/(open-begin));
+   if(c<close){
+     let x=(c-open)/(close-open);
+     let start=sys*(right?.88:.91);
+     let peak=right?.985:1.015;
+     // early LV shoulder / RV mid-systolic shoulder; restrained notch
+     let shape=start+(sys*peak-start)*Math.sin(Math.PI*Math.pow(x,right?.62:.73));
+     shape-=sys*(right?.014:.022)*gauss(x,right?.19:.13,.036);
+     return shape;
+   }
+   const closeVal=sys*(right?.88:.91);
+   if(c<fallEnd)return mix(closeVal,base+.7,(c-close)/(fallEnd-close));
+   return rest;
+ }
+ function arterial(sys,dia,open,close,pulm){
+   // Arterial wave never collapses to ventricular baseline.
+   const start=dia+(sys-dia)*.025;
+   const ejectionStart=open,crest=open+(close-open)*.36;
+   const closeVal=dia+(sys-dia)*(pulm?.69:.73);
+   if(c<ejectionStart){
+     // continuity with previous cycle's diastolic endpoint
+     return dia;
+   }
+   if(c<crest)return mix(start,sys,(c-open)/(crest-open));
+   if(c<close)return mix(sys,closeVal,(c-crest)/(close-crest));
+   const notchEnd=close+.019,reboundEnd=close+.044;
+   const notch=closeVal-(sys-dia)*(pulm?.085:.080);
+   const rebound=notch+(sys-dia)*(pulm?.047:.055);
+   if(c<notchEnd)return mix(closeVal,notch,(c-close)/(notchEnd-close));
+   if(c<reboundEnd)return mix(notch,rebound,(c-notchEnd)/(reboundEnd-notchEnd));
+   const x=(c-reboundEnd)/(1-reboundEnd);
+   const rate=pulm?2.5:(p.open?3.9:2.2);
+   const exp=(Math.exp(-rate*x)-Math.exp(-rate))/(1-Math.exp(-rate));
+   return dia+(rebound-dia)*Math.max(0,exp);
+ }
+ return [
+   ventricular(p.sap+5,p.lvedp,Math.max(2,p.lvedp-5),aoOpen,aoClose,false),
+   arterial(p.sap,p.dap,aoOpen,aoClose,false),
+   ventricular(p.rvSys,p.rvDia,Math.max(1,p.rvDia-3),paOpen,paClose,true),
+   arterial(p.paSys,p.paDia,paOpen,paClose,true)
+ ];
+}
+window.addEventListener('message',e=>{if(e.origin!==location.origin||!e.data||e.data.type!=='sim-v3-physiology')return;const d=e.data;for(const k of ['hr','sap','dap'])if(Number.isFinite(d[k]))patient[k]=d[k];document.getElementById('sourceState').textContent='Dati V3.0: '+(d.caseTitle||'simulazione libera')+' · aggiornati '+new Date().toLocaleTimeString('it-IT');});
+function draw(now){
+ let w=canvas.clientWidth,h=canvas.clientHeight,dpr=Math.min(devicePixelRatio||1,2);
+ if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr)}
+ ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
+ let p=profile(),hr=clamp(patient.hr,35,200),period=60/hr,secs=paused?freeze:(now-t0)/1000;
+ let colors=['#f3bd62','#f4717a','#6ebded','#70d9ac'],labels=['LV','Ao','RV','PA'],view=$('view').value;
+ let max=clamp(+$('scale').value||160,60,240),span=clamp(+$('span').value||6,2,12);
+ // One shared vertical pressure scale for all channels, with labeled gridlines.
+ const padTop=25,padBottom=23,graphH=h-padTop-padBottom;
+ const yFor=v=>padTop+graphH*(1-v/max);
+ for(let val=0;val<=max;val+=20){let y=yFor(val);ctx.strokeStyle=val===0||val===100?'#617b89':'#263e4a';ctx.lineWidth=val===0||val===100?1.3:.6;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();ctx.fillStyle='#9cb6c4';ctx.font='11px system-ui';ctx.fillText(val+'',3,y-3)}
+ let indices=view==='all'||view==='sequence'?[0,1,2,3]:view==='custom'?Array.from(document.querySelectorAll('#waveChecks input:checked')).map(el=>Number(el.dataset.wave)):[Number(view)];
+ const seq=[1,0,2,3],colW=w/4;
+ for(let j of indices){
+  ctx.strokeStyle=colors[j];ctx.lineWidth=2;ctx.beginPath();let begun=false;
+  for(let x=0;x<w;x+=1.2){
+   if(view==='sequence'&&seq[Math.min(3,Math.floor(x/colW))]!==j){begun=false;continue}
+   let time=secs-span+(x/w)*span,c=((time/period)%1+1)%1;
+   let v=pressure(p,c)[j],y=yFor(v);
+   if(!begun){ctx.moveTo(x,y);begun=true}else ctx.lineTo(x,y)
+  }
+  ctx.stroke();
+ }
+ if(view==='sequence'){for(let i=0;i<4;i++){let x=i*colW;ctx.strokeStyle='#3d5b6b';ctx.beginPath();ctx.moveTo(x,padTop);ctx.lineTo(x,h-padBottom);ctx.stroke();ctx.fillStyle=colors[seq[i]];ctx.font='bold 13px system-ui';ctx.fillText(labels[seq[i]],x+12,18)}}
+ else{ctx.fillStyle='#c7dce7';ctx.font='12px system-ui';ctx.fillText(view==='all'?'LV  /  Ao  /  RV  /  PA':view==='custom'?(indices.map(i=>labels[i]).join('  /  ')||'Seleziona almeno una onda'):labels[Number(view)],60,18)}
+ $('aoVal').textContent=p.sap+'/'+p.dap+' mmHg';$('lvVal').textContent=Math.round(p.sap+5)+'/'+p.lvedp+' mmHg';$('rvVal').textContent=p.rvSys+'/'+p.rvDia+' mmHg';$('paVal').textContent=p.paSys+'/'+p.paDia+' mmHg';$('gradient').textContent=(p.rvSys-p.paSys)+' mmHg';
+ requestAnimationFrame(draw);
+}
+document.querySelectorAll('#waveChecks input').forEach(el=>el.addEventListener('change',()=>{$('view').value='custom'}));
+$('scenario').addEventListener('change',()=>{let s=$('scenario').value;let v=s==='pda'?[125,48,14]:s==='closed'?[126,82,9]:s==='ps'?[112,72,9]:[112,72,9];patient.sap=v[0];patient.dap=v[1];patient.lvedp=v[2]});
+$('pause').addEventListener('click',()=>{if(!paused){freeze=(performance.now()-t0)/1000;paused=true;$('pause').textContent='Riprendi'}else{t0=performance.now()-freeze*1000;paused=false;$('pause').textContent='Pausa'}});requestAnimationFrame(draw);
+})();
+</script></body></html>
