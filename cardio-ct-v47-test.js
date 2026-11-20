@@ -2,7 +2,7 @@
 if(document.body.classList.contains('student'))return;
 const init=()=>{
  const sel=document.getElementById('ivScenario'),mod=document.getElementById('interventisticaModule');
- if(!sel||!mod)return;
+ if(!sel||!mod||document.getElementById('ivCardioTC'))return;
  if(!sel.querySelector('option[value="ct"]'))sel.add(new Option('Cardio TC','ct'));
  const panel=document.createElement('section');panel.id='ivCardioTC';panel.className='iv-card';panel.hidden=true;
  panel.innerHTML='<h3>Cardio TC · remifentanil e apnea di acquisizione</h3><div class="iv-row"><label>Remifentanil CRI (µg/kg/min) <input id="ctRemiDose" type="number" min="0" max="1" step="0.05" value="0.20" style="width:95px"></label><button id="ctRemiStart">Avvia CRI</button><button id="ctRemiStop">Interrompi CRI</button><strong id="ctRemiStatus">CRI non avviata</strong></div><div class="iv-row"><span id="ctRemiNumbers">Cp — · Ce — · FC —</span></div><canvas id="ctRemiChart" style="height:165px;width:100%"></canvas><div class="iv-row"><label>Durata apnea TC (s) <input id="ctApneaSeconds" type="number" min="3" max="30" step="1" value="10" style="width:75px"></label><button id="ctScanStart">Avvia scansione TC + apnea</button><button id="ctScanStop">Termina apnea</button><strong id="ctScanStatus">Scansione non avviata</strong></div><p class="iv-note">Modello PK/PD illustrativo nel cane: clearance 63 mL/kg/min, Vss 231 mL/kg, ke0 0,48/min; compartimento centrale illustrativo distinto (75 mL/kg, da validare). La risposta cronotropa varia con la dose e l’atropina; non è un modello clinicamente validato per guidare la somministrazione. L’apnea è una manovra ventilatoria controllata, non un effetto del remifentanil.</p>';
@@ -23,10 +23,13 @@ const init=()=>{
  $('ctRemiStart').onclick=()=>{st.dose=Math.max(0,Math.min(1,Number($('ctRemiDose').value)||0));st.running=st.dose>0;st.stopAt=0;};
  $('ctRemiStop').onclick=()=>{st.running=false;st.dose=0;st.stopAt=window.simVirtualNow?.()??performance.now();st.ceAtStop=st.ce;};
  $('ctRemiDose').onchange=()=>{if(st.running)st.dose=Math.max(0,Math.min(1,Number($('ctRemiDose').value)||0))};
- function stopApnea(){if(st.apnea){st.postApneaAt=window.simVirtualNow?.()??performance.now();st.postApneaBoost=Math.min(8,Math.max(1.5,Number($('ctApneaSeconds').value)||10)*.35);}st.apnea=false;st.apneaUntil=0;window.simCardioCTApnea=false;document.body.classList.remove('ct-apnea-active');$('ctScanStatus').textContent='Apnea terminata'}
+ function stopApnea(){if(st.apnea){st.postApneaAt=window.simVirtualNow?.()??performance.now();st.postApneaBoost=Math.min(8,Math.max(1.5,Number($('ctApneaSeconds').value)||10)*.35);}st.apnea=false;st.apneaUntil=0;window.simCardioCTApnea=false;document.body.classList.remove('ct-apnea-active');$('ctScanStatus').textContent='Apnea terminata';$('ctScanStart').hidden=false;$('ctScanStart').style.display='inline-block';$('ctScanStart').disabled=false}
  $('ctScanStart').onclick=()=>{
+  if(st.apnea)return;
   if(!window.simAirwayIntubated){$('ctScanStatus').textContent='Intubare prima della scansione';return}
   const now=window.simVirtualNow?.()??performance.now();
+  $('ctScanStart').disabled=true;
+  st.postApneaAt=0;st.postApneaBoost=0;window.simCardioCTEtBoost=0;
   st.apnea=true;st.apneaUntil=now+Math.max(3,Math.min(30,Number($('ctApneaSeconds').value)||10))*1000;
   window.simCardioCTApnea=true;document.body.classList.add('ct-apnea-active');
  };
@@ -64,7 +67,7 @@ const init=()=>{
   if(st.active&&!panel.hidden){
    $('ctRemiStatus').textContent=st.running?'CRI attiva · '+st.dose.toFixed(2)+' µg/kg/min':'CRI interrotta';
    $('ctRemiNumbers').textContent='Cp '+st.cp.toFixed(2)+' ng/mL · Ce '+st.ce.toFixed(2)+' ng/mL · FC '+(document.getElementById('hr')?.value||'—')+' bpm';
-   $('ctScanStart').hidden=false;$('ctScanStart').style.display='inline-block';
+   $('ctScanStart').hidden=false;$('ctScanStart').style.display='inline-block';$('ctScanStart').disabled=st.apnea;
    if(st.apnea)$('ctScanStatus').textContent='Apnea TC · '+Math.ceil((st.apneaUntil-now)/1000)+' s rimanenti';
    if(now>=nextSample){samples.push({cp:st.cp,ce:st.ce});if(samples.length>150)samples.shift();nextSample=now+1000}
    draw();
