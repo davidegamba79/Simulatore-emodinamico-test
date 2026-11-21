@@ -1661,8 +1661,11 @@ function wave(p,phase,i){
   const open=.145,close=.405,notchBottom=dia+(sys-dia)*.57;
   const rebound=dia+(sys-dia)*.65;
   if(c<open)return dia;
-  if(c<.245)return between(c,open,.245,dia,sys,x=>Math.sin(sat(x)*Math.PI/2));
-  if(c<close)return between(c,.245,close,sys,dia+(sys-dia)*.69);
+  // Broad, rounded central-aortic systolic crest, with continuous slope.
+  // Smoothstep gives a zero slope at the summit instead of a sharp vertex.
+  if(c<.265)return between(c,open,.265,dia,sys,smooth);
+  if(c<.315)return between(c,.265,.315,sys,sys*.985,smooth);
+  if(c<close)return between(c,.315,close,sys*.985,dia+(sys-dia)*.69,smooth);
   if(c<close+.018)return between(c,close,close+.018,dia+(sys-dia)*.69,notchBottom);
   if(c<close+.050)return between(c,close+.018,close+.050,notchBottom,rebound);
   const x=(c-close-.050)/(1-close-.050);
