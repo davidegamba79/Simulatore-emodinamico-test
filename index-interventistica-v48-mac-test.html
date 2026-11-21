@@ -1623,39 +1623,41 @@ function wave(p,phase,i){
  const c=((phase%1)+1)%1;
  const sys=i===0?p.sap+5:i===1?p.sap:i===2?p.rv:p.pa;
  const dia=i===0?p.edp:i===1?p.dap:i===2?p.rvd:p.pad;
- const clamp01=x=>Math.max(0,Math.min(1,x));
- const ease=x=>{x=clamp01(x);return x*x*(3-2*x)};
- const segment=(x,a,b,y0,y1,shape=ease)=>y0+(y1-y0)*shape((x-a)/(b-a));
+ const sat=x=>Math.max(0,Math.min(1,x));
+ const smooth=x=>{x=sat(x);return x*x*(3-2*x)};
+ const between=(x,a,b,y0,y1,fn=smooth)=>y0+(y1-y0)*fn((x-a)/(b-a));
  if(i===0){
-  // LV: brisk isovolumic upstroke, rounded sustained ejection,
-  // brisk relaxation and small atrial contraction before next systole.
-  const base=Math.max(1,dia-4),shoulder=sys*.94;
-  if(c<.065)return base;
-  if(c<.135)return segment(c,.065,.135,base,shoulder,x=>Math.pow(clamp01(x),1.65));
-  if(c<.215)return segment(c,.135,.215,shoulder,sys);
-  if(c<.325)return segment(c,.215,.325,sys,sys*.96);
-  if(c<.415)return segment(c,.325,.415,sys*.96,sys*.88);
-  if(c<.515)return segment(c,.415,.515,sys*.88,base,x=>1-Math.pow(1-clamp01(x),2.7));
-  if(c<.82)return base;
-  if(c<.925)return segment(c,.82,.925,base,dia);
-  return segment(c,.925,1,dia,base);
+  // LV catheter waveform, qualitatively traced from supplied clinical screenshots:
+  // steep upstroke, asymmetric notched peak, fast relaxation, low filling pressure.
+  const base=Math.max(0,dia-13),amp=sys-base;
+  if(c<.075)return base+Math.max(0,dia-base)*.16*Math.exp(-Math.pow((c-.035)/.024,2));
+  if(c<.154)return between(c,.075,.154,base,sys*.965,x=>Math.pow(sat(x),1.8));
+  if(c<.183)return between(c,.154,.183,sys*.965,sys);
+  if(c<.207)return between(c,.183,.207,sys,sys*.91);
+  if(c<.236)return between(c,.207,.236,sys*.91,sys*.955);
+  if(c<.345)return between(c,.236,.345,sys*.955,sys*.89,x=>Math.pow(sat(x),.85));
+  if(c<.433)return between(c,.345,.433,sys*.89,base,x=>Math.pow(sat(x),1.05));
+  if(c<.68)return base;
+  if(c<.78)return between(c,.68,.78,base,base+(dia-base)*.25);
+  if(c<.85)return between(c,.78,.85,base+(dia-base)*.25,base+(dia-base)*.17);
+  if(c<.945)return between(c,.85,.945,base+(dia-base)*.17,dia);
+  return between(c,.945,1,dia,base);
  }
  if(i===2){
-  // RV: lower pressure, shorter sharply peaked systolic summit,
-  // longer tapering ejection, rapid final relaxation.
-  const base=Math.max(1,dia-3),peak=sys;
+  // RV deliberately remains a distinct, lower-pressure triangular profile.
+  const base=Math.max(1,dia-3);
   if(c<.075)return base;
-  if(c<.205)return segment(c,.075,.205,base,peak,x=>Math.pow(clamp01(x),1.25));
-  if(c<.305)return segment(c,.205,.305,peak,peak*.81,x=>Math.pow(clamp01(x),.8));
-  if(c<.465)return segment(c,.305,.465,peak*.81,peak*.43,x=>Math.pow(clamp01(x),1.05));
-  if(c<.565)return segment(c,.465,.565,peak*.43,base,x=>1-Math.pow(1-clamp01(x),2));
+  if(c<.205)return between(c,.075,.205,base,sys,x=>Math.pow(sat(x),1.25));
+  if(c<.305)return between(c,.205,.305,sys,sys*.81);
+  if(c<.465)return between(c,.305,.465,sys*.81,sys*.43);
+  if(c<.565)return between(c,.465,.565,sys*.43,base);
   if(c<.82)return base;
-  if(c<.925)return segment(c,.82,.925,base,dia);
-  return segment(c,.925,1,dia,base);
+  if(c<.925)return between(c,.82,.925,base,dia);
+  return between(c,.925,1,dia,base);
  }
  const right=i===3,open=right?.165:.145,close=right?.455:.405;
  if(c<open)return dia;
- if(c<open+.10)return dia+(sys-dia)*ease((c-open)/.10);
+ if(c<open+.10)return dia+(sys-dia)*smooth((c-open)/.10);
  if(c<close)return sys-(sys-dia)*.28*(c-open-.10)/(close-open-.10);
  const x=(c-close)/(1-close);
  return dia+(sys-dia)*.7*Math.exp(-3*x)+((c<close+.035)?-(sys-dia)*.08*Math.sin(Math.PI*(c-close)/.035):0);
