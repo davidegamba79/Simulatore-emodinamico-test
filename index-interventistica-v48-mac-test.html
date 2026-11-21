@@ -1655,7 +1655,20 @@ function wave(p,phase,i){
   if(c<.925)return between(c,.82,.925,base,dia);
   return between(c,.925,1,dia,base);
  }
- const right=i===3,open=right?.165:.145,close=right?.455:.405;
+ // Central aortic pressure: early, clearly visible dicrotic notch at
+ // aortic valve closure (LV relaxation onset); peripheral IBP is unchanged.
+ if(i===1){
+  const open=.145,close=.405,notchBottom=dia+(sys-dia)*.57;
+  const rebound=dia+(sys-dia)*.65;
+  if(c<open)return dia;
+  if(c<.245)return between(c,open,.245,dia,sys,x=>Math.sin(sat(x)*Math.PI/2));
+  if(c<close)return between(c,.245,close,sys,dia+(sys-dia)*.69);
+  if(c<close+.018)return between(c,close,close+.018,dia+(sys-dia)*.69,notchBottom);
+  if(c<close+.050)return between(c,close+.018,close+.050,notchBottom,rebound);
+  const x=(c-close-.050)/(1-close-.050);
+  return dia+(rebound-dia)*Math.exp(-3.4*x);
+ }
+ const open=.165,close=.455;
  if(c<open)return dia;
  if(c<open+.10)return dia+(sys-dia)*smooth((c-open)/.10);
  if(c<close)return sys-(sys-dia)*.28*(c-open-.10)/(close-open-.10);
