@@ -1623,39 +1623,39 @@ function wave(p,phase,i){
  const c=((phase%1)+1)%1;
  const sys=i===0?p.sap+5:i===1?p.sap:i===2?p.rv:p.pa;
  const dia=i===0?p.edp:i===1?p.dap:i===2?p.rvd:p.pad;
- const smooth=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x)};
- if(i===0||i===2){
-  // Ventricular catheter pressure: atrial kick, isovolumic contraction,
-  // ejection dome and isovolumic relaxation. Separate LV and RV timing.
-  const right=i===2;
-  const baseline=Math.max(1,dia-(right?3:4));
-  const atrialStart=.79,atrialPeak=.91,atrialEnd=.985;
-  const kick=(dia-baseline)*Math.exp(-Math.pow((c-atrialPeak)/.045,2));
-  const early=c<.075?baseline+(dia-baseline)*smooth(c/.075):baseline;
-  if(c<.075)return early;
-  const riseStart=.075,riseEnd=right?.165:.142;
-  const valveClose=right?.455:.405,fallEnd=right?.575:.495;
-  if(c<riseEnd){
-   const u=(c-riseStart)/(riseEnd-riseStart);
-   return baseline+(sys-baseline)*Math.pow(smooth(u),right?.83:.72);
-  }
-  if(c<valveClose){
-   const u=(c-riseEnd)/(valveClose-riseEnd);
-   // Rounded LV dome; RV earlier and narrower peak, without flat plateau.
-   const dome=right?Math.pow(Math.sin(Math.PI*Math.pow(u,.78)),.68):Math.pow(Math.sin(Math.PI*u),.48);
-   const shoulder=right?.83:.91;
-   return sys*(shoulder+(1-shoulder)*dome);
-  }
-  if(c<fallEnd){
-   const u=(c-valveClose)/(fallEnd-valveClose);
-   const start=sys*(right?.83:.91);
-   return baseline+(start-baseline)*Math.pow(1-smooth(u),right?1.1:.85);
-  }
-  return baseline+kick;
+ const clamp01=x=>Math.max(0,Math.min(1,x));
+ const ease=x=>{x=clamp01(x);return x*x*(3-2*x)};
+ const segment=(x,a,b,y0,y1,shape=ease)=>y0+(y1-y0)*shape((x-a)/(b-a));
+ if(i===0){
+  // LV: brisk isovolumic upstroke, rounded sustained ejection,
+  // brisk relaxation and small atrial contraction before next systole.
+  const base=Math.max(1,dia-4),shoulder=sys*.94;
+  if(c<.065)return base;
+  if(c<.135)return segment(c,.065,.135,base,shoulder,x=>Math.pow(clamp01(x),1.65));
+  if(c<.215)return segment(c,.135,.215,shoulder,sys);
+  if(c<.325)return segment(c,.215,.325,sys,sys*.96);
+  if(c<.415)return segment(c,.325,.415,sys*.96,sys*.88);
+  if(c<.515)return segment(c,.415,.515,sys*.88,base,x=>1-Math.pow(1-clamp01(x),2.7));
+  if(c<.82)return base;
+  if(c<.925)return segment(c,.82,.925,base,dia);
+  return segment(c,.925,1,dia,base);
+ }
+ if(i===2){
+  // RV: lower pressure, shorter sharply peaked systolic summit,
+  // longer tapering ejection, rapid final relaxation.
+  const base=Math.max(1,dia-3),peak=sys;
+  if(c<.075)return base;
+  if(c<.205)return segment(c,.075,.205,base,peak,x=>Math.pow(clamp01(x),1.25));
+  if(c<.305)return segment(c,.205,.305,peak,peak*.81,x=>Math.pow(clamp01(x),.8));
+  if(c<.465)return segment(c,.305,.465,peak*.81,peak*.43,x=>Math.pow(clamp01(x),1.05));
+  if(c<.565)return segment(c,.465,.565,peak*.43,base,x=>1-Math.pow(1-clamp01(x),2));
+  if(c<.82)return base;
+  if(c<.925)return segment(c,.82,.925,base,dia);
+  return segment(c,.925,1,dia,base);
  }
  const right=i===3,open=right?.165:.145,close=right?.455:.405;
  if(c<open)return dia;
- if(c<open+.10)return dia+(sys-dia)*smooth((c-open)/.10);
+ if(c<open+.10)return dia+(sys-dia)*ease((c-open)/.10);
  if(c<close)return sys-(sys-dia)*.28*(c-open-.10)/(close-open-.10);
  const x=(c-close)/(1-close);
  return dia+(sys-dia)*.7*Math.exp(-3*x)+((c<close+.035)?-(sys-dia)*.08*Math.sin(Math.PI*(c-close)/.035):0);
