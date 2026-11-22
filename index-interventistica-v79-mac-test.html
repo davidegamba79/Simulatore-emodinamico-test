@@ -2144,9 +2144,10 @@ window.addEventListener('DOMContentLoaded',()=>{
     // Keep only saturated PV curves; remove grey grid, labels and axes.
     const max=Math.max(r,gr,bl),min=Math.min(r,gr,bl);
     const colorful=max-min>68&&max>115;
+    const loopColor=(bl>r*1.2&&bl>gr*.95)||(gr>r*1.25&&gr>bl*.75)||(bl>gr*1.2&&r>gr*1.1)||(r>155&&gr>r*.70&&bl<gr*.72);
     // Dashed white reference: alternate 12px visible / 8px gap.
     const dash=((x+y*.35)%20)<12;
-    p[i]=255;p[i+1]=255;p[i+2]=255;p[i+3]=colorful&&dash?235:0;
+    p[i]=255;p[i+1]=255;p[i+2]=255;p[i+3]=colorful&&loopColor&&dash?235:0;
    }
    g.putImageData(d,0,0);masks.set(src,c);paint();
   };
