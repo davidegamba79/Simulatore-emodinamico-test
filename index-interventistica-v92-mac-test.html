@@ -1,0 +1,2194 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sim Anestesia V3.0">
+<meta name="theme-color" content="#071016">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="stylesheet" href="./styles.css">
+<link rel="stylesheet" href="./styles-v2.css?v=2900">
+<title>SIMULATORE ANESTESIA — V3.0</title>
+<style id="student-panel-2893">body.student #timeControls,body.student #premedPanel,body.student #inductionPanel{display:none!important}
+/* Fentanil: tre indicatori affiancati anche su iPad. */
+body:not(.student) #fentanylPanel .fentanyl-stats{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:8px;align-items:start}
+body:not(.student) #fentanylPanel .fentanyl-stats>div{min-width:0;font-size:12px}
+body:not(.student) #fentanylPanel .fentanyl-stats b{display:block;overflow-wrap:anywhere;font-size:14px}
+/* Il pannello trend appartiene esclusivamente alla scheda Trend. */
+body:not(.student):not([data-instructor-tab="trends"]) #trendV25{display:none!important}
+
+body:not(.student) #fentanylPanel>.cols:first-of-type{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px}
+body:not(.student) #fentanylPanel>.cols:first-of-type label{display:block;min-width:0}
+body:not(.student) #fentanylPanel #fentTarget,body:not(.student) #fentanylPanel #fentBolus{box-sizing:border-box;width:100%!important;min-width:0;height:40px;min-height:40px;font:inherit}
+</style>
+<style id="therapy-layout-2861">
+/* Applied in the document to avoid stale stylesheet caching */
+#therapyV25{container-type:normal!important}
+#therapyV25 .therapy-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:7px!important}
+#therapyV25 .therapy{min-width:0!important;min-height:84px!important;padding:7px!important;display:grid!important;grid-template-columns:minmax(0,1fr) minmax(80px,105px)!important;grid-template-areas:"drug dose" "drug action"!important;gap:3px 7px!important;align-content:center!important;align-items:center!important}
+#therapyV25 .therapy:first-child{grid-template-areas:"drug action"!important}
+#therapyV25 .therapy>div{grid-area:drug!important;grid-column:auto!important;min-width:0!important}
+#therapyV25 .therapy>div b{font-size:13px!important;line-height:1.2!important}
+#therapyV25 .therapy>div small{font-size:10px!important;line-height:1.2!important}
+#therapyV25 .therapy>label{grid-area:dose!important;min-width:0!important;font-size:10px!important}
+#therapyV25 .therapy>label input{width:100%!important;padding:5px 6px!important;margin:2px 0 0!important;font-size:13px!important}
+#therapyV25 .therapy>button{grid-area:action!important;width:100%!important;min-width:0!important;min-height:34px!important;padding:5px 4px!important;font-size:11px!important}
+@media(min-width:1550px){#therapyV25 .therapy-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important}}
+@media(max-width:640px){#therapyV25 .therapy-grid{grid-template-columns:1fr!important}}
+</style>
+<style>#premedPanel .premed-form{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;align-items:end}#premedPanel input,#premedPanel select{padding:8px}#premedPanel button{min-height:40px}@media(max-width:1000px){#premedPanel .premed-form{grid-template-columns:repeat(2,minmax(0,1fr))}}</style>
+<style id="ipad-instructor-tabs-28105">
+/* Solo console docente: il monitor studenti su schermo esteso resta invariato. */
+body:not(.student) .controls{align-content:start;grid-auto-rows:max-content;min-width:0}
+body:not(.student) .instructor-console-top{position:sticky;top:66px;z-index:4;background:#0b1a22;border:1px solid #294653;border-radius:12px;padding:10px;box-shadow:0 8px 18px #0005}
+.instructor-console-top .quick-values{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-bottom:8px}
+.instructor-console-top .quick-values>div{background:#071219;border:1px solid #1e3844;border-radius:7px;padding:6px;min-width:0}
+.instructor-console-top .quick-values small{display:block;color:#a2bac6;font-size:10px}
+.instructor-console-top .quick-values b{display:block;font-size:17px;font-variant-numeric:tabular-nums}
+.instructor-console-top .quick-phase{color:#c4d9e2;font-size:11px;line-height:1.4;margin-bottom:7px}
+.instructor-tab-nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+.instructor-tab-nav button{min-width:0;min-height:46px;padding:7px 2px;font-size:12px;line-height:1.2}
+.instructor-tab-nav button[aria-selected="true"]{background:#18523c;border-color:#42c28b;color:#fff}
+.instructor-tab-panel{display:grid;gap:10px;align-content:start;min-width:0}
+.instructor-tab-panel[hidden]{display:none!important}
+.instructor-tab-panel>.card{min-width:0;margin:0}
+.instructor-tab-panel .premed-form{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+.instructor-tab-panel .premed-form>button{grid-column:1/-1}
+.instructor-tab-panel #inductionReport{overflow-x:auto}
+.instructor-tab-panel #inductionReport table{min-width:570px}
+.instructor-tab-panel #therapyV25 .therapy-grid{grid-template-columns:1fr!important}
+.instructor-advanced{border:1px solid #29404d;border-radius:10px;padding:9px}
+.instructor-advanced>summary{cursor:pointer;font-size:13px;font-weight:700;color:#d3e9f1;padding:4px;min-height:34px;touch-action:manipulation}
+.instructor-advanced-content{display:grid;gap:10px;padding-top:10px}
+body:not(.student) #timeControls{padding:9px;margin:0!important}
+body:not(.student) #timeControls h2{font-size:13px;margin-bottom:7px}
+body:not(.student) #timeControls .time-primary{display:flex;gap:7px;flex-wrap:wrap;align-items:center}
+body:not(.student) #timeControls .time-primary label{flex:1;min-width:110px}
+body:not(.student) #timeControls .time-primary button{min-height:44px}
+body:not(.student) #timeControls .time-primary strong{font-size:16px;font-variant-numeric:tabular-nums}
+body:not(.student) #timeControls .time-jumps{margin-top:6px}
+body:not(.student) #timeControls .time-jumps summary{cursor:pointer;min-height:32px;color:#bcd0d8;font-size:12px}
+body:not(.student) #timeControls .time-jumps>div{display:flex;flex-wrap:wrap;gap:6px}
+body:not(.student) #timeControls .time-jumps button{min-height:42px}
+body:not(.student) .monitor{min-width:0}
+@media(min-width:901px){body:not(.student) .grid{grid-template-columns:minmax(350px,390px) minmax(0,1fr)}}
+@media(max-width:900px){body:not(.student) .instructor-console-top{top:58px}body:not(.student) .controls{order:0}body:not(.student) .monitor{order:1}}
+@media(max-width:520px){.instructor-console-top .quick-values b{font-size:15px}.instructor-tab-nav button{font-size:11px}body:not(.student) .instructor-console-top{top:54px}}
+</style>
+
+<style id="ipad-persistent-monitor-28106">
+/* Console docente iPad: monitor clinico sempre visibile durante lo scroll dei comandi.
+   Il display studenti, su schermo esteso, non e' coinvolto. */
+body:not(.student) .grid{align-items:start}
+body:not(.student) .monitor{
+ position:sticky!important;
+ top:calc(var(--instructor-header-height, 80px) + 8px)!important;
+ align-self:start!important;
+ max-height:calc(100dvh - var(--instructor-header-height, 80px) - 20px)!important;
+ overflow-y:auto!important;
+ overflow-x:hidden!important;
+ overscroll-behavior:contain;
+ -webkit-overflow-scrolling:touch;
+ scrollbar-width:thin;
+}
+body:not(.student) .hemo-wrap{padding:9px}
+body:not(.student) .hemo-wrap h2{font-size:13px;margin-bottom:7px}
+body:not(.student) .hemo-wrap .hemo{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px}
+body:not(.student) .hemo-wrap .metric{min-width:0;padding:6px}
+body:not(.student) .hemo-wrap .metric b{font-size:17px}
+body:not(.student) .hemo-wrap .metric small{font-size:10px;overflow-wrap:anywhere}
+@media(min-width:1180px){
+ body:not(.student) .hemo-wrap .hemo{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(min-width:700px) and (max-width:900px){
+ body:not(.student) .grid{grid-template-columns:minmax(300px,40%) minmax(0,1fr)!important;gap:9px}
+ body:not(.student) .controls{order:0}
+ body:not(.student) .monitor{order:1}
+ body:not(.student) main{padding:8px}
+ body:not(.student) .hemo-wrap .metric b{font-size:15px}
+ body:not(.student) .hemo-wrap .metric small{font-size:9px}
+}
+@media(max-height:820px) and (min-width:700px){
+ body:not(.student) .monitor .wave{height:70px!important;min-height:70px!important}
+ body:not(.student) .hemo-wrap .metric{padding:4px 6px}
+ body:not(.student) .hemo-wrap .metric b{font-size:15px}
+ body:not(.student) .hemo-wrap .metric small{font-size:9px}
+ body:not(.student) .hemo-wrap{padding:7px}
+ body:not(.student) .hemo-wrap h2{margin-bottom:5px}
+}
+@media(max-width:699px){
+ /* Su schermi piccoli la colonna del monitor precede i controlli. */
+ body:not(.student) .grid{display:flex!important;flex-direction:column;gap:8px}
+ body:not(.student) .monitor{order:0;width:100%;max-height:44dvh!important;top:calc(var(--instructor-header-height, 80px) + 5px)!important;z-index:3}
+ body:not(.student) .controls{order:1;width:100%}
+ body:not(.student) .monitor .wave{height:62px!important;min-height:62px!important}
+}
+</style>
+
+<style id="student-readonly-tabs-28108">
+/* La console studenti e' soltanto una vista: onde e PRAM sempre visibili. */
+body.student main{height:calc(100dvh - var(--student-header-height, 76px));padding:8px 12px;overflow:hidden}
+body.student .grid{height:100%;min-height:0;display:block}
+body.student .monitor{height:100%;min-height:0;overflow:hidden;display:flex!important;flex-direction:column!important;gap:7px!important}
+body.student .student-fixed-monitor{flex:0 0 auto;display:flex;flex-direction:column;gap:4px;min-height:0;max-height:64%;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
+body.student .student-fixed-monitor .wave{height:78px!important;min-height:78px!important;flex-shrink:0}
+body.student .student-fixed-monitor .hemo-wrap{padding:8px}
+body.student .student-fixed-monitor .hemo-wrap h2{font-size:12px;margin-bottom:5px}
+body.student .student-fixed-monitor .hemo{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:5px}
+body.student .student-fixed-monitor .metric{min-width:0;padding:5px}
+body.student .student-fixed-monitor .metric b{font-size:17px;overflow-wrap:anywhere}
+body.student .student-fixed-monitor .metric small{font-size:10px}
+body.student .student-tabs-shell{flex:1;min-height:0;display:flex;flex-direction:column;border:1px solid #29404d;border-radius:12px;background:#0a1820;overflow:hidden}
+body.student .student-tabs-nav{display:flex;align-items:center;gap:8px;flex:0 0 auto;padding:8px 10px;border-bottom:1px solid #29404d}
+body.student .student-tabs-nav button{min-height:42px;min-width:150px;font-size:13px}
+body.student .student-tabs-nav button[aria-selected="true"]{background:#16513b;border-color:#3ec18a;color:#fff}
+body.student .student-readonly-badge{margin-left:auto;color:#b5cbd5;font-size:12px}
+body.student .student-tab-panel{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:8px;scrollbar-width:thin}
+body.student .student-tab-panel[hidden]{display:none!important}
+body.student #trendV25{margin:0!important}
+body.student #trendV25 .trend-controls{display:none!important}
+body.student #trendV25 .v26-trend-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+body.student #trendV25 .v26-chart canvas{height:155px!important}
+body.student #therapyV25,body.student #timeControls,body.student #premedPanel,body.student #inductionPanel{display:none!important}
+body.student[data-student-external="true"] #modeBtn{display:none!important}
+body.student .student-meds-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+body.student .student-meds-summary .student-meds-group{background:#0c1d26;border:1px solid #23404c;border-radius:10px;padding:10px;min-width:0}
+body.student .student-meds-group h3{font-size:15px;margin:0 0 9px;color:#d7e9f1}
+body.student .student-meds-list{display:flex;flex-direction:column;gap:6px}
+body.student .student-meds-event{display:grid;grid-template-columns:50px minmax(0,1fr);gap:8px;align-items:start;padding:6px;border-bottom:1px solid #19323e}
+body.student .student-meds-event time{color:#a6bbc6;font-size:12px;font-variant-numeric:tabular-nums}
+body.student .student-meds-event span{color:#e0edf2;font-size:13px;line-height:1.4;overflow-wrap:anywhere}
+body.student .student-meds-empty{color:#91aab5;font-size:13px}
+body.student .student-inhaled-status:not([hidden]){padding:9px 10px;margin:0 0 10px;border-radius:7px;border-left:3px solid #48c69a;background:#103329;color:#e3f8ee;font-size:14px;font-weight:650}
+body.student .student-active-therapy{padding:9px 11px;margin-bottom:10px;background:#0b2521;border-left:3px solid #38c58c;border-radius:6px;font-size:13px;line-height:1.55;color:#d4f2e6}
+@media(max-width:850px){
+ body.student .student-fixed-monitor .hemo{grid-template-columns:repeat(4,minmax(0,1fr))}
+ body.student .student-fixed-monitor .wave{height:67px!important;min-height:67px!important}
+ body.student .student-meds-summary{grid-template-columns:1fr}
+ body.student #trendV25 .v26-trend-grid{grid-template-columns:1fr}
+}
+@media(max-height:850px){
+ body.student .student-fixed-monitor{max-height:62%}
+ body.student .student-fixed-monitor .wave{height:62px!important;min-height:62px!important}
+ body.student .student-fixed-monitor .metric{padding:3px 5px}
+ body.student .student-fixed-monitor .metric b{font-size:14px}
+ body.student .student-fixed-monitor .metric small{font-size:9px}
+ body.student .student-fixed-monitor .hemo-wrap{padding:5px}
+ body.student .student-fixed-monitor .hemo-wrap h2{margin-bottom:3px}
+}
+</style>
+<style id="app-version-label">.app-version{display:inline-block;vertical-align:middle;margin:0 2px;padding:3px 7px;border:1px solid #3c766a;border-radius:7px;background:#12372f;color:#baf5d5;font-size:12px;font-weight:750;letter-spacing:.02em;white-space:nowrap}</style>
+<style id="ventilation-v293-styles">
+#ventilationPanel .cols{gap:8px}
+#ventilationPanel input,#ventilationPanel select{padding:8px}
+#ventilationPanel .vent-hold-controls{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);align-items:center;gap:10px;margin-top:10px;padding:10px;background:#0b2028;border:1px solid #2c5361;border-radius:9px}
+#ventilationPanel .vent-hold-toggle{display:flex;align-items:center;gap:10px;min-height:44px;font-size:13px;font-weight:650}
+#ventilationPanel .vent-hold-toggle input{width:22px;height:22px;flex:0 0 22px;accent-color:#40c6a0}
+#ventilationPanel .vent-hold-controls label{min-width:0}
+@media(max-width:520px){#ventilationPanel .vent-hold-controls{grid-template-columns:1fr}}
+.vent-readouts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:10px}
+.vent-readouts>div{background:#081820;border:1px solid #24404c;border-radius:8px;padding:8px;min-width:0}
+.vent-readouts small{display:block;color:#a6bdc8;font-size:10px}
+.vent-readouts b{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.vent-wave-stack{display:grid;gap:8px;margin-top:12px}
+.vent-wave-stack>div{background:#030b10;border:1px solid #1e3642;border-radius:9px;padding:5px 8px}
+.vent-wave-stack small{font-size:11px;color:#a8c5d3}
+.vent-wave-stack canvas{width:100%;height:78px;display:block}
+body.student #student-panel-ventilation .vent-readouts{grid-template-columns:repeat(4,minmax(0,1fr))}
+body.student #student-panel-ventilation .vent-wave-stack{grid-template-columns:repeat(3,minmax(0,1fr))}
+body.student #student-panel-ventilation .vent-wave-stack canvas{height:110px}
+@media(max-width:900px){body.student #student-panel-ventilation .vent-readouts{grid-template-columns:repeat(3,minmax(0,1fr))}body.student #student-panel-ventilation .vent-wave-stack{grid-template-columns:1fr}}
+@media(max-width:520px){.vent-readouts b{font-size:17px}.instructor-tab-nav button{font-size:10px;padding:5px 1px}}
+</style>
+
+<style id="vent-monitor-spirometry-296">
+/* Onde respiratorie nel monitor principale, con vista dedicata per la ventilazione. */
+.instructor-tab-nav{grid-template-columns:repeat(3,minmax(0,1fr))}
+.instructor-tab-nav button{box-sizing:border-box;max-width:100%;width:100%;min-width:0;white-space:nowrap!important;overflow:hidden;display:flex;align-items:center;justify-content:center;line-height:1.1;font-size:11px;padding:7px 3px;letter-spacing:0}
+@media(max-width:520px){.instructor-tab-nav button{font-size:10px;padding:6px 0}}
+.monitor .resp-wave{display:none!important}
+body:not(.student)[data-instructor-tab="ventilation"] .monitor .resp-wave,
+body.student[data-student-tab="ventilation"] .monitor .resp-wave{display:flex!important}
+body:not(.student)[data-instructor-tab="ventilation"] .monitor .wave[data-key="ecg"],
+body.student[data-student-tab="ventilation"] .monitor .wave[data-key="ecg"]{display:none!important}
+body:not(.student):not([data-instructor-tab="ventilation"])[data-resp-pressure="true"] .monitor .resp-wave[data-resp-type="pressure"],
+body.student:not([data-student-tab="ventilation"])[data-resp-pressure="true"] .monitor .resp-wave[data-resp-type="pressure"]{display:flex!important}
+body:not(.student):not([data-instructor-tab="ventilation"])[data-resp-flow="true"] .monitor .resp-wave[data-resp-type="flow"],
+body.student:not([data-student-tab="ventilation"])[data-resp-flow="true"] .monitor .resp-wave[data-resp-type="flow"]{display:flex!important}
+body:not(.student) .resp-wave-controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:7px 10px;background:#0a202b;border:1px solid #274452;border-radius:9px;margin-bottom:4px}
+body.student .resp-wave-controls{display:none!important}
+#instructorVentLoops{display:none}
+body:not(.student)[data-instructor-tab="ventilation"] #instructorVentLoops{display:block}
+body:not(.student) #instructorVentLoops .vent-loop-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+body:not(.student) #instructorVentLoops .vent-loop-card canvas{height:auto!important;aspect-ratio:17 / 12}
+body:not(.student) .resp-wave-controls{margin-top:12px;margin-bottom:0}
+@media(max-width:960px){body:not(.student) #instructorVentLoops .vent-loop-grid{grid-template-columns:1fr}}
+.resp-wave-controls label{display:flex;align-items:center;gap:6px;font-size:12px;color:#c7dce6;min-height:28px}
+.resp-wave-controls input{width:18px;height:18px;accent-color:#48c7a0}
+.resp-wave .wlabel{color:#a8d7ee}
+.resp-wave[data-resp-type="pressure"] .wlabel,.resp-wave[data-resp-type="pressure"] .values{color:#ffd34e}
+.resp-wave[data-resp-type="flow"] .wlabel,.resp-wave[data-resp-type="flow"] .values{color:#ff9a3c}
+.resp-wave[data-resp-type="volume"] .wlabel,.resp-wave[data-resp-type="volume"] .values{color:#bd895a}
+/* V3.0 — dati paziente della ventilazione richiudibili come i salti temporali. */
+details.vent-patient-card{padding:0;overflow:hidden}
+.vent-patient-card .vent-patient-summary{
+ cursor:pointer;min-height:44px;padding:9px 12px;display:flex;align-items:center;
+ flex-wrap:wrap;gap:4px 12px;color:#d7e9f1;list-style:revert;touch-action:manipulation
+}
+.vent-patient-card .vent-patient-summary-title{font-size:13px;font-weight:750}
+.vent-patient-card .vent-patient-compact{font-size:11px;color:#9cb9c7;min-width:0;overflow-wrap:anywhere}
+.vent-patient-card .vent-patient-content{padding:0 12px 12px}
+.vent-patient-card[open] .vent-patient-summary{border-bottom:1px solid #29404d;margin-bottom:10px}
+.vent-patient-card .cols{gap:8px}
+.vent-patient-card input,.vent-patient-card select{padding:8px}
+.vent-loop-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin-top:12px}
+/* I loop sono nel monitor principale, non tra i controlli ventilatori. */
+.vent-loop-grid .vent-loop-card{background:#040d14;border:1px solid #254450;border-radius:10px;padding:8px;min-width:0}
+.vent-loop-grid .vent-loop-card strong{display:block;font-size:13px;color:#d7eaf1;margin-bottom:3px}
+.vent-loop-grid .vent-loop-card canvas{display:block;width:100%;height:auto!important;aspect-ratio:17 / 12}
+.vent-loop-legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:7px;font-size:11px;color:#b6d1db}
+.vent-loop-legend .insp{color:#4399ff}.vent-loop-legend .exp{color:#c084fc}
+body.student[data-student-tab="ventilation"] .student-fixed-monitor .wave{height:55px!important;min-height:55px!important}
+body.student[data-student-tab="ventilation"] .student-fixed-monitor{max-height:69%}
+body:not(.student)[data-instructor-tab="ventilation"] .monitor .wave{height:67px!important;min-height:67px!important}
+@media(max-width:720px){.vent-loop-grid{grid-template-columns:1fr}}
+@media(max-height:800px){body.student[data-student-tab="ventilation"] .student-fixed-monitor .wave{height:48px!important;min-height:48px!important}}
+/* V3.0: EtCO₂ bianca su ogni monitor, docente e studenti. */
+.monitor .wave[data-key="capno"] .wlabel,
+.monitor .wave[data-key="capno"] .values{color:#f8fbff!important}
+/* Scala geometrica invariata: i canvas spirometrici conservano un rapporto 17:12. */
+.vent-loop-card{min-width:0}
+.vent-loop-card canvas{width:100%;aspect-ratio:17 / 12;height:auto!important;display:block}
+/* Sul monitor studenti: onde a sinistra e loop impilati a destra. */
+body.student .student-vent-layout{min-width:0;width:100%}
+body.student .student-vent-wave-column{display:flex;flex-direction:column;gap:4px;min-width:0}
+body.student .student-vent-loops{display:none;min-width:0}
+body.student[data-student-tab="ventilation"] .student-vent-layout{
+ display:grid;grid-template-columns:minmax(0,1fr) minmax(210px,330px);gap:9px;align-items:start
+}
+body.student[data-student-tab="ventilation"] .student-vent-loops{display:block}
+body.student[data-student-tab="ventilation"] .student-vent-loops .vent-loop-grid{
+ display:grid;grid-template-columns:1fr;gap:8px;margin:0
+}
+body.student .student-vent-loops .vent-loop-card{padding:6px}
+body.student .student-vent-loops .vent-loop-card strong{font-size:11px;margin-bottom:2px}
+body.student .student-vent-loops .vent-loop-card canvas{aspect-ratio:17 / 12;height:auto!important}
+body.student .student-vent-loops .vent-loop-legend{margin-top:5px;font-size:10px}
+/* V3.0: i dati ventilatori riempiono lo spazio sotto IBP,
+   affiancati ai due loop; nessun riquadro nelle altre schede. */
+body.student .student-vent-metrics{display:none;min-width:0}
+body.student[data-student-tab="ventilation"] .student-vent-metrics{
+ display:block;order:7;background:#0b1d27;border:1px solid #294653;
+ border-radius:9px;padding:7px 9px;margin-top:2px
+}
+body.student .student-vent-metrics h3{font-size:12px;margin:0 0 5px;color:#d8edf5}
+body.student .student-vent-metrics .status{
+ font-size:11px;line-height:1.3;padding:4px 7px;margin:0 0 5px;
+ border-left-width:2px
+}
+body.student .student-vent-metrics .vent-readouts{
+ display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px;margin-top:0
+}
+body.student .student-vent-metrics .vent-readouts>div{
+ padding:5px 6px;min-width:0
+}
+body.student .student-vent-metrics .vent-readouts small{
+ font-size:9px;line-height:1.2;overflow-wrap:anywhere
+}
+body.student .student-vent-metrics .vent-readouts b{
+ font-size:17px;line-height:1.25
+}
+/* L'IBP chiude la colonna delle onde: subito sotto compaiono i dati. */
+body.student[data-student-tab="ventilation"] .student-vent-wave-column .resp-wave[data-resp-type="pressure"]{order:1}
+body.student[data-student-tab="ventilation"] .student-vent-wave-column .resp-wave[data-resp-type="flow"]{order:2}
+body.student[data-student-tab="ventilation"] .student-vent-wave-column .resp-wave[data-resp-type="volume"]{order:3}
+body.student[data-student-tab="ventilation"] .student-vent-wave-column .wave[data-key="pleth"]{order:4}
+body.student[data-student-tab="ventilation"] .student-vent-wave-column .wave[data-key="capno"]{order:5}
+body.student[data-student-tab="ventilation"] .student-vent-wave-column .wave[data-key="art"]{order:6}
+@media(min-width:621px) and (max-width:850px){
+ body.student[data-student-tab="ventilation"] .student-vent-layout{grid-template-columns:minmax(0,1fr) minmax(190px,270px)}
+}
+@media(max-width:620px){
+ body.student[data-student-tab="ventilation"] .student-vent-layout{grid-template-columns:1fr}
+ body.student[data-student-tab="ventilation"] .student-vent-loops .vent-loop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+/* V3.0 — nella scheda Ventilazione gli emodinamici scorrono
+   nel proprio riquadro: le onde e i loop non vengono mai scrollati via
+   o coperti quando si consultano i valori PRAM. */
+body.student[data-student-tab="ventilation"] .student-fixed-monitor{
+ flex:0 0 79%;height:79%;max-height:79%;
+ overflow-y:hidden!important;overflow-x:hidden!important;
+}
+body.student[data-student-tab="ventilation"] .student-fixed-monitor>.student-only,
+body.student[data-student-tab="ventilation"] .student-vent-layout{flex-shrink:0}
+body.student[data-student-tab="ventilation"] .student-vent-layout{
+ grid-template-columns:minmax(0,1fr) minmax(190px,min(330px,27dvh));
+}
+body.student[data-student-tab="ventilation"] .student-fixed-monitor>.hemo-wrap{
+ flex:1 1 0;min-height:68px;
+ overflow-y:auto!important;overflow-x:hidden!important;
+ overscroll-behavior:contain;
+ -webkit-overflow-scrolling:touch;
+ scrollbar-width:thin;
+}
+body.student[data-student-tab="ventilation"] .student-fixed-monitor>.hemo-wrap h2{
+ position:sticky;top:0;z-index:1;background:#0d1a22;
+ padding:2px 0 5px;
+}
+@media(max-height:850px){
+ body.student[data-student-tab="ventilation"] .student-fixed-monitor{
+  flex-basis:83%;height:83%;max-height:83%;
+ }
+}
+@media(max-width:850px) and (min-width:621px){
+ body.student[data-student-tab="ventilation"] .student-vent-layout{
+  grid-template-columns:minmax(0,1fr) minmax(180px,min(270px,27dvh));
+ }
+}
+/* Su schermi molto stretti i loop restano affiancati alle onde,
+   evitando che si impilino sopra la zona dei dati emodinamici. */
+@media(max-width:620px){
+ body.student[data-student-tab="ventilation"] .student-vent-layout{
+  grid-template-columns:minmax(0,1fr) minmax(120px,34%);
+  gap:5px;
+ }
+ body.student[data-student-tab="ventilation"] .student-vent-loops .vent-loop-grid{
+  grid-template-columns:1fr;gap:4px;
+ }
+ body.student[data-student-tab="ventilation"] .student-vent-metrics .vent-readouts{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+ }
+}
+/* V3.0 — nessuna misura delle vie aeree prima dell'intubazione.
+   Se l'utente ha attivato le onde opzionali, questa regola ha comunque priorita'. */
+body[data-resp-intubated="false"] .monitor .wave.resp-wave[data-resp-type]:not([hidden]){
+ display:none!important
+}
+body:not(.student)[data-resp-intubated="false"] #instructorVentLoops,
+body.student[data-resp-intubated="false"] .student-vent-loops{
+ display:none!important
+}
+/* Sul monitor studenti il pannello PRAM scorre indipendentemente:
+   nessuno scroll dei valori emodinamici deve spostare o coprire le onde. */
+body.student[data-student-tab="ventilation"] .student-vent-layout{
+ position:relative;z-index:2;flex-shrink:0
+}
+body.student[data-student-tab="ventilation"] .student-fixed-monitor>.hemo-wrap{
+ position:relative;z-index:1;overscroll-behavior:contain
+}
+@media(max-height:720px){
+ body.student[data-student-tab="ventilation"] .student-fixed-monitor{
+  flex-basis:85%;height:85%;max-height:85%
+ }
+ body.student[data-student-tab="ventilation"] .student-fixed-monitor .wave{
+  height:40px!important;min-height:40px!important
+ }
+ body.student[data-student-tab="ventilation"] .student-vent-metrics .vent-readouts>div{
+  padding:3px 4px
+ }
+ body.student[data-student-tab="ventilation"] .student-vent-metrics .vent-readouts b{
+  font-size:13px
+ }
+ body.student[data-student-tab="ventilation"] .student-vent-metrics .status{
+  font-size:10px;padding:3px 5px
+ }
+ body.student[data-student-tab="ventilation"] .student-vent-layout{
+  grid-template-columns:minmax(0,1fr) minmax(135px,min(260px,25dvh))
+ }
+}
+
+/* V3.0 — navigazione studenti in testata, a fianco del titolo. */
+body:not(.student) header .student-tabs-nav{display:none!important}
+body.student header{
+ padding:8px 12px;gap:8px;min-height:54px
+}
+body.student header>div:first-child{
+ display:flex;flex:1 1 auto;min-width:0;align-items:center;gap:12px
+}
+body.student header h1{
+ flex:0 1 auto;min-width:0;white-space:nowrap;
+ font-size:15px;line-height:1.2
+}
+body.student header #syncBadge{display:none!important}
+body.student header .student-tabs-nav{
+ display:flex;flex:0 0 auto;align-items:center;gap:5px;
+ padding:0;border:0;background:transparent;min-width:0
+}
+body.student header .student-tabs-nav button{
+ min-height:35px;min-width:0;padding:6px 10px;
+ font-size:12px;line-height:1.2;white-space:nowrap
+}
+body.student header>.row{flex:0 0 auto;gap:6px}
+body.student header>.row .tiny{
+ min-height:35px;padding:6px 8px;font-size:11px
+}
+body.student .student-tabs-shell[hidden]{display:none!important}
+/* Senza il pannello duplicato inferiore, onde, loop e PRAM
+   occupano tutta l'altezza della scheda Ventilazione. */
+body.student[data-student-tab="ventilation"] .student-fixed-monitor{
+ flex:1 1 auto!important;height:100%!important;max-height:100%!important
+}
+body.student[data-student-tab="ventilation"][data-resp-intubated="false"] .student-vent-layout{
+ grid-template-columns:minmax(0,1fr)!important
+}
+@media(max-width:1100px){
+ body.student header>div:first-child{gap:8px}
+ body.student header h1{font-size:13px}
+ body.student header .student-tabs-nav button{font-size:11px;padding:6px 8px}
+}
+@media(max-width:850px){
+ body.student header{flex-wrap:wrap}
+ body.student header>div:first-child{flex-wrap:wrap;gap:5px 9px}
+ body.student header h1{font-size:14px}
+ body.student header .student-tabs-nav{flex-wrap:wrap}
+ body.student header>.row{margin-left:auto}
+}
+
+/* V3.0 — controllo docente delle scale dei loop e confronto statico. */
+.vent-loop-actions{display:flex;align-items:center;flex-wrap:wrap;gap:7px;margin:8px 0}
+.vent-loop-actions button,.vent-loop-axis-grid button{min-height:35px}
+.vent-loop-ref-status{font-size:11px;color:#b6d1db;line-height:1.4;overflow-wrap:anywhere}
+.vent-loop-ref-key{color:#b0b9c7;font-size:11px;font-weight:650;white-space:normal}
+.vent-loop-ref-key[hidden]{display:none!important}
+.vent-loop-scale-panel{border:1px solid #294956;border-radius:9px;background:#0b1b25;margin:7px 0;padding:0 10px}
+.vent-loop-scale-panel>summary{padding:11px 3px;cursor:pointer;font-size:12px;font-weight:700;color:#d7eaf1;min-height:38px}
+.vent-loop-scale-panel p{margin:0 0 9px;font-size:11px;color:#a8c4d1;line-height:1.45}
+.vent-loop-axis-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;padding-bottom:10px}
+.vent-loop-axis-grid fieldset{border:1px solid #2d4b58;border-radius:8px;padding:8px;min-width:0}
+.vent-loop-axis-grid legend{font-size:12px;font-weight:700;color:#d7eaf1;padding:0 4px}
+.vent-loop-axis-inputs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:4px 0 10px}
+.vent-loop-axis-inputs label{font-size:11px;color:#b8d3df;display:flex;flex-direction:column;gap:4px;min-width:0}
+.vent-loop-axis-inputs input{box-sizing:border-box;width:100%;min-width:0;padding:7px 6px;font-size:13px;background:#081820;color:#eefaff;border:1px solid #365361;border-radius:6px}
+.vent-loop-message{font-size:11px;color:#91b5c5;line-height:1.4;margin:6px 0}
+.student-vent-loops .vent-loop-ref-status{margin-top:5px;font-size:10px}
+.student-vent-loops .vent-loop-ref-key{font-size:10px;margin-top:3px}
+@media(max-width:700px){.vent-loop-axis-grid{grid-template-columns:1fr}.vent-loop-actions{align-items:stretch}.vent-loop-actions button{flex:1 1 auto}}
+</style>
+
+<style id="instructor-trend-tab-2933">
+/* V3.0 — ripristina tutte le cinque schede e la vista originale nelle altre sezioni.
+   SOLO nella scheda Trend: onde e PRAM in alto, grafici grandi e scorrevoli sotto. */
+body:not(.student) .instructor-fixed-monitor,
+body:not(.student) .instructor-monitor-scroll{display:contents}
+body:not(.student) #trendV25[hidden]{display:none!important}
+body:not(.student)[data-instructor-tab="trends"] .monitor{
+ display:flex!important;flex-direction:column!important;gap:5px!important;
+ height:calc(100dvh - var(--instructor-header-height, 80px) - 20px)!important;
+ max-height:calc(100dvh - var(--instructor-header-height, 80px) - 20px)!important;
+ overflow:hidden!important;
+}
+body:not(.student)[data-instructor-tab="trends"] .instructor-fixed-monitor{
+ display:flex;flex-direction:column;gap:3px;flex:0 1 auto;min-height:0;
+ max-height:70%;overflow-y:auto;overflow-x:hidden;
+ overscroll-behavior:contain;-webkit-overflow-scrolling:touch;scrollbar-width:thin;
+}
+body:not(.student)[data-instructor-tab="trends"] .instructor-fixed-monitor .wave{
+ height:55px!important;min-height:55px!important;flex:0 0 55px!important;
+}
+body:not(.student)[data-instructor-tab="trends"] .instructor-fixed-monitor .hemo-wrap{
+ flex:0 0 auto;margin:0;padding:7px 9px;
+}
+body:not(.student)[data-instructor-tab="trends"] .instructor-fixed-monitor .hemo-wrap .hemo{
+ grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;
+}
+body:not(.student)[data-instructor-tab="trends"] .instructor-fixed-monitor .hemo-wrap .metric{
+ padding:4px 6px;
+}
+body:not(.student)[data-instructor-tab="trends"] .instructor-fixed-monitor .hemo-wrap .metric b{
+ font-size:15px;
+}
+body:not(.student)[data-instructor-tab="trends"] .instructor-monitor-scroll{
+ display:flex;flex-direction:column;gap:8px;flex:1 1 0;min-height:140px;
+ overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;
+ -webkit-overflow-scrolling:touch;scrollbar-width:thin;
+}
+body:not(.student)[data-instructor-tab="trends"] .instructor-monitor-scroll>.card{
+ flex:0 0 auto;margin:0!important;min-width:0;
+}
+body:not(.student)[data-instructor-tab="trends"] #trendV25{
+ display:block!important;width:100%;min-width:0;
+}
+body:not(.student)[data-instructor-tab="trends"] #trendV25 .v26-trend-grid{
+ display:grid;grid-template-columns:minmax(0,1fr)!important;gap:12px;
+}
+body:not(.student)[data-instructor-tab="trends"] #trendV25 .v26-chart{padding:10px}
+body:not(.student)[data-instructor-tab="trends"] #trendV25 .v26-chart h3{font-size:14px}
+body:not(.student)[data-instructor-tab="trends"] #trendV25 .v26-chart canvas{height:230px!important}
+body:not(.student)[data-instructor-tab="trends"] #trendV25 .v26-legend{
+ font-size:12px;line-height:1.55;
+}
+.student-trend-window-status{display:none}
+body.student #trendV25 .student-trend-window-status{
+ display:inline;color:#b7d0df;font-size:12px;margin-left:auto;
+}
+body.student #trendV25 .trend-head{gap:12px;flex-wrap:wrap}
+@media(max-height:740px){
+ body:not(.student)[data-instructor-tab="trends"] .instructor-fixed-monitor{max-height:68%}
+ body:not(.student)[data-instructor-tab="trends"] .instructor-fixed-monitor .wave{
+  height:47px!important;min-height:47px!important;flex-basis:47px!important;
+ }
+}
+@media(max-width:699px){
+ body:not(.student)[data-instructor-tab="trends"] .monitor{
+  height:44dvh!important;max-height:44dvh!important;
+ }
+ body:not(.student)[data-instructor-tab="trends"] .instructor-fixed-monitor{max-height:60%}
+ body:not(.student)[data-instructor-tab="trends"] .instructor-fixed-monitor .hemo-wrap .hemo{
+  grid-template-columns:repeat(3,minmax(0,1fr));
+ }
+ body:not(.student)[data-instructor-tab="trends"] #trendV25 .v26-chart canvas{height:210px!important}
+}
+</style>
+<style id="instructor-anesthesia-layout-2934">
+/* MAC nel monitor principale sotto PRAM; visibile solo nella scheda Anestesia. */
+body:not(.student) #instructorInhaledCard{display:none!important;min-width:0}
+body:not(.student) #fentanylPanel{display:none!important;min-width:0}
+body:not(.student)[data-instructor-tab="anesthesia"] #fentanylPanel{display:block!important}
+body:not(.student)[data-instructor-tab="anesthesia"] #instructorInhaledCard{
+ display:block!important;margin:0!important;padding:10px 12px;
+}
+body:not(.student)[data-instructor-tab="anesthesia"] #instructorInhaledCard h2{
+ font-size:15px;margin:0 0 8px;
+}
+body:not(.student)[data-instructor-tab="anesthesia"] #instructorInhaledCard input[type="range"]{
+ width:100%;min-height:32px;touch-action:pan-y;
+}
+</style>
+<style id="student-pv-v30">
+body.student.student-pv-active #studentVentLayout{display:grid!important;grid-template-columns:minmax(0,1.4fr) minmax(260px,1fr)!important;align-items:stretch;gap:9px}
+body.student .student-pv-side{min-width:0;background:#0a1820;border:1px solid #294653;border-radius:9px;padding:8px;overflow:hidden}
+body.student .student-pv-side[hidden]{display:none!important}
+body.student .student-pv-side h3{margin:0 0 6px;font-size:13px;color:#e4f2f8}
+body.student #studentPvCanvas{display:block;width:100%;height:clamp(210px,27vh,330px);background:#081923;border:1px solid #244351;border-radius:7px}
+body.student .student-pv-legend{display:flex;flex-wrap:wrap;gap:5px 10px;font-size:10px;margin-top:6px}
+body.student #studentPvReadings{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;margin-top:7px}
+body.student #studentPvReadings div{font-size:11px;color:#d5e7ee;background:#0c202a;border-radius:5px;padding:5px}
+body.student #studentPvReadings small{display:block;color:#a4bbc7;font-size:9px}
+@media(max-width:760px){body.student.student-pv-active #studentVentLayout{grid-template-columns:1fr!important}body.student #studentPvCanvas{height:220px}}
+</style>
+
+<style id="hide-clinical-case-narrative-v3">
+/* Keep case controls and JS state, but remove instructor/student narrative panels. */
+#caseInstructor, #caseFeedback, #studentCaseBanner { display: none !important; }
+</style>
+
+<style id="therapy-clocks-v30">
+.therapy-clock{display:block;margin-top:5px;font-size:12px;font-variant-numeric:tabular-nums;color:#a9dce9;font-weight:600;white-space:nowrap}
+#studentTherapyClocks{display:none;padding:9px 12px;margin:6px 0;background:#0b2029;border:1px solid #294653;border-radius:8px}
+#studentTherapyClocks .clock-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+#studentTherapyClocks .clock-item{font-size:12px;color:#b9d6e1}
+#studentTherapyClocks .clock-item b{display:block;color:#eff9fd;font-size:14px;font-variant-numeric:tabular-nums;margin-top:3px}
+body.student[data-student-tab="meds"] #studentTherapyClocks{display:block}
+@media(max-width:720px){#studentTherapyClocks .clock-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+<style id="v30-dose-update-style">.v30-confirm-rate{font-size:11px;padding:6px 8px;margin-top:5px;background:#174e62;color:#e5f8ff;border:1px solid #4d9cba;border-radius:6px;cursor:pointer}.v30-confirm-rate:disabled{opacity:.4;cursor:default}</style>
+<style id="v30-infusion-layout-fix">
+/* Separate grid areas: the former shared action area overlaid both buttons. */
+#therapyV25 .therapy:has(.v30-confirm-rate){grid-template-areas:"drug dose" "drug action" "drug confirm" "clock clock"!important;min-height:128px!important;align-content:start!important}
+#therapyV25 .therapy:has(.v30-confirm-rate)>button:not(.v30-confirm-rate){grid-area:action!important;position:relative!important;z-index:2!important}
+#therapyV25 .therapy>.v30-confirm-rate{grid-area:confirm!important;width:100%!important;margin:0!important;min-height:30px!important;position:relative!important;z-index:1!important}
+#therapyV25 .therapy>.therapy-clock{grid-area:clock!important;display:block!important;margin:2px 0 0!important;white-space:normal!important}
+</style>
+<style id="ct-apnea-buttons-v47-fix">
+body:not(.student) #ivCardioTC #ctScanStart,
+body:not(.student) #ivCardioTC #ctScanStop{
+ display:inline-flex!important;
+ visibility:visible!important;
+ opacity:1!important;
+ align-items:center;
+ justify-content:center;
+ min-height:34px;
+ width:auto!important;
+ max-width:none!important;
+ position:static!important;
+}
+body:not(.student) #ivCardioTC #ctScanStart:disabled{opacity:.55!important;cursor:not-allowed}
+</style>
+<style id="ct-apnea-v40">body.ct-apnea-active .wave[data-key="capno"] .values{visibility:hidden!important}body.ct-apnea-active .wave[data-key="capno"]::after{content:"Apnea TC · valvola espiratoria chiusa · EtCO₂ non rilevabile";position:absolute;right:14px;top:14px;color:#f3c969;font-size:12px;pointer-events:none}</style><style id="student-interventistica-v57">
+body.student .iv-student-view{padding:12px;color:#dcebf3;width:100%;max-width:none;box-sizing:border-box}
+body.student .iv-student-view h3{font-size:14px;margin:12px 0 8px}
+body.student .iv-student-metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin:12px 0}
+body.student .iv-student-metrics>div{border:1px solid #2d4d5c;background:#10232d;border-radius:7px;padding:9px}
+body.student .iv-student-metrics small{display:block;color:#a9c3d0;font-size:11px}
+body.student .iv-student-metrics b{font-size:19px}
+body.student .iv-student-view canvas{width:100%;height:auto;display:block;background:#081c26;border:1px solid #2b4b5b;border-radius:7px}
+body.student .iv-student-loops{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}body.student .iv-student-loops canvas{width:100%;height:auto;aspect-ratio:1.5;object-fit:contain}
+body.student .iv-student-legend{display:flex;gap:16px;font-size:12px;margin:6px}
+body.student .iv-student-note{font-size:12px;color:#a9c3d0}
+body.student #ivStudentComparison{font-size:13px;line-height:1.7}
+@media(max-width:700px){body.student .iv-student-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}body.student .iv-student-loops{grid-template-columns:1fr}}
+</style><style id="iv61-alignment">
+body.student .student-fixed-monitor.iv-intervention-active{position:relative;padding-right:43%;box-sizing:border-box;max-height:none}
+body.student .student-fixed-monitor #ivTopLoops{display:none}
+body.student .student-fixed-monitor.iv-intervention-active #ivTopLoops{display:grid;position:absolute;right:8px;top:4px;width:41%;grid-template-columns:1fr 1fr;gap:7px;align-items:start}
+body.student .student-fixed-monitor.iv-intervention-active #ivTopLoops section{min-width:0}
+body.student .student-fixed-monitor.iv-intervention-active #ivTopLoops canvas{width:100%;height:auto;aspect-ratio:1.35;object-fit:contain}
+body.student .student-fixed-monitor.iv-intervention-active #ivTopLoops h3{font-size:11px;margin:2px 0 5px}
+body.student .iv-student-visual{display:block}
+body.student .iv-student-pressure{width:100%}
+@media(max-width:850px){body.student .student-fixed-monitor.iv-intervention-active{padding-right:0}body.student .student-fixed-monitor.iv-intervention-active #ivTopLoops{position:static;width:100%}}
+</style><style id="iv63-layout">
+body.student .student-fixed-monitor #ivTopRight{display:none}
+body.student .student-fixed-monitor.iv-intervention-active #ivTopRight{display:flex;flex-direction:column;position:absolute;right:8px;top:4px;bottom:4px;width:41%;gap:8px;min-height:0}
+body.student .student-fixed-monitor.iv-intervention-active #ivTopRight #ivTopLoops{position:static;display:grid;width:100%;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;flex:0 0 auto}
+body.student #ivTopRight .iv-student-pressure{flex:1;min-height:0;display:flex;flex-direction:column}
+body.student #ivTopRight .iv-student-pressure h3{font-size:12px;margin:2px 0 4px}
+body.student #ivTopRight #ivStudentPressure{width:100%;height:100%;min-height:130px;flex:1;aspect-ratio:auto;object-fit:fill}
+body.student #ivTopRight .iv-student-legend{flex-wrap:wrap;gap:8px;margin:3px;font-size:11px}
+body.student .student-fixed-monitor.iv-intervention-active{min-height:450px;max-height:72%;overflow:hidden}
+body.student .student-fixed-monitor.iv-intervention-active>.wave{max-width:57%}
+body.student .student-fixed-monitor.iv-intervention-active>.hemo-wrap{max-width:57%}
+@media(max-width:850px){body.student .student-fixed-monitor.iv-intervention-active{padding-right:0;max-height:none;overflow-y:auto}body.student .student-fixed-monitor.iv-intervention-active #ivTopRight{position:static;width:100%}body.student .student-fixed-monitor.iv-intervention-active>.wave,body.student .student-fixed-monitor.iv-intervention-active>.hemo-wrap{max-width:100%}}
+</style><style id="iv64-responsive">
+body.student .student-fixed-monitor.iv-intervention-active{display:grid!important;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr);grid-template-rows:repeat(4,78px) auto;gap:5px;min-height:0!important;max-height:none!important;padding:0!important;overflow:visible!important;align-items:stretch}
+body.student .student-fixed-monitor.iv-intervention-active>.wave{grid-column:1;max-width:none!important;width:100%;min-width:0}
+body.student .student-fixed-monitor.iv-intervention-active>.hemo-wrap{grid-column:1;max-width:none!important;width:100%;min-width:0}
+body.student .student-fixed-monitor.iv-intervention-active #ivTopRight{grid-column:2;grid-row:1 / 6;position:static!important;width:100%!important;min-width:0;min-height:0;display:flex;flex-direction:column;gap:6px}
+body.student .student-fixed-monitor.iv-intervention-active #ivTopLoops{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;flex:0 0 auto}
+body.student #ivTopRight #ivTopLoops canvas{width:100%;height:auto;aspect-ratio:1.5;object-fit:contain}
+body.student #ivTopRight #ivStudentPressure{min-height:160px;height:220px!important;flex:0 0 auto;aspect-ratio:auto!important}
+body.student .student-fixed-monitor.iv-intervention-active .hemo{grid-template-columns:repeat(3,minmax(0,1fr))}
+body.student .student-fixed-monitor.iv-intervention-active .metric b{font-size:clamp(12px,1.2vw,17px)}
+body.student.iv-compact .student-fixed-monitor.iv-intervention-active{grid-template-columns:minmax(0,1fr);grid-template-rows:none}
+body.student.iv-compact .student-fixed-monitor.iv-intervention-active>.wave,body.student.iv-compact .student-fixed-monitor.iv-intervention-active>.hemo-wrap{grid-column:1}
+body.student.iv-compact .student-fixed-monitor.iv-intervention-active #ivTopRight{grid-column:1;grid-row:auto}
+body.student.iv-compact #ivTopRight #ivStudentPressure{height:210px!important}
+</style><style id="iv69-pram-fix">
+body.student .student-fixed-monitor.iv-intervention-active>.hemo-wrap{grid-row:5!important;height:auto!important;min-height:0!important;max-height:none!important;overflow:visible!important;align-self:start!important}
+body.student .student-fixed-monitor.iv-intervention-active .hemo{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;grid-auto-rows:minmax(56px,auto)!important;height:auto!important;max-height:none!important;overflow:visible!important;gap:5px!important}
+body.student .student-fixed-monitor.iv-intervention-active .hemo>.metric{min-width:0!important;min-height:54px!important;display:flex!important;flex-direction:column!important;justify-content:center!important}
+body.student .student-fixed-monitor.iv-intervention-active .hemo>.metric b{font-size:clamp(12px,1.1vw,18px)!important}
+body.student.iv-compact .student-fixed-monitor.iv-intervention-active>.hemo-wrap{grid-row:auto!important}
+</style><style id="iv70-pram-compact">
+/* Twelve PRAM values in two compact rows; prevent the first row being hidden by the wave stack. */
+body.student .student-fixed-monitor.iv-intervention-active{grid-template-rows:repeat(4,78px) minmax(118px,auto)!important;row-gap:7px!important}
+body.student .student-fixed-monitor.iv-intervention-active>.hemo-wrap{grid-column:1!important;grid-row:5!important;position:relative!important;top:auto!important;transform:none!important;min-height:118px!important;height:auto!important;max-height:none!important;margin:0!important;padding:5px!important;overflow:visible!important}
+body.student .student-fixed-monitor.iv-intervention-active>.hemo-wrap h2{font-size:10px!important;margin:0 0 3px!important;line-height:1.1!important}
+body.student .student-fixed-monitor.iv-intervention-active .hemo{display:grid!important;grid-template-columns:repeat(6,minmax(0,1fr))!important;grid-template-rows:repeat(2,minmax(45px,auto))!important;grid-auto-rows:minmax(45px,auto)!important;gap:3px!important;overflow:visible!important}
+body.student .student-fixed-monitor.iv-intervention-active .hemo>.metric{min-height:45px!important;padding:3px!important;line-height:1.1!important}
+body.student .student-fixed-monitor.iv-intervention-active .hemo>.metric b{font-size:13px!important;line-height:1.15!important}
+body.student .student-fixed-monitor.iv-intervention-active .hemo>.metric small{font-size:9px!important}
+body.student.iv-compact .student-fixed-monitor.iv-intervention-active{grid-template-rows:none!important}
+body.student.iv-compact .student-fixed-monitor.iv-intervention-active>.hemo-wrap{grid-row:auto!important}
+</style><style id="iv71-ipad-wave-layout">
+/* Student intervention: remove patient strip and reserve separate rows for all four waves. */
+body.student:has(.student-fixed-monitor.iv-intervention-active) .monitor>.student-only.card:has(#studentPatient){display:none!important}
+body.student .student-fixed-monitor.iv-intervention-active{grid-template-rows:repeat(4,78px) minmax(118px,auto)!important;grid-auto-flow:row!important;gap:5px!important;align-content:start!important}
+body.student .student-fixed-monitor.iv-intervention-active>.wave{grid-column:1!important;position:relative!important;min-height:78px!important;height:78px!important;max-height:78px!important;margin:0!important;transform:none!important;overflow:hidden!important}
+body.student .student-fixed-monitor.iv-intervention-active>.wave:nth-of-type(1){grid-row:1!important}
+body.student .student-fixed-monitor.iv-intervention-active>.wave:nth-of-type(2){grid-row:2!important}
+body.student .student-fixed-monitor.iv-intervention-active>.wave:nth-of-type(3){grid-row:3!important}
+body.student .student-fixed-monitor.iv-intervention-active>.wave:nth-of-type(4){grid-row:4!important}
+body.student .student-fixed-monitor.iv-intervention-active>.hemo-wrap{grid-row:5!important;grid-column:1!important;z-index:0!important}
+body.student .student-fixed-monitor.iv-intervention-active #ivTopRight{grid-column:2!important;grid-row:1 / 6!important}
+</style><style id="iv72-student-ipad-override">
+/* Explicit wave placement, avoiding nth-of-type (the hidden notice also has .wave). */
+body.student .monitor>.student-only.card:has(#studentPatient){display:none!important}
+body.student .student-fixed-monitor.iv-intervention-active{display:grid!important;grid-template-columns:minmax(0,1.12fr) minmax(0,1fr)!important;grid-template-rows:repeat(4,78px) auto!important;column-gap:7px!important;row-gap:7px!important;overflow:visible!important;max-height:none!important}
+body.student .student-fixed-monitor.iv-intervention-active>.wave[data-key="ecg"]{grid-column:1!important;grid-row:1!important}
+body.student .student-fixed-monitor.iv-intervention-active>.wave[data-key="pleth"]{grid-column:1!important;grid-row:2!important}
+body.student .student-fixed-monitor.iv-intervention-active>.wave[data-key="capno"]{grid-column:1!important;grid-row:3!important}
+body.student .student-fixed-monitor.iv-intervention-active>.wave[data-key="art"]{grid-column:1!important;grid-row:4!important}
+body.student .student-fixed-monitor.iv-intervention-active>.wave[data-key="ibp"]{grid-column:1!important;grid-row:4!important}
+body.student .student-fixed-monitor.iv-intervention-active>.hemo-wrap{grid-column:1!important;grid-row:5!important;position:relative!important;z-index:0!important}
+body.student .student-fixed-monitor.iv-intervention-active #ivTopRight{grid-column:2!important;grid-row:1 / 6!important}
+</style><style id="iv73-real-dom-layout">
+body.student .student-fixed-monitor.iv-intervention-active>.student-only.card:has(#studentPatient){display:none!important}
+body.student .student-fixed-monitor.iv-intervention-active>.student-vent-layout{grid-column:1!important;grid-row:1 / 5!important;display:block!important;min-width:0!important;width:100%!important;position:relative!important}
+body.student .student-fixed-monitor.iv-intervention-active .student-vent-wave-column{display:flex!important;flex-direction:column!important;gap:7px!important;width:100%!important;min-width:0!important}
+body.student .student-fixed-monitor.iv-intervention-active .student-vent-wave-column>.wave[data-key]{flex:none!important;position:relative!important;box-sizing:border-box!important;height:78px!important;min-height:78px!important;max-height:78px!important;overflow:hidden!important;margin:0!important;transform:none!important}
+body.student .student-fixed-monitor.iv-intervention-active .student-vent-wave-column>.wave[data-key="ecg"]{order:1!important}
+body.student .student-fixed-monitor.iv-intervention-active .student-vent-wave-column>.wave[data-key="pleth"]{order:2!important}
+body.student .student-fixed-monitor.iv-intervention-active .student-vent-wave-column>.wave[data-key="capno"]{order:3!important}
+body.student .student-fixed-monitor.iv-intervention-active .student-vent-wave-column>.wave[data-key="art"]{order:4!important}
+body.student .student-fixed-monitor.iv-intervention-active .student-vent-wave-column>#awakeCapnoNotice{order:3!important}
+body.student .student-fixed-monitor.iv-intervention-active>.hemo-wrap{grid-column:1!important;grid-row:5!important;position:relative!important;top:auto!important;z-index:1!important;transform:none!important;overflow:visible!important}
+body.student .student-fixed-monitor.iv-intervention-active #ivTopRight{grid-column:2!important;grid-row:1 / 6!important;min-width:0!important}
+body.student .student-fixed-monitor.iv-intervention-active{grid-template-rows:repeat(4,78px) auto!important;row-gap:7px!important;align-items:start!important}
+body.student .student-fixed-monitor.iv-intervention-active .hemo{grid-template-columns:repeat(6,minmax(0,1fr))!important;gap:3px!important}
+body.student .student-fixed-monitor.iv-intervention-active .hemo>.metric{min-width:0!important}
+</style></head>
+<body>
+
+<header>
+ <div><h1>SIMULATORE ANESTESIA <span class="app-version">V3.0</span> — <span id="modeTitle">Console istruttore</span></h1><div class="badge" id="syncBadge">Monitor locale sincronizzato</div></div>
+ <div class="row">
+  <button class="tiny instructor-only" id="studentBtn">Apri Monitor studenti</button>
+  <button class="tiny" id="fullBtn">Schermo intero</button>
+ </div>
+</header>
+<main>
+<div class="grid">
+<aside class="controls instructor-only">
+ <section class="card"><h2>Paziente</h2><div class="cols">
+  <label>Nome paziente<input id="name" value="Paziente Cane"></label>
+  <label>Peso (kg)<input id="weight" type="number" value="25" min="1" max="100" step=".1"></label>
+ </div><div class="cols" style="margin-top:9px">
+  <label>Età (anni)<input id="patientAge" type="number" value="6" min="0.1" max="22" step="0.5"></label>
+  <label>Razza<select id="patientBreed"><option>Meticcio</option><option>Labrador Retriever</option><option>Golden Retriever</option><option>Pastore tedesco</option><option>Bulldog francese</option><option>Bulldog inglese</option><option>Carlino</option><option>Boxer</option><option>Cavalier King Charles</option><option>Chihuahua</option><option>Bassotto</option><option>Levriero</option><option>Altro</option></select></label>
+  <label>Conformazione cranio-facciale<select id="patientMorph"><option value="meso">Mesocefalo</option><option value="brachy">Brachicefalo</option><option value="dolicho">Dolicocefalo</option></select></label>
+  <label>Morfotipo corporeo<select id="patientBodyType"><option value="meso">Mesomorfo</option><option value="brachy">Brachimorfo</option><option value="dolicho">Dolicomorfo</option></select></label>
+  <label>Body Condition Score (1–9)<input id="patientBCS" type="number" value="5" min="1" max="9" step="1"></label>
+ </div><div class="status" id="patientPresetStatus" style="margin-top:8px">Paziente sano · sveglio · non premedicato</div></section>
+
+ <section class="card"><h2>Monitoraggio attivo — istruttore</h2>
+  <div id="toggles"></div><div class="row" style="margin-top:9px"><button id="allOn">Tutto ON</button><button id="allOff">Tutto OFF</button></div>
+  <div class="resp-wave-controls instructor-only" aria-label="Onde respiratorie opzionali">
+   <strong style="font-size:12px;color:#d4eaf0">Onde aggiuntive</strong>
+   <label><input type="checkbox" id="showVentPressure"> Pressione vie aeree</label>
+   <label><input type="checkbox" id="showVentFlow"> Flusso respiratorio</label>
+  </div>
+ </section>
+
+ <section class="card"><h2>ECG</h2>
+  <label>Ritmo<select id="rhythm"><option>Ritmo sinusale</option><option>Bradicardia sinusale</option><option>Tachicardia sinusale</option><option>Tachicardia ventricolare con polso</option><option>Tachicardia ventricolare senza polso</option><option>Fibrillazione ventricolare</option><option>Blocco AV I grado</option><option>Blocco AV II grado (2:1)</option><option>Blocco AV III grado</option></select></label>
+  <label><span id="hrCaption">FC (bpm)</span><input id="hr" type="range" min="0" max="260" value="95"><span id="hrOut">95</span></label><small id="avBlockInfo" style="display:none;color:#a7c4d2;margin-top:6px"></small>
+ </section>
+
+ <section class="card"><h2>Capnografia</h2><div class="cols">
+  <label>EtCO₂ impostata (mmHg)<input id="etco2Set" type="number" value="34" min="3" max="80" step=".1"></label><input id="etco2" type="hidden" value="34">
+  <label>FR (atti/min)<input id="rr" type="number" value="12"></label>
+ </div></section>
+
+ <section class="card"><h2>Pressione</h2><div class="cols">
+  <label>SAP invasiva<input id="sap" type="number" value="135"></label><label>DAP invasiva<input id="dap" type="number" value="80"></label>
+ </div></section>
+
+ <section class="card"><h2>MostCare Up / PRAM — simulazione</h2><div class="cols" id="hemoInputs"></div></section>
+
+ <section class="card"><h2>SpO₂</h2><div class="cols"><label>SpO₂ (%)<input id="spo2" type="number" value="98"></label></div></section>
+
+ <section class="card"><h2>Modalità Caso clinico</h2>
+  <label>Caso<select id="caseSelect">
+    <option value="">— simulazione libera —</option>
+    <option value="hemorrhagic">Caso A — shock emorragico</option>
+    <option value="distributive">Caso B — shock distributivo / vasoplegico</option>
+    <option value="myocardial">Caso C — depressione miocardica</option>
+    <option value="arrest">Caso D — arresto cardiaco / PEA</option>
+  </select></label>
+  <div class="row" style="margin-top:9px"><button class="primary" id="startCase">Avvia caso</button><button class="danger" id="endCase">Termina caso</button></div>
+  <div id="caseInstructor" hidden style="display:none!important"></div>
+  <div id="caseFeedback" hidden style="display:none!important"></div>
+ </section>
+<section class="card" id="ventilationPanel"><h2>Ventilazione e meccanica respiratoria</h2>
+ <div class="status" id="ventStatus">La ventilazione controllata diventa disponibile dopo l'intubazione o con il preset Paziente anestetizzato.</div>
+ <div class="cols" style="margin-top:10px">
+  <label>Modalità<select id="ventMode"><option value="SPONT" selected>Spontanea</option><option value="VCV">VCV — volume controllato</option><option value="PCV">PCV — pressione controllata</option></select></label>
+  <label>Frequenza respiratoria (/min)<input id="ventRate" type="number" min="4" max="50" step="1" value="12"></label>
+  <label>Volume corrente Vt (mL/kg)<input id="ventVtKg" type="number" min="4" max="15" step=".5" value="10"></label>
+  <label>PEEP (cmH₂O)<input id="ventPeep" type="number" min="0" max="18" step="1" value="0"></label>
+  <label>Pressione inspiratoria sopra PEEP (cmH₂O, PCV)<input id="ventPinsp" type="number" min="4" max="30" step="1" value="8"></label>
+  <label>Rapporto I:E<select id="ventIE"><option value="2">1:2</option><option value="3">1:3</option><option value="1">1:1</option></select></label>
+  <label>FiO₂<select id="ventFio2"><option value=".21">21%</option><option value=".4">40%</option><option value=".5" selected>50%</option><option value=".6">60%</option><option value=".8">80%</option><option value="1">100%</option></select></label>
+ </div>
+ <div class="vent-hold-controls">
+  <label class="vent-hold-toggle"><input id="ventHoldEnabled" type="checkbox"> Attiva pausa di fine inspirazione</label>
+  <label>Durata pausa (secondi)<input id="ventHoldSeconds" type="number" min="0.1" max="1.5" step="0.1" value="0.4" disabled></label>
+ </div>
+
+ <div class="vent-readouts" aria-live="off">
+  <div><small>PIP</small><b id="ventPip">—</b><small>cmH₂O</small></div>
+  <div><small>Pplat</small><b id="ventPplat">—</b><small>cmH₂O</small></div>
+  <div><small>Driving P</small><b id="ventDriving">—</b><small>cmH₂O</small></div>
+  <div><small>Vt</small><b id="ventVt">—</b><small>mL</small></div>
+  <div><small>V̇E</small><b id="ventMinute">—</b><small>L/min</small></div>
+  <div><small>Crs modellata</small><b id="ventCrs">—</b><small>mL/cmH₂O</small></div>
+  <div><small>Compliance statica (Cstat)</small><b id="ventCstat">—</b><small>mL/cmH₂O</small></div>
+  <div><small>Compliance dinamica (Cdyn)</small><b id="ventCdyn">—</b><small>mL/cmH₂O</small></div>
+  <div><small>Resistenza vie aeree (Raw)</small><b id="ventRaw">—</b><small>cmH₂O/(L/s)</small></div>
+  <div><small>Auto-PEEP stimata</small><b id="ventAutoPeep">—</b><small>cmH₂O</small></div>
+  <div><small>Volume intrappolato stimato</small><b id="ventTrappedVolume">—</b><small>mL</small></div>
+  <div><small>Costante espiratoria τE</small><b id="ventTauE">—</b><small>s</small></div>
+ </div>
+
+ </section>
+<section class="card"><h2>Anestesia inalatoria</h2>
+  
+  <label style="margin-top:10px">MAC <input id="mac" type="range" min="0" max="2" value="1" step="0.1"><span id="macOut">1,0</span></label><div class="status" id="anesthesiaPhaseStatus" style="margin-top:8px">Fase anestetizzata: MAC attivo.</div>
+ </section>
+<section class="card" id="fentanylPanel"><h2>Fentanil EV — schema CCCP</h2><div class="cols"><label>Cp target (ng/mL)<input id="fentTarget" type="number" inputmode="decimal" min="0.6" max="2.0" step="0.1" value="1.0"></label><label>Bolo aggiuntivo (µg/kg)<input id="fentBolus" type="number" inputmode="decimal" min="0.1" max="20" step="0.1" value="1.0"></label></div><div class="row" style="margin-top:8px"><button id="fentStart" type="button">Avvia TCI + bolo iniziale</button><button id="fentStop" type="button" disabled>Interrompi TCI</button><button id="fentBolusGive" type="button">Somministra bolo</button><span class="therapy-clock" id="fentBolusClock" aria-live="off">Pronto · 00:00 / 00:30</span></div><div class="status" id="fentState" style="margin-top:8px">TCI non attiva</div><div class="fentanyl-stats" style="margin-top:8px"><div>Velocità attuale<br><b id="fentRate">0 µg/kg/h</b></div><div>Tempo TCI<br><b id="fentElapsed">—</b></div><div>Dose cumulativa<br><b id="fentTotal">0 µg/kg</b></div></div><div class="status" id="fentLog" style="margin-top:8px">Nessuna somministrazione.</div></section><section class="card physiology-engine-card"><h2>Motore fisiologico — emodinamica</h2>
+  <div class="cols">
+   <label>Precarico <input id="preload" type="range" min="20" max="180" value="100"><span id="preloadOut">100%</span></label>
+   <label>Contrattilità <input id="contractility" type="range" min="20" max="180" value="100"><span id="contractilityOut">100%</span></label>
+   <label>Tono vascolare / SVR <input id="vascularTone" type="range" min="20" max="180" value="100" data-logical-min="30" oninput="if(Number(this.value)<30)this.value=30"><span id="vascularToneOut">100%</span></label>
+   <label>Compliance arteriosa <input id="compliance" type="range" min="40" max="160" value="100"><span id="complianceOut">100%</span></label>
+  </div>
+ </section>
+
+
+ <section class="card"><h2>Interventi / trend</h2>
+   <div id="eventLog" class="status" style="max-height:150px;overflow:auto">Nessun intervento.</div>
+ </section>
+<section class="card"><h2>Preset manuali</h2><div class="preset" id="presets"></div></section>
+
+
+</aside>
+
+<section class="monitor">
+ <div class="student-only card" style="padding:8px 12px"><b id="studentPatient">Paziente Cane</b> · <span id="studentWeight">25</span> kg · <span id="studentPhenotype">6 anni · Meticcio · BCS 5/9</span></div>
+ <div id="studentCaseBanner" hidden style="display:none!important"><span id="studentCaseMinute"></span><span id="studentCasePresentation"></span><span id="studentCaseEvolution"></span></div>
+
+ <div class="student-only" id="studentTherapyClocks"><b>Tempi terapie · tempo simulato</b><div class="clock-grid"><div class="clock-item">Fluid challenge<b id="studentClockBolus">Pronto · 00:00 / 00:30</b></div><div class="clock-item">Cristalloidi<b id="studentClockFluid">Non attiva · 00:00</b></div><div class="clock-item">Dobutamina<b id="studentClockDob">Non attiva · 00:00</b></div><div class="clock-item">Noradrenalina<b id="studentClockNor">Non attiva · 00:00</b></div></div></div>
+ <div class="wave" data-key="ecg"><span class="wlabel green">ECG</span><div class="values green"><span class="big" id="vhr">90</span><br>bpm</div><canvas id="ecg"></canvas></div>
+ <div class="wave" id="awakeCapnoNotice" style="display:none;min-height:70px;align-items:center;padding:15px;color:#e9c46a;border:1px solid #24414d;border-radius:8px">Paziente non intubato — capnografia non disponibile durante premedicazione e induzione</div><div class="wave" data-key="capno"><span class="wlabel yellow">EtCO₂</span><div class="values yellow"><span class="big" id="vet">38</span> mmHg<br><span id="vrr">18</span> /min</div><canvas id="capno"></canvas></div>
+ <div class="wave" data-key="art"><span class="wlabel red">ART — pressione invasiva</span><div class="values red"><span class="big" id="vart">118/68</span><br>MAP <span id="vmap">85</span> mmHg</div><canvas id="art"></canvas></div>
+ <div class="wave" data-key="pleth"><span class="wlabel cyan">SpO₂</span><div class="values cyan"><span class="big" id="vspo2">98</span>%</div><canvas id="pleth"></canvas></div>
+ <div class="wave resp-wave" data-resp-type="pressure"><span class="wlabel">Paw · Pressione</span><div class="values"><span class="big" id="ventMainPip">—</span> cmH₂O<br><small>PIP</small></div><canvas id="ventMainPressure"></canvas></div>
+ <div class="wave resp-wave" data-resp-type="flow"><span class="wlabel">Flusso respiratorio</span><div class="values"><span class="big" id="ventMainFlowValue">—</span> L/s<br><small>picco insp.</small></div><canvas id="ventMainFlow"></canvas></div>
+ <div class="wave resp-wave" data-resp-type="volume"><span class="wlabel">Volume corrente</span><div class="values"><span class="big" id="ventMainVolumeValue">—</span> mL<br><small>Vt</small></div><canvas id="ventMainVolume"></canvas></div>
+
+
+ <div class="card hemo-wrap" data-key="hemo"><h2>Emodinamica avanzata — MostCare Up / PRAM (simulazione didattica)</h2><div class="hemo" id="hemoMetrics"></div></div>
+
+ <section id="instructorVentLoops" class="card vent-loops instructor-only" aria-label="Spirometria: loop respiratori">
+  <h3 style="font-size:14px;margin:12px 0 6px">Spirometria — loop respiratori</h3>
+  <div class="vent-loop-actions">
+   <button type="button" class="tiny" id="ventSaveLoop">Memorizza loop di riferimento</button>
+   <button type="button" class="tiny" id="ventClearLoop">Rimuovi riferimento</button>
+   <button type="button" class="tiny" id="ventPvFit">Adatta solo P/V</button>
+   <button type="button" class="tiny" id="ventFvFit">Adatta solo F/V</button>
+   <span class="vent-loop-ref-status" id="ventLoopRefStatus">Nessun loop di riferimento salvato</span>
+  </div>
+  <details class="vent-loop-scale-panel" id="ventLoopScalePanel">
+   <summary>Regolazione scale P/V e F/V · assi indipendenti e fissi</summary>
+   
+   <div class="vent-loop-axis-grid">
+    <fieldset><legend>Loop Pressione / Volume</legend>
+     <div class="vent-loop-axis-inputs">
+      <label>Pressione X min (cmH₂O)<input type="number" id="ventPvXMin" step="any"></label>
+      <label>Pressione X max (cmH₂O)<input type="number" id="ventPvXMax" step="any"></label>
+      <label>Volume Y min (mL)<input type="number" id="ventPvYMin" step="any"></label>
+      <label>Volume Y max (mL)<input type="number" id="ventPvYMax" step="any"></label>
+     </div>
+     <button type="button" class="tiny" id="ventPvFit">Adatta solo P/V</button>
+    </fieldset>
+    <fieldset><legend>Loop Flusso / Volume</legend>
+     <div class="vent-loop-axis-inputs">
+      <label>Volume X min (mL)<input type="number" id="ventFvXMin" step="any"></label>
+      <label>Volume X max (mL)<input type="number" id="ventFvXMax" step="any"></label>
+      <label>Flusso Y min (L/s)<input type="number" id="ventFvYMin" step="any"></label>
+      <label>Flusso Y max (L/s)<input type="number" id="ventFvYMax" step="any"></label>
+     </div>
+     <button type="button" class="tiny" id="ventFvFit">Adatta solo F/V</button>
+    </fieldset>
+   </div>
+  </details>
+  <div class="vent-loop-message" id="ventLoopMessage" role="status">Scale automatiche iniziali; poi fisse.</div>
+  <div class="vent-loop-grid">
+   <div class="vent-loop-card"><strong>Pressione / Volume</strong><canvas id="ventLoopPV" aria-label="Loop pressione volume, pressione sull'asse orizzontale e volume sull'asse verticale"></canvas></div>
+   <div class="vent-loop-card"><strong>Flusso / Volume</strong><canvas id="ventLoopFV" aria-label="Loop flusso volume, volume sull'asse orizzontale e flusso sull'asse verticale"></canvas></div>
+  </div>
+  <div class="vent-loop-legend"><span class="insp">● Inspirazione attuale</span><span class="exp">● Espirazione attuale</span><span id="ventLoopRefKey" class="vent-loop-ref-key" hidden>┄┄ Riferimento memorizzato</span></div>
+ </section>
+
+
+<div class="card" id="timeControls" style="margin-bottom:8px"><h2>Tempo simulato</h2><div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center"><label>Velocità <select id="simSpeed"><option value="1">1× reale</option><option value="5">5×</option><option value="20">20×</option><option value="60">60×</option></select></label><button type="button" id="simPause">Pausa</button><div class="sim-time-jumps" aria-label="Salti temporali"><button type="button" id="simBack1">−1 min</button><button type="button" id="simBack5">−5 min</button><button type="button" id="simBack10">−10 min</button><button type="button" id="simAdvance1">+1 min</button><button type="button" id="simAdvance5">+5 min</button><button type="button" id="simAdvance10">+10 min</button></div><strong id="simTimeReadout">00:00</strong></div></div>
+<section class="card" id="premedPanel"><h2>Premedicazione anestesiologica — cane</h2><div class="premed-form"><label>Farmaco<select id="premedDrug"><option>Acepromazina</option><option>Dexmedetomidina</option><option>Midazolam</option><option>Metadone</option><option>Butorfanolo</option><option>Ketamina</option></select></label><label>Dosaggio (inserimento manuale)<input id="premedDose" type="number" min="0" step="any" placeholder="Dose"></label><label>Unità<select id="premedUnit"><option>mg/kg</option><option>µg/kg</option></select></label><label>Via<input id="premedRoute" value="IM" readonly aria-label="Via intramuscolare" title="Premedicazione standardizzata esclusivamente IM"></label><button type="button" id="premedAdd">Aggiungi alla combinazione</button></div><div id="premedCombination" class="status" style="margin-top:8px">Nessun farmaco nella combinazione.</div><div class="row" style="margin-top:8px"><button type="button" id="premedGive">Somministra combinazione</button><button type="button" id="premedClear">Svuota combinazione</button></div><div class="status" id="premedElapsed" style="margin-top:8px">Tempo dalla premedicazione: —</div><div class="status" id="premedStatus" style="margin-top:8px">Nessuna somministrazione registrata.</div></section>
+ <section class="card" id="inductionPanel"><h2>Induzione anestesiologica EV — cane</h2>
+  <div class="premed-form">
+   <label>Induttore<select id="inductionDrug"><option>Propofol</option><option>Alfaxalone</option></select></label>
+   <label>Dose totale (mg/kg)<input id="inductionDose" type="number" min="0.1" max="12" step="0.1" value="4.5"></label>
+   <label>Somministrazione EV (secondi)<input id="inductionSeconds" type="number" min="10" max="300" step="5" value="60"></label>
+   <label>Finestra didattica (minuti)<input id="inductionMinutes" type="number" min="1" max="30" step="1" value="10"></label>
+   <button type="button" id="inductionStart">Avvia induzione</button>
+  </div>
+  <div class="row" style="margin-top:8px"><button type="button" id="inductionIntubate" disabled>Intuba e avvia mantenimento</button></div>
+  <div id="inductionStatus" class="status" style="margin-top:8px">In attesa di induzione. L'istruttore può avviarla in qualsiasi momento.</div>
+  <small style="color:var(--muted)">Dose e velocità EV indipendenti. Fino all'intubazione non sono disponibili EtCO₂ né MAC. Effetti farmacocinetici e cardiovascolari didattici da calibrare: non utilizzare per decisioni cliniche.</small>
+  <div id="inductionReport" style="margin-top:15px;border-top:1px solid #29404b;padding-top:12px">
+   <h3 style="margin:0 0 8px">Riepilogo automatico dell'induzione</h3>
+   <div id="inductionReportInfo" class="status" style="margin-bottom:8px">Il report inizia con «Avvia induzione».</div>
+   <div style="overflow-x:auto">
+    <table style="width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums">
+     <thead><tr><th style="text-align:left">Tempo</th><th>FC</th><th>SAP</th><th>DAP</th><th>MAP</th><th>CO</th><th>SV</th><th>SVR</th></tr></thead>
+     <tbody id="inductionReportRows"><tr><td colspan="8">Nessuna induzione registrata.</td></tr></tbody>
+    </table>
+   </div>
+   <small style="color:var(--muted)">FC in bpm; pressioni in mmHg; CO in L/min; SV in mL; SVR in dyn·s/cm⁵. Campioni ai tempi indicati dal tempo virtuale.</small>
+   <div id="inductionReportExtrema" class="status" style="margin-top:8px">MAP minima, SVR minima e FC massima: —</div>
+   
+   <small style="display:block;color:var(--muted);margin-top:6px">Valori prodotti dal modello didattico, non dati clinici validati. Per confrontare gli induttori, verificare che i valori preinduzione siano equivalenti.</small>
+  </div>
+ </section>
+ <section class="card" id="therapyV25"><h2>Terapie dinamiche</h2>
+  <div class="therapy-grid">
+   <div class="therapy"><div><b>Fluid challenge</b><small>2 mL/kg in 30 secondi</small></div><button id="v25FluidBolus">Somministra</button><span class="therapy-clock" id="clock-v25FluidBolus">Pronto · 00:00 / 00:30</span></div>
+   <div class="therapy"><div><b>Cristalloidi</b><small>Infusione continua</small></div><label>mL/kg/h<input id="v25FluidRate" type="number" min="0" max="50" step="1" value="2"></label><button id="v25FluidBtn">Avvia</button><button type="button" id="v30Confirm-fluid" class="v30-confirm-rate" disabled>Conferma dose</button><span class="therapy-clock" id="clock-v25FluidBtn">Non attiva · 00:00</span></div>
+   <div class="therapy"><div><b>Dobutamina</b><small>Infusione continua</small></div><label>µg/kg/min<input id="v25DobRate" type="number" min="0" max="30" step=".5" value="5"></label><button id="v25DobBtn">Avvia</button><button type="button" id="v30Confirm-dob" class="v30-confirm-rate" disabled>Conferma dose</button><span class="therapy-clock" id="clock-v25DobBtn">Non attiva · 00:00</span></div>
+   <div class="therapy"><div><b>Noradrenalina</b><small>Infusione continua</small></div><label>µg/kg/min<input id="v25NorRate" type="number" min="0" max="2" step=".01" value=".10"></label><button id="v25NorBtn">Avvia</button><button type="button" id="v30Confirm-nor" class="v30-confirm-rate" disabled>Conferma dose</button><span class="therapy-clock" id="clock-v25NorBtn">Non attiva · 00:00</span></div>
+   <div class="therapy"><div><b>Efedrina</b><small>Bolo EV · risposta transitoria (simulazione)</small></div><label>µg/kg<input id="v25EphDose" type="number" min="25" max="100" step="5" value="50"></label><button id="v25EphBtn">Somministra</button></div>
+   <div class="therapy"><div><b>Atropina</b><small>Bolo</small></div><label>µg/kg<input id="v25AtDose" type="number" min="0" max="100" step="1" value="20"></label><button id="v25AtBtn">Somministra</button></div>
+  </div><div id="v25TherapyStatus" class="status" style="margin-top:8px">Nessuna terapia attiva.</div>
+ </section>
+
+ <div class="card trend-card" id="trendV25">
+  <div class="trend-head"><h2>Trend monitor</h2><small class="student-trend-window-status" id="studentTrendWindowStatus">Finestra 2 min · gestita dalla console</small><b id="v25Clock">00:00</b></div>
+  <div class="trend-controls"><label>Finestra<select id="v25Window"><option value="120">2 min</option><option value="300">5 min</option><option value="600">10 min</option><option value="1800">30 min</option></select></label></div>
+  <div id="v26TrendGrid" class="v26-trend-grid">
+   <div class="v26-chart"><h3>Parametri vitali</h3><canvas id="trend-vitals"></canvas><div class="v26-legend" id="legend-vitals"></div></div>
+   <div class="v26-chart"><h3>Pressioni</h3><canvas id="trend-pressure"></canvas><div class="v26-legend" id="legend-pressure"></div></div>
+   <div class="v26-chart"><h3>Portata cardiaca</h3><canvas id="trend-flow"></canvas><div class="v26-legend" id="legend-flow"></div></div>
+   <div class="v26-chart"><h3>Gittata sistolica</h3><canvas id="trend-stroke"></canvas><div class="v26-legend" id="legend-stroke"></div></div>
+   <div class="v26-chart"><h3>Resistenze</h3><canvas id="trend-resistance"></canvas><div class="v26-legend" id="legend-resistance"></div></div>
+   <div class="v26-chart"><h3>Fluid responsiveness</h3><canvas id="trend-fluid"></canvas><div class="v26-legend" id="legend-fluid"></div></div>
+   <div class="v26-chart"><h3>Contrattilità</h3><canvas id="trend-contractility"></canvas><div class="v26-legend" id="legend-contractility"></div></div>
+   <div class="v26-chart"><h3>Elastanza arteriosa / potenza</h3><canvas id="trend-coupling"></canvas><div class="v26-legend" id="legend-coupling"></div></div>
+   
+  </div>
+  <div class="trend-legend">23 parametri registrati ogni secondo · curve normalizzate rispetto al basale · marker verticali = eventi/terapie</div>
+  <div id="v25TrendEvents" class="trend-events"></div>
+ </div>
+
+</section>
+</div>
+</main>
+
+<script src="./app-interventistica-v77-test.js?v=77"></script>
+<script src="./ui-v2.4.js"></script>
+<script src="./wave-cardio-ct-v55-test.js?v=55"></script>
+<script>
+window.addEventListener('DOMContentLoaded',()=>{
+ const $p=id=>document.getElementById(id);
+ const items=[];
+ const units={Acepromazina:'mg/kg',Dexmedetomidina:'µg/kg',Midazolam:'mg/kg',Metadone:'mg/kg',Butorfanolo:'mg/kg',Ketamina:'mg/kg'};
+ const profile={
+  Acepromazina:{unit:'mg/kg',ref:.02,tone:-22,hr:3,contractility:-4,minutes:90},
+  Dexmedetomidina:{unit:'µg/kg',ref:3,tone:85,hr:0,contractility:-9,minutes:50},
+  Midazolam:{unit:'mg/kg',ref:.2,tone:-2,hr:0,contractility:0,minutes:35},
+  Metadone:{unit:'mg/kg',ref:.2,tone:-3,hr:-9,contractility:-2,minutes:60},
+  Butorfanolo:{unit:'mg/kg',ref:.2,tone:-2,hr:-1,contractility:-1,minutes:45},
+  Ketamina:{unit:'mg/kg',ref:1,tone:9,hr:10,contractility:7,minutes:25}
+ };
+ const administrations=[];
+ window.premedEffects=()=>{const now=window.simVirtualNow?window.simVirtualNow():performance.now();let tone=0,hr=0,contractility=0;
+  administrations.forEach(x=>{const p=profile[x.drug];if(!p)return;const age=(now-x.at)/1000,onset=x.route==='EV'?15:180;if(age<0)return;
+   const factor=Math.min(1,x.dose/p.ref)*(1-Math.exp(-age/onset))*Math.exp(-Math.max(0,age-onset)/(p.minutes*60));
+   tone+=p.tone*factor;hr+=p.hr*factor;contractility+=p.contractility*factor});
+  return {tone:Math.max(-55,Math.min(65,tone)),hr:Math.max(-65,Math.min(45,hr)),contractility:Math.max(-45,Math.min(45,contractility)),active:administrations.some(x=>(now-x.at)<profile[x.drug].minutes*60*5000)};
+ };
+ // Interazioni del fentanil distinte per meccanismo; coefficienti didattici, non PK/PD validati.
+ window.premedFentanylInteraction=()=>{const now=window.simVirtualNow?window.simVirtualNow():performance.now();let mu=0,vagal=0,pressor=0,sedation=0;
+  administrations.forEach(x=>{if(x.drug==='Butorfanolo')return;const p=profile[x.drug];if(!p)return;const age=(now-x.at)/1000;if(age<0)return;
+   const onset=x.route==='EV'?15:180;
+   const effect=Math.min(1,Math.max(0,x.dose/p.ref))*(1-Math.exp(-age/onset))*Math.exp(-Math.max(0,age-onset)/(p.minutes*60));
+   if(x.drug==='Metadone'){mu+=.18*effect;vagal+=.10*effect;}
+   if(x.drug==='Dexmedetomidina'){sedation+=.20*effect;vagal+=.06*effect;}
+   if(x.drug==='Acepromazina')sedation+=.22*effect;
+   if(x.drug==='Midazolam')sedation+=.16*effect;
+   if(x.drug==='Ketamina')pressor+=.12*effect;
+  });
+  return {mu:Math.min(.18,mu),vagal:Math.min(.16,vagal),sedation:Math.min(.4,sedation),pressor:Math.min(.12,pressor)};
+ };
+ window.premedDexEffect=()=>{const now=window.simVirtualNow?window.simVirtualNow():performance.now();return Math.min(1,administrations.filter(x=>x.drug==='Dexmedetomidina').reduce((sum,x)=>{const age=Math.max(0,(now-x.at)/1000),onset=x.route==='EV'?15:180;return sum+Math.min(1,x.dose/3)*(1-Math.exp(-age/onset))*Math.exp(-Math.max(0,age-onset)/3000)},0))};
+ // Fase sveglia fino a 20:00 dalla prima somministrazione IM, valutata sul tempo virtuale.
+ window.isPremedAwake=()=>['awake','premed'].includes(v25.induction.phase);
+ window.isInductionPhase=()=>v25.induction.phase==='induction';
+ window.simNonIntubated=()=>['awake','premed','induction'].includes(v25.induction.phase);
+ const elapsedEl=$p('premedElapsed');
+ const capnoMonitorEnabled=()=>{const t=document.querySelector('[data-toggle="capno"]');return !t||t.checked};
+ const showPremedElapsed=()=>{if(!elapsedEl)return;const now=window.simVirtualNow?window.simVirtualNow():performance.now();const awake=window.simNonIntubated();window.premedAwakePhase=awake;
+  const patientStatus=$p('patientPresetStatus');
+  if(patientStatus){
+   const phase=v25.induction.phase;
+   const clinical=typeof caseState!=='undefined'&&caseState.active;
+   const legacyAnesthetized=typeof patientModel!=='undefined'&&patientModel==='anesthetized';
+   patientStatus.textContent=clinical?'Caso clinico · profilo emodinamico dedicato':
+    phase==='induction'?'Paziente · induzione anestesiologica in corso':
+    phase==='maintenance'?'Paziente · anestesia generale · mantenimento':
+    phase==='premed'?'Paziente sano · premedicato · non ancora indotto':
+    legacyAnesthetized?'Paziente anestetizzato · preset manuale':
+    'Paziente sano · sveglio · non premedicato';
+  }
+  const macInput=$p('mac'),phaseStatus=$p('anesthesiaPhaseStatus');
+  if(macInput)macInput.disabled=awake;
+  if(phaseStatus)phaseStatus.textContent=v25.induction.phase==='awake'?'Paziente sano sveglio, non premedicato: MAC escluso.':v25.induction.phase==='premed'?'Premedicazione: cane non anestetizzato; MAC escluso. Induzione avviabile manualmente.':v25.induction.phase==='induction'?'Induzione EV: MAC escluso; effetti farmacologici in evoluzione.':'Mantenimento: MAC attivo; persistono gli effetti residui dei farmaci.';const cap=document.querySelector('[data-key="capno"]'),notice=$p('awakeCapnoNotice');if(cap)cap.style.display=(awake||!capnoMonitorEnabled())?'none':'';if(notice)notice.style.display=awake?'flex':'none';if(!administrations.length){elapsedEl.textContent='Tempo dalla premedicazione: —';return}
+ const seconds=Math.max(0,Math.floor((now-administrations[0].at)/1000)),mm=String(Math.floor(seconds/60)).padStart(2,'0'),ss=String(seconds%60).padStart(2,'0');
+ elapsedEl.textContent='Tempo dalla prima somministrazione: '+mm+':'+ss+' (tempo virtuale; induzione avviata manualmente dall’istruttore)';
+ };
+ window.updatePremedElapsed=showPremedElapsed;
+ setInterval(showPremedElapsed,200);
+ const names=$p('premedDrug');
+ names.addEventListener('change',()=>{$p('premedUnit').value=units[names.value]||'mg/kg'});
+ const renderCombo=()=>{
+  const el=$p('premedCombination');el.replaceChildren();
+  if(!items.length){el.textContent='Nessun farmaco nella combinazione.';return}
+  items.forEach((x,i)=>{const line=document.createElement('div');line.style.cssText='display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid #24414d';
+   const label=document.createElement('span');label.textContent=(i+1)+'. '+x.drug+' '+x.dose+' '+x.unit+' '+x.route;
+   const remove=document.createElement('button');remove.type='button';remove.className='tiny';remove.textContent='Rimuovi';remove.onclick=()=>{items.splice(i,1);renderCombo()};
+   line.append(label,remove);el.append(line)
+  })
+ };
+ $p('premedAdd').onclick=()=>{
+  const drug=names.value,dose=Number($p('premedDose').value),unit=$p('premedUnit').value,route='IM';
+  if(!Number.isFinite(dose)||dose<=0){$p('premedStatus').textContent='Inserire una dose valida maggiore di zero.';return}
+  items.push({drug,dose,unit,route});renderCombo();$p('premedStatus').textContent=items.length+' farmaci nella combinazione, non ancora somministrati.';
+ };
+ $p('premedClear').onclick=()=>{items.length=0;renderCombo();$p('premedStatus').textContent='Combinazione svuotata.'};
+ $p('premedGive').onclick=()=>{
+  if(!items.length){$p('premedStatus').textContent='Aggiungi almeno un farmaco prima di somministrare.';return}
+  const txt='Premedicazione combinata: '+items.map(x=>x.drug+' '+x.dose+' '+x.unit+' '+x.route).join(' + ');
+  const accepted=[],rejected=[];
+  items.forEach(x=>{
+   const p=profile[x.drug];if(!p){rejected.push(x.drug);return}
+   let convert=NaN;
+   if(x.unit===p.unit)convert=1;
+   else if(x.unit==='µg/kg'&&p.unit==='mg/kg')convert=0.001;
+   else if(x.unit==='mg/kg'&&p.unit==='µg/kg')convert=1000;
+   const normalized=x.dose*convert;
+   if(!Number.isFinite(normalized)||normalized<=0){rejected.push(x.drug);return}
+   accepted.push({...x,dose:normalized,unit:p.unit,at:(window.simVirtualNow?window.simVirtualNow():performance.now())});
+  });
+  administrations.push(...accepted);if(accepted.length&&['legacy','awake'].includes(v25.induction.phase))v25.induction.phase='premed';
+  if(typeof v25Event==='function')v25Event(txt);
+  $p('premedStatus').textContent=(accepted.length?'Somministrata: '+accepted.map(x=>x.drug+' '+x.dose+' '+x.unit+' '+x.route).join(' + '):'Nessun farmaco somministrato.')+(rejected.length?' · Non riconosciuti: '+rejected.join(', '):'');
+  items.length=0;renderCombo();showPremedElapsed()
+ };
+ // La finestra di 10 minuti e' osservazionale; non equivale a una infusione di 10 minuti.
+ const inductionDrug=$p('inductionDrug'),inductionDose=$p('inductionDose');
+ inductionDrug.onchange=()=>{inductionDose.value=inductionDrug.value==='Propofol'?'4.5':'2'};
+ const showInductionStatus=()=>{
+  const i=v25.induction,el=$p('inductionStatus'),intubate=$p('inductionIntubate');
+  if(!el)return;
+  if(intubate)intubate.disabled=i.phase!=='induction';$p('inductionStart').disabled=!['legacy','awake','premed'].includes(i.phase);
+  if(i.phase==='legacy'||i.phase==='awake'||i.phase==='premed'){el.textContent='In attesa di induzione EV. Finestra impostata: '+$p('inductionMinutes').value+' minuti.';return}
+  const elapsed=Math.max(0,((window.simVirtualNow?window.simVirtualNow():performance.now())-i.startedAt)/1000);
+  const time=String(Math.floor(elapsed/60)).padStart(2,'0')+':'+String(Math.floor(elapsed%60)).padStart(2,'0');
+  if(i.phase==='maintenance'){el.textContent='Mantenimento avviato: MAC e capnografia disponibili. Persistono gli effetti residui di '+i.drug+'.';return}
+  const administering=elapsed<i.administrationSeconds;
+  const finished=elapsed>=i.windowMinutes*60;
+  el.textContent=i.drug+' '+i.dose+' mg/kg EV in '+i.administrationSeconds+' s · '+time+' · '+(administering?'Somministrazione in corso':finished?'Finestra didattica terminata: in attesa di intubazione':'Osservazione emodinamica')+' · Rischio apnea: '+i.apneaRisk;
+ };
+ $p('inductionStart').onclick=()=>{
+  if(!['legacy','awake','premed'].includes(v25.induction.phase)){$p('inductionStatus').textContent='Induzione già avviata. Per una nuova simulazione ricaricare la pagina.';return}
+  const drug=inductionDrug.value,dose=Number(inductionDose.value),seconds=Number($p('inductionSeconds').value),minutes=Number($p('inductionMinutes').value);
+  if(!['Propofol','Alfaxalone'].includes(drug)||!Number.isFinite(dose)||dose<.1||dose>12||!Number.isFinite(seconds)||seconds<10||seconds>300||!Number.isInteger(minutes)||minutes<1||minutes>30){$p('inductionStatus').textContent='Verificare dose (0,1–12 mg/kg), somministrazione (10–300 s) e finestra (1–30 min).';return}
+  v25.induction={phase:'induction',startedAt:window.simVirtualNow(),drug,dose,administrationSeconds:seconds,windowMinutes:minutes,premedicated:administrations.length>0,
+   pk:{central:0,fast:0,slow:0,ce:0,cv:0},effects:{preload:0,tone:0,contractility:0,hr:0,active:false},apneaRisk:'—'};
+  window.simAirwayIntubated=false;
+  inductionStartReport();
+  $p('inductionStart').disabled=true;
+  if(typeof v25Event==='function')v25Event('Induzione EV: '+drug+' '+dose+' mg/kg in '+seconds+' s; finestra '+minutes+' min');
+  showPremedElapsed();showInductionStatus();
+ };
+ // Induzione TIVA: la TCI parte prima dell'intubazione e resta attiva dopo.
+ window.simTIVAStartInduction=()=>{
+  const i=v25.induction;
+  if(i.phase==='awake'||!i.startedAt){
+   i.drug='Propofol';i.dose=0;i.administrationSeconds=60;
+   i.startedAt=window.simVirtualNow();i.propofolStoppedAt=i.startedAt;
+   i.pk={central:0,fast:0,slow:0,ce:0,cv:0};
+   i.phase='induction';
+   window.simSetAirwayIntubated?.(false,'induzione TIVA');
+   if(typeof v25Event==='function')v25Event('Induzione TIVA propofol TCI avviata');
+  }
+  showInductionStatus();
+ };
+ window.simTIVAIntubate=()=>{
+  const i=v25.induction;
+  if(!window.simPropofolTCI?.active||window.simPropofolTCI?.mode!=='tiva'||window.simAirwayIntubated)return;
+  if(!i.startedAt)window.simTIVAStartInduction?.();
+  i.phase='maintenance';i.maintenanceAt=window.simVirtualNow();
+  i.propofolStoppedAt=i.maintenanceAt;
+  window.simSetAirwayIntubated?.(true,'intubazione TIVA');
+  window.simVentOnIntubation?.();
+  if(typeof v25Event==='function')v25Event('Intubazione eseguita per mantenimento TIVA');
+  showInductionStatus();
+ };
+ $p('inductionIntubate').onclick=()=>{
+  if(v25.induction.phase!=='induction')return;
+  v25.induction.phase='maintenance';
+  v25.induction.maintenanceAt=window.simVirtualNow();
+  // Stop further EV delivery immediately; distribution/elimination continue.
+  v25.induction.propofolStoppedAt=v25.induction.maintenanceAt;
+  // L'intubazione da sola non attiva il ventilatore: si inizia in SPONT.
+  if(typeof window.simVentOnIntubation==='function')window.simVentOnIntubation();
+  if(typeof v25Event==='function')v25Event('Intubazione eseguita — respirazione spontanea; selezionare VCV/PCV per ventilazione controllata');
+  showPremedElapsed();showInductionStatus();
+ };
+ setInterval(showInductionStatus,250);showInductionStatus();inductionRenderReport();
+
+});
+</script>
+<script id="ipad-instructor-tabs-script-28105">
+window.addEventListener('DOMContentLoaded',()=>{
+ // Non modificare mai la struttura della finestra studenti (schermo esteso iPad).
+ if(document.body.classList.contains('student'))return;
+ const header=document.querySelector('body > header');
+ const syncHeaderHeight=()=>document.documentElement.style.setProperty('--instructor-header-height',Math.ceil(header?.getBoundingClientRect().height||80)+'px');
+ syncHeaderHeight();window.addEventListener('resize',syncHeaderHeight);
+ if(header&&typeof ResizeObserver!=='undefined')new ResizeObserver(syncHeaderHeight).observe(header);
+ const aside=document.querySelector('aside.controls'),monitor=document.querySelector('section.monitor');
+ if(!aside||!monitor)return;
+ const get=id=>document.getElementById(id);
+ const top=document.createElement('div');top.className='instructor-console-top';
+ top.innerHTML='<div class="quick-values" aria-label="Parametri paziente in tempo reale">'+
+  '<div><small>FC · bpm</small><b id="quickHr">—</b></div>'+
+  '<div><small>MAP · mmHg</small><b id="quickMap">—</b></div>'+
+  '<div><small>CO · L/min</small><b id="quickCo">—</b></div>'+
+  '<div><small>SVR</small><b id="quickSvr">—</b></div></div>'+
+  '<div class="quick-phase" id="quickPhase">Paziente sano · sveglio</div>'+
+  '<nav class="instructor-tab-nav" aria-label="Sezioni console docente" role="tablist"></nav>';
+ aside.prepend(top);
+ const nav=top.querySelector('nav');
+ const groups=[
+  {id:'patient',label:'Paziente'},
+  {id:'anesthesia',label:'Anestesia'},
+  {id:'ventilation',label:'Ventilazione'},
+  {id:'therapy',label:'Emodinamica'},
+  {id:'trends',label:'Trend'}
+ ];
+ const panels={};
+ for(const group of groups){
+  const b=document.createElement('button');b.type='button';b.textContent=group.label;
+  if(group.id==='ventilation')b.title='Ventilazione';
+  b.id='instructor-tab-'+group.id;b.setAttribute('role','tab');
+  b.setAttribute('aria-controls','instructor-panel-'+group.id);
+  nav.append(b);
+  const panel=document.createElement('div');panel.className='instructor-tab-panel';
+  panel.id='instructor-panel-'+group.id;panel.setAttribute('role','tabpanel');
+  panel.setAttribute('aria-labelledby',b.id);
+  aside.append(panel);panels[group.id]=panel;
+  b.addEventListener('click',()=>activate(group.id));
+ }
+ const add=(id,group)=>{const el=get(id);if(el)panels[group].append(el)};
+ // Elementi esistenti: spostati, non clonati. ID e listener rimangono gli stessi.
+ const asideCards=Array.from(aside.querySelectorAll(':scope > section.card'));
+ const findCard=title=>asideCards.find(el=>el.querySelector('h2')?.textContent.trim()===title);
+ const moveCard=(title,group)=>{const el=findCard(title);if(el)panels[group].append(el)};
+ moveCard('Paziente','patient');
+ moveCard('Preset manuali','patient');
+ moveCard('Modalità Caso clinico','patient');
+ moveCard('Monitoraggio attivo — istruttore','patient');
+ const advanced=document.createElement('details');advanced.className='instructor-advanced';
+ advanced.innerHTML='<summary>Regolazioni manuali e motore fisiologico</summary><div class="instructor-advanced-content"></div>';
+ const inner=advanced.querySelector('div');
+ for(const title of ['ECG','Capnografia','Pressione','MostCare Up / PRAM — simulazione','SpO₂','Motore fisiologico — emodinamica']){
+  const el=findCard(title);if(el)inner.append(el);
+ }
+ panels.patient.append(advanced);
+ // Vista speculare del motore fisiologico nella scheda Emodinamica:
+ // i controlli originali restano nella scheda Paziente; il duplicato
+ // inoltra gli eventi agli stessi input, senza creare un secondo motore.
+ const physiologyCard=findCard('Motore fisiologico — emodinamica');
+ if(physiologyCard){
+  const mirror=physiologyCard.cloneNode(true);
+  mirror.id='hemoPhysiologyMirror';
+  const originals=Array.from(physiologyCard.querySelectorAll('input'));
+  const mirrors=Array.from(mirror.querySelectorAll('input'));
+  const originalOutputs=Array.from(physiologyCard.querySelectorAll('span[id]'));
+  const mirrorOutputs=Array.from(mirror.querySelectorAll('span[id]'));
+  mirror.querySelectorAll('[id]').forEach(el=>el.removeAttribute('id'));
+  const syncPhysiologyMirror=()=>{
+   mirrors.forEach((input,i)=>{
+    const source=originals[i];if(!source)return;
+    if(input.type==='checkbox')input.checked=source.checked;
+    else input.value=source.value;
+    input.disabled=source.disabled;
+   });
+   mirrorOutputs.forEach((el,i)=>{if(originalOutputs[i])el.textContent=originalOutputs[i].textContent});
+  };
+  mirrors.forEach((input,i)=>{
+   const source=originals[i];if(!source)return;
+   const forward=type=>{
+    if(input.type==='checkbox')source.checked=input.checked;
+    else source.value=input.value;
+    // Un solo motore: il controllo originale riceve l'evento ed esegue physiology().
+    source.dispatchEvent(new Event(type,{bubbles:true}));
+    syncPhysiologyMirror();
+   };
+   input.addEventListener('input',()=>forward('input'));
+   input.addEventListener('change',()=>forward('change'));
+  });
+  originals.forEach(input=>{
+   input.addEventListener('input',syncPhysiologyMirror);
+   input.addEventListener('change',syncPhysiologyMirror);
+  });
+  // Aggiornamento anche dopo cambiamenti indotti da farmaci/preset, senza
+  // polling che sovrascriva la digitazione sul monitor docente (Safari/iPad).
+  window.addEventListener('sim:physiology-updated',syncPhysiologyMirror);
+  panels.therapy.prepend(mirror);
+  syncPhysiologyMirror();
+ }
+ add('premedPanel','anesthesia');add('inductionPanel','anesthesia');
+ const inhaledCard=findCard('Anestesia inalatoria');
+ add('ventilationPanel','ventilation');
+ add('therapyV25','therapy');moveCard('Interventi / trend','trends');
+ // Onde e PRAM restano visibili; i trend a larghezza piena scorrono sotto.
+ const clinical=document.createElement('div');clinical.className='instructor-fixed-monitor';
+ const scroll=document.createElement('div');scroll.className='instructor-monitor-scroll';scroll.id='instructorMonitorScroll';
+ for(const node of Array.from(monitor.children)){
+  if(node.classList.contains('wave')||node.classList.contains('hemo-wrap'))clinical.append(node);
+  else scroll.append(node);
+ }
+ monitor.append(clinical,scroll);
+ // MAC e mantenimento inalatorio immediatamente sotto i valori PRAM,
+ // nel monitor principale e soltanto nella scheda Anestesia.
+ if(inhaledCard){
+  inhaledCard.id='instructorInhaledCard';
+  // Controlli anestesia nella zona PRINCIPALE sotto PRAM, non nella barra laterale.
+  const mainAnesthesia=document.createElement('div');
+  mainAnesthesia.id='mainAnesthesiaBelowPram';
+  mainAnesthesia.className='main-anesthesia-below-pram';
+  clinical.append(mainAnesthesia);
+  const propofolCard=get('inductionPanel');
+  const fentanylCard=get('fentanylPanel');
+  if(propofolCard)mainAnesthesia.append(propofolCard);
+  mainAnesthesia.append(inhaledCard);
+  if(fentanylCard)mainAnesthesia.append(fentanylCard);
+ }
+ const trend=get('trendV25');if(trend){scroll.append(trend);trend.hidden=true}
+ // Tempo sempre accessibile, indipendentemente dalla scheda selezionata.
+ const time=get('timeControls');
+ if(time){
+  top.after(time);
+  const row=time.querySelector('div[style*="display:flex"]');
+  if(row){
+   row.classList.add('time-primary');
+   const jumpGrid=time.querySelector('.sim-time-jumps');
+   const details=document.createElement('details');details.className='time-jumps';
+   details.open=true;
+   details.innerHTML='<summary>Salti temporali e avanzamento rapido</summary>';
+   if(jumpGrid)details.append(jumpGrid);
+   time.append(details);
+  }
+ }
+ function activate(id){
+  for(const group of groups){
+   const selected=group.id===id;
+   panels[group.id].hidden=!selected;
+   const b=get('instructor-tab-'+group.id);
+   b.setAttribute('aria-selected',String(selected));b.tabIndex=selected?0:-1;
+  }
+  document.body.dataset.instructorTab=id;
+  // I trend occupano il monitor principale SOLO quando la scheda Trend e' selezionata.
+  // Nelle altre schede il layout del monitor torna quello precedente.
+  if(trend){trend.hidden=id!=='trends';trend.style.display=id==='trends'?'':'none';}
+  if(id==='trends'){
+   scroll.scrollTop=0;
+   requestAnimationFrame(()=>{if(typeof v25Draw==='function')v25Draw()});
+  }
+  // Le onde del monitor seguono la scheda attiva; il monitor resta visibile.
+ }
+ activate('patient');
+ const refresh=()=>{
+  const read=id=>get(id)?.textContent.trim()||'—';
+  get('quickHr').textContent=read('vhr');
+  get('quickMap').textContent=read('vmap');
+  get('quickCo').textContent=read('m_co');
+  get('quickSvr').textContent=read('m_svr');
+  get('quickPhase').textContent=read('patientPresetStatus');
+ };
+ refresh();setInterval(refresh,600);
+});
+</script>
+
+<script id="student-readonly-tabs-script-28108">
+window.addEventListener('DOMContentLoaded',()=>{
+ if(!document.body.classList.contains('student'))return;
+ const isExternal=new URLSearchParams(location.search).get('student')==='1';
+ document.body.dataset.studentExternal=String(isExternal);
+ const header=document.querySelector('body > header');
+ const syncHeader=()=>document.documentElement.style.setProperty('--student-header-height',Math.ceil(header?.getBoundingClientRect().height||76)+'px');
+ syncHeader();window.addEventListener('resize',syncHeader);
+ if(header&&typeof ResizeObserver!=='undefined')new ResizeObserver(syncHeader).observe(header);
+ const monitor=document.querySelector('section.monitor');
+ if(!monitor)return;
+ const badge=document.getElementById('syncBadge');if(badge)badge.textContent='Monitor studenti · sola lettura · sincronizzato';
+ const fixed=document.createElement('div');fixed.className='student-fixed-monitor';
+ for(const el of Array.from(monitor.children)){
+  if(el.classList.contains('wave')||el.classList.contains('hemo-wrap')||el.classList.contains('student-only'))fixed.append(el);
+ }
+ monitor.prepend(fixed);
+ // Mantiene tutte le onde in una colonna; nella scheda Ventilazione
+ // i loop spirometrici occupano la colonna adiacente, senza duplicare i tracciati.
+ const waveNodes=Array.from(fixed.children).filter(el=>el.classList.contains('wave'));
+ if(waveNodes.length){
+  const ventLayout=document.createElement('div');ventLayout.className='student-vent-layout';ventLayout.id='studentVentLayout';
+  const waveColumn=document.createElement('div');waveColumn.className='student-vent-wave-column';
+  fixed.insertBefore(ventLayout,waveNodes[0]);ventLayout.append(waveColumn);
+  for(const wave of waveNodes)waveColumn.append(wave);
+ }
+ // The LV PV loop is placed beside the live waveforms only on the
+ // Hemodynamics student tab; all student controls remain read-only.
+ const pvSide=document.createElement('aside');
+ pvSide.id='studentPvSide';pvSide.className='student-pv-side';pvSide.hidden=true;
+ pvSide.innerHTML='<h3>Ventricolo sinistro — loop P/V</h3><canvas id="studentPvCanvas" aria-label="Loop pressione volume sincronizzato con la console docente"></canvas><div class="student-pv-legend"><span style="color:#3dd5bb">● Riempimento</span> <span style="color:#f3c969">● Contrazione</span> <span style="color:#60b8ff">● Eiezione</span> <span style="color:#d19afa">● Rilasciamento</span> <span style="color:#ff5757">– – Ea</span> <span style="color:#ffad70">– – ESPVR</span></div><div id="studentPvReadings"></div>';
+ document.getElementById('studentVentLayout')?.append(pvSide);
+ const shell=document.createElement('section');shell.className='student-tabs-shell';
+ const nav=document.createElement('nav');nav.className='student-tabs-nav';nav.setAttribute('role','tablist');nav.setAttribute('aria-label','Visualizzazioni monitor studenti');
+ // Navigazione accanto a «Monitor studenti» nell'intestazione, non piu' sotto i tracciati.
+ header?.querySelector('h1')?.after(nav);
+ const panels={};
+ for(const [key,title] of [['trends','Trend'],['meds','Emodinamica'],['ventilation','Ventilazione'],['interventistica','Interventistica']]){
+  const b=document.createElement('button');b.type='button';b.id='student-tab-'+key;b.textContent=title;
+  b.setAttribute('role','tab');b.setAttribute('aria-controls','student-panel-'+key);nav.append(b);
+  const panel=document.createElement('div');panel.className='student-tab-panel';panel.id='student-panel-'+key;
+  panel.setAttribute('role','tabpanel');panel.setAttribute('aria-labelledby',b.id);shell.append(panel);
+  panels[key]=panel;b.addEventListener('click',()=>selectTab(key));
+ }
+ const trend=document.getElementById('trendV25');if(trend)panels.trends.append(trend);
+ const windowSelect=document.getElementById('v25Window');if(windowSelect)windowSelect.disabled=true;
+ const current=document.createElement('div');current.className='student-active-therapy';current.textContent='In attesa dei dati terapeutici della console docente.';
+ panels.meds.append(current);
+ const summary=document.createElement('div');summary.className='student-meds-summary';panels.meds.append(summary);
+ const containers={};
+ for(const [key,title] of [['anesthesia','Farmaci anestetici e mantenimento'],['therapy','Terapie emodinamiche e fluidi']]){
+  const group=document.createElement('section');group.className='student-meds-group';
+  const heading=document.createElement('h3');heading.textContent=title;group.append(heading);
+  if(key==='anesthesia'){const inhaled=document.createElement('div');inhaled.id='studentIsofluraneStatus';inhaled.className='student-inhaled-status';inhaled.hidden=true;group.append(inhaled)}
+  const list=document.createElement('div');list.className='student-meds-list';group.append(list);
+  summary.append(group);containers[key]=list;
+ }
+ monitor.append(shell);
+ panels.interventistica.innerHTML='<div class="iv-student-view"><h3>Interventistica · monitoraggio emodinamico</h3><div id="ivStudentPhase">In attesa della console docente</div><div class="iv-student-metrics" id="ivStudentMetrics"></div><div class="iv-student-visual"><div class="iv-student-pressure"><h3>Pressioni da cateterismo · scala comune</h3><canvas id="ivStudentPressure" height="270"></canvas><div class="iv-student-legend"><span style="color:#f3bd62">● VS</span><span style="color:#f4717a">● Aorta</span><span style="color:#6ebded">● VD</span><span style="color:#70d9ac">● AP</span></div></div><div class="iv-student-loops"><section><h3>Loop P/V ventricolo sinistro</h3><canvas id="ivStudentLV" height="210"></canvas></section><section><h3>Loop P/V ventricolo destro</h3><canvas id="ivStudentRV" height="210"></canvas></section></div></div><h3>Confronto pre/post procedura</h3><div id="ivStudentComparison">In attesa di dati</div><p class="iv-student-note">Interpretare le variazioni di pressione, portata ed EtCO₂. Esito selezionato dal docente non visualizzato.</p></div>';
+ function selectTab(key){
+  for(const name of Object.keys(panels)){
+   const active=name===key;panels[name].hidden=!active;
+   const btn=document.getElementById('student-tab-'+name);
+   btn.setAttribute('aria-selected',String(active));btn.tabIndex=active?0:-1;
+  }
+  document.body.dataset.studentTab=key;
+  shell.hidden=key==='ventilation';
+  pvSide.hidden=key!=='meds';
+  document.body.classList.toggle('student-pv-active',key==='meds');
+  if(key==='trends'&&typeof v25Draw==='function')requestAnimationFrame(()=>v25Draw());
+ }
+ selectTab('trends');
+ let allEvents=[],lastTreatment=null;
+ const fmtTime=sec=>{const n=Math.max(0,Math.floor(Number(sec)||0));return String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0')};
+ const categorize=txt=>{
+  if(/^(Premedicazione combinata:|Induzione EV:|Intubazione eseguita|MAC impostato)/i.test(txt))return 'anesthesia';
+  if(/^(Cristalloidi|Dobutamina|Noradrenalina|Fluid challenge|Efedrina|Atropina)/i.test(txt))return 'therapy';
+  return null;
+ };
+ function renderEvents(){
+  for(const key of Object.keys(containers)){
+   const list=containers[key];list.replaceChildren();
+   const events=allEvents.filter(e=>typeof e.txt==='string'&&categorize(e.txt)===key);
+   if(!events.length){const p=document.createElement('p');p.className='student-meds-empty';p.textContent=key==='anesthesia'?'Nessun farmaco anestetico somministrato.':'Nessuna terapia somministrata.';list.append(p);continue}
+   for(const e of events){
+    const item=document.createElement('div');item.className='student-meds-event';
+    const time=document.createElement('time');time.textContent=fmtTime(e.t);
+    const description=document.createElement('span');description.textContent=e.txt;
+    item.append(time,description);list.append(item);
+   }
+  }
+ }
+ function updateEvents(events,replace){
+  if(!Array.isArray(events))return;
+  const merged=replace?[]:allEvents.slice();
+  const seen=new Set(merged.map(e=>String(e.t)+'|'+e.txt));
+  for(const e of events){
+   if(!e||!Number.isFinite(Number(e.t))||typeof e.txt!=='string')continue;
+   const k=String(e.t)+'|'+e.txt;if(!seen.has(k)){merged.push({t:Number(e.t),txt:e.txt});seen.add(k)}
+  }
+  allEvents=merged.sort((a,b)=>a.t-b.t);renderEvents();
+ }
+ function updateTreatments(t){
+  if(!t||typeof t!=='object')return;lastTreatment=t;
+  const items=[];
+  const phases={awake:'Paziente sveglio',premed:'Premedicazione',induction:'Induzione EV',maintenance:'Mantenimento'};
+  items.push('Fase: '+(phases[t.phase]||'—'));
+  const inhaled=document.getElementById('studentIsofluraneStatus');
+  if(inhaled){const intubated=t.phase==='maintenance';inhaled.hidden=!intubated;if(intubated)inhaled.textContent='Alogenato (isofluorano) · '+(Number.isFinite(t.mac)?Number(t.mac).toFixed(1).replace('.',',')+' MAC':'MAC non disponibile')+' · mantenimento inalatorio';}
+  if(t.phase==='maintenance'&&Number.isFinite(t.mac))items.push('Alogenato (isofluorano): '+Number(t.mac).toFixed(1).replace('.',',')+' MAC');
+  const inf=t.infusions||{},rates=t.rates||{};
+  for(const [key,label,unit] of [['fluid','Cristalloidi','mL/kg/h'],['dob','Dobutamina','µg/kg/min'],['nor','Noradrenalina','µg/kg/min']]){
+   if(inf[key])items.push(label+' in corso: '+rates[key]+' '+unit);
+  }
+  if(!inf.fluid&&!inf.dob&&!inf.nor)items.push('Nessuna infusione continua attiva');
+  current.textContent=items.join(' · ');
+ }
+ // Le informazioni arrivano solo dalla console istruttore: mai scrivere in localStorage.
+ window.addEventListener('storage',e=>{
+  if(!e.newValue)return;
+  if(e.key==='recoverCaneStudentHistoryV2891'){
+   try{const data=JSON.parse(e.newValue);updateEvents(data.events,true)}catch(err){console.warn('Riepilogo terapie studenti:',err)}
+  }
+  if(e.key==='recoverCaneStudentStatusV2891'){
+   try{const data=JSON.parse(e.newValue);updateEvents(data.events,false);updateTreatments(data.treatments)}catch(err){console.warn('Stato terapie studenti:',err)}
+  }
+ });
+ try{
+  const h=localStorage.getItem('recoverCaneStudentHistoryV2891');if(h)updateEvents(JSON.parse(h).events,true);
+  const st=localStorage.getItem('recoverCaneStudentStatusV2891');
+  if(st){const d=JSON.parse(st);updateEvents(d.events,false);updateTreatments(d.treatments)}
+ }catch(err){console.warn('Ripristino riepilogo terapie studenti:',err)}
+});
+</script>
+<script src="./ventilation-v291.js?v=29361"></script>
+<!-- Solo ramo sperimentale: modulo EGA/VQ, nessuna modifica al motore principale -->
+<script src="./research/emogas-vq-prototype.js?v=6"></script>
+<script src="./research/emogas-vq-ui.js?v=30"></script>
+<script src="./research/lv-pv-teaching-v83.js?v=83"></script>
+<style id="physiology-number-v30">
+ .physiology-percent-editor{display:flex;align-items:center;gap:5px;margin-top:5px}
+ .physiology-percent-editor input[type="number"]{width:76px;max-width:100%;box-sizing:border-box;padding:5px 6px;background:#081923;color:#e5f5fa;border:1px solid #34566a;border-radius:5px;font-size:13px}
+ .physiology-percent-editor .percent-unit{font-size:12px;color:#a9c2ce}
+ /* Layout compatto, applicato sia all'originale sia alla copia emodinamica. */
+ .physiology-engine-card{padding:9px 11px!important}
+ .physiology-engine-card h2{margin:0 0 7px!important;font-size:14px}
+ .physiology-engine-card .cols{display:grid!important;grid-template-columns:minmax(0,1fr) 92px!important;gap:5px 8px!important;align-items:center;margin:0!important}
+ .physiology-engine-card .cols>label{display:flex!important;flex-direction:column;gap:2px;min-width:0;margin:0!important;font-size:12px;line-height:1.15}
+ .physiology-engine-card .cols>label input[type="range"]{width:100%;margin:0!important}
+ .physiology-engine-card .cols>label>span{display:none!important}
+ /* Il cursore SVR mantiene il range fisiologico 30–180%, ma a 100%
+    la manopola si allinea visivamente agli altri slider. */
+ /* Scale visuali centrate su 100: SVR resta limitato logicamente a 30. */
+ .physiology-engine-card .physiology-percent-editor{margin:0;gap:4px}
+ .physiology-engine-card .physiology-percent-editor input[type="number"]{width:65px;padding:4px 5px;font-size:13px}
+ @media(max-width:420px){.physiology-engine-card .cols{grid-template-columns:minmax(0,1fr) 82px!important;gap:5px!important}.physiology-engine-card .physiology-percent-editor input[type="number"]{width:57px}}
+</style>
+<script id="physiology-number-v30-script">
+(()=>{
+ const keys=['preload','contractility','vascularTone','compliance'];
+ const root=document;
+ const original=id=>root.getElementById(id);
+ const mirror=root.getElementById('hemoPhysiologyMirror');
+ function install(range){
+  if(!range||range.dataset.numberEditorInstalled)return;
+  range.dataset.numberEditorInstalled='1';
+  const editor=document.createElement('div');editor.className='physiology-percent-editor';
+  const number=document.createElement('input');
+  number.type='number';number.min=range.dataset.logicalMin||range.min;number.max=range.max;number.step='1';
+  number.value=range.value;number.setAttribute('aria-label','Valore percentuale '+range.closest('label')?.textContent.trim());
+  const unit=document.createElement('span');unit.className='percent-unit';unit.textContent='%';
+  editor.append(number,unit);
+  // Non inserire il campo numerico dentro la <label> dello slider:
+  // su Safari/iPad il click sulla label puo' riportare il focus al cursore,
+  // impedendo di digitare nel campo.
+  const sliderLabel=range.closest('label');
+  if(sliderLabel)sliderLabel.insertAdjacentElement('afterend',editor);
+  else range.insertAdjacentElement('afterend',editor);
+  // Non sovrascrivere il valore mentre l'utente sta digitando.
+  // Il focus puo' variare su Safari durante l'apertura della tastiera.
+  let editing=false;
+  const sync=(force=false)=>{
+   // Lo spostamento dello slider prevale sempre, anche se il campo numerico
+   // era stato compilato o ha ancora il focus (Safari/iPad).
+   if(force){editing=false;if(document.activeElement===number)number.blur();}
+   if(force||(!editing&&document.activeElement!==number))number.value=range.value;
+   number.disabled=range.disabled;
+  };
+  number.addEventListener('pointerdown',()=>{editing=true});
+  number.addEventListener('focus',()=>{editing=true});
+  number.addEventListener('input',()=>{editing=true});
+  const apply=()=>{
+   const n=Number(number.value);
+   if(number.value.trim()===''||!Number.isFinite(n))return;
+   const min=Number(range.dataset.logicalMin||range.min),max=Number(range.max);
+   const value=Math.round(Math.max(min,Math.min(max,n)));
+   range.value=String(value);
+   range.dispatchEvent(new Event('input',{bubbles:true}));
+   range.dispatchEvent(new Event('change',{bubbles:true}));
+   number.value=range.value;
+  };
+  number.addEventListener('blur',()=>{if(editing)apply();editing=false;sync()});
+  number.addEventListener('change',()=>{if(editing)apply()});
+  number.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();apply();editing=false;number.blur()}});
+  range.addEventListener('pointerdown',()=>sync(true));
+  range.addEventListener('touchstart',()=>sync(true),{passive:true});
+  range.addEventListener('input',()=>sync(true));
+  range.addEventListener('change',()=>sync(true));
+  // Aggiornamento farmacologico senza interrompere una digitazione in corso.
+  window.addEventListener('sim:physiology-updated',()=>sync(false));
+  sync();
+ }
+ // Il duplicato conserva l'ordine dei quattro slider originali.
+ // Associazione per posizione, senza ricercare ripetutamente l'intero DOM.
+ const mirrorRanges=mirror
+  ? Array.from(mirror.querySelectorAll('input[type="range"]'))
+  : [];
+ keys.forEach((key,index)=>{
+  const primary=original(key),duplicate=mirrorRanges[index];
+  if(primary)primary.dataset.physKey=key;
+  if(duplicate)duplicate.dataset.physKey=key;
+  install(primary);
+  install(duplicate);
+ });
+})();
+</script>
+
+<style id="instructor-clean-copy-v30">
+/* Solo docente: nasconde testo esplicativo, non stati dinamici o comandi. */
+body:not(.student) #ventilationPanel > .status:not([id]),
+body:not(.student) .controls > section.card > small[style*="display:block"],
+body:not(.student) #inductionPanel > small,
+body:not(.student) #premedPanel > small {display:none!important}
+</style>
+<style id="vent-loop-quick-scale-v30">
+body:not(.student) #instructorVentLoops .vent-loop-actions{display:flex!important;flex-wrap:wrap;align-items:center;gap:6px!important}
+body:not(.student) #instructorVentLoops .vent-loop-actions button{min-height:34px;white-space:nowrap}
+body:not(.student) #instructorVentLoops .vent-loop-ref-status{flex-basis:100%;font-size:11px}
+</style>
+<style id="sim-time-jumps-grid-v30">
+body:not(.student) #timeControls .time-jumps .sim-time-jumps{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;min-width:210px;width:100%}
+body:not(.student) #timeControls .time-jumps .sim-time-jumps button{min-width:0;min-height:36px;padding:6px 8px;white-space:nowrap}
+@media(max-width:550px){body:not(.student) #timeControls .sim-time-jumps{width:100%}}
+</style>
+<style id="instructor-hide-duplicate-vitals-v30">
+/* I valori FC, MAP, CO e SVR restano nel monitor; non duplicarli nella barra docente. */
+body:not(.student) .instructor-console-top .quick-values{display:none!important}
+</style>
+<style id="propofol-tiva-v30">body:not(.student)[data-propofol-mode="tiva"] #instructorInhaledCard{display:none!important}body:not(.student)[data-instructor-tab="anesthesia"] #inductionPanel{display:block!important}#propofolTCIControl{border-top:1px solid #344652;padding-top:12px;margin-top:12px}#propofolTCIControl .row{display:flex;gap:8px;flex-wrap:wrap}#propofolTCIControl canvas,#fentPKChart{background:#0b1720;border-radius:8px;margin-top:8px}</style><script src="./fentanyl-cccp.js?v=10"></script><script src="./propofol-tci.js?v=18"></script><style id="pk-chart-visibility-v30">body:not(.student)[data-instructor-tab="anesthesia"] #inductionPanel{display:block!important}#propofolTCIControl,#fentPKChart{min-width:0}#propofolTCIControl canvas,#fentPKChart{height:160px!important;min-height:160px!important;display:block!important}#inductionReport{margin-top:8px!important}#inductionReport details summary{cursor:pointer;padding:8px 0;font-weight:600}</style><style id="anesthesia-maintenance-ux-v30">
+body:not(.student) #maintenanceModeCard{display:none!important}
+body:not(.student)[data-instructor-tab="anesthesia"] #maintenanceModeCard{display:block!important;padding:10px 12px;margin:0!important}
+body:not(.student)[data-propofol-mode="tiva"] #instructorInhaledCard{display:none!important}
+body:not(.student)[data-propofol-mode="inhaled"] #propofolTCIControl .cols,
+body:not(.student)[data-propofol-mode="inhaled"] #propofolTCIControl .row,
+body:not(.student)[data-propofol-mode="inhaled"] #propStatus,
+body:not(.student)[data-propofol-mode="inhaled"] #propStats{display:none!important}
+body:not(.student)[data-propofol-mode="tiva"][data-anesthesia-maintenance="true"] #inductionPanel .premed-form,
+body:not(.student)[data-propofol-mode="tiva"][data-anesthesia-maintenance="true"] #inductionPanel #inductionIntubate{display:none!important}
+body:not(.student)[data-propofol-mode="tiva"][data-anesthesia-maintenance="true"] #inductionPanel > .row:has(#inductionIntubate){display:none!important}
+body:not(.student) #propofolTCIControl canvas{width:100%;display:block}
+</style><style id="anesthesia-panel-isolation-v30">
+/* Tutti i moduli farmacologici esclusivamente nel pannello Anestesia. */
+body:not(.student) #instructor-panel-anesthesia #maintenanceModeCard{display:block!important;order:0}
+body:not(.student) #instructor-panel-anesthesia #instructorInhaledCard{order:1;margin:0!important}
+body:not(.student) #instructor-panel-anesthesia #inductionPanel{order:2}
+body:not(.student) #instructor-panel-anesthesia #fentanylPanel{order:3}
+body:not(.student) #instructor-panel-anesthesia{flex-direction:column}
+body:not(.student)[data-propofol-mode="tiva"] #instructor-panel-anesthesia #instructorInhaledCard{display:none!important}
+body:not(.student)[data-propofol-mode="inhaled"] #instructor-panel-anesthesia #instructorInhaledCard{display:block!important}
+body:not(.student) #instructor-panel-anesthesia #inductionPanel{display:block!important}
+body:not(.student) #instructor-panel-anesthesia #fentanylPanel{display:block!important}
+body:not(.student)[data-propofol-mode="inhaled"] #propofolTCIControl .cols,
+body:not(.student)[data-propofol-mode="inhaled"] #propofolTCIControl .row,
+body:not(.student)[data-propofol-mode="inhaled"] #propStatus,
+body:not(.student)[data-propofol-mode="inhaled"] #propStats{display:none!important}
+</style><style id="anesthesia-main-pram-v7">
+/* Il pannello anestesia sta nella zona principale immediatamente dopo onde e PRAM. */
+body:not(.student) #mainAnesthesiaBelowPram{display:none!important}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram{
+ display:flex!important;flex-direction:column;gap:10px;min-width:0;width:100%;padding:0 0 16px;
+}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram > .card{
+ display:block!important;min-width:0;width:100%;box-sizing:border-box;margin:0!important;
+}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram #maintenanceModeCard{display:block!important}
+body:not(.student)[data-instructor-tab="anesthesia"][data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #instructorInhaledCard{display:none!important}
+body:not(.student)[data-instructor-tab="anesthesia"][data-propofol-mode="inhaled"] #mainAnesthesiaBelowPram #instructorInhaledCard{display:block!important}
+body:not(.student)[data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #inductionPanel .premed-form,
+body:not(.student)[data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #inductionPanel > .row,
+body:not(.student)[data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #inductionStatus,
+body:not(.student)[data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #inductionReport{display:none!important}
+body:not(.student)[data-propofol-mode="inhaled"] #mainAnesthesiaBelowPram #propofolTCIControl .cols,
+body:not(.student)[data-propofol-mode="inhaled"] #mainAnesthesiaBelowPram #propofolTCIControl .row,
+body:not(.student)[data-propofol-mode="inhaled"] #mainAnesthesiaBelowPram #propStatus,
+body:not(.student)[data-propofol-mode="inhaled"] #mainAnesthesiaBelowPram #propStats{display:none!important}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram #propPKChart,
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram #fentPKChart{
+ display:block!important;width:100%!important;height:180px!important;min-height:180px!important;
+}
+body:not(.student)[data-instructor-tab="anesthesia"] .monitor{overflow-y:auto!important;max-height:none!important}
+</style><style id="anesthesia-main-layout-v8">
+/* La scheda Anestesia usa l'area centrale sotto il PRAM, senza pannelli laterali duplicati. */
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram{display:flex!important;flex-direction:column!important;gap:10px!important;order:999!important;flex:0 0 auto!important;overflow:visible!important}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram #maintenanceModeCard{order:0!important;display:block!important}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram #inductionPanel{order:1!important}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram #instructorInhaledCard{order:2!important}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram #fentanylPanel{order:3!important}
+body:not(.student)[data-instructor-tab="anesthesia"] .monitor{height:auto!important;max-height:calc(100dvh - 110px)!important;overflow-y:auto!important;display:flex!important;flex-direction:column!important;align-items:stretch!important}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram canvas{display:block!important;visibility:visible!important;min-height:180px!important;height:180px!important}
+body:not(.student)[data-propofol-mode="inhaled"] #mainAnesthesiaBelowPram #propofolTCIControl .cols,
+body:not(.student)[data-propofol-mode="inhaled"] #mainAnesthesiaBelowPram #propofolTCIControl .row,
+body:not(.student)[data-propofol-mode="inhaled"] #mainAnesthesiaBelowPram #propStatus,
+body:not(.student)[data-propofol-mode="inhaled"] #mainAnesthesiaBelowPram #propStats{display:none!important}
+body:not(.student)[data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #inductionPanel .premed-form,
+body:not(.student)[data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #inductionPanel > .row,
+body:not(.student)[data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #inductionStatus,
+body:not(.student)[data-propofol-mode="tiva"] #mainAnesthesiaBelowPram #inductionReport{display:none!important}
+</style><style id="anesthesia-scroll-ipad-v13">
+/* Un solo contenitore scrollabile nella vista Anestesia; evita rimbalzi e scroll anchoring Safari. */
+body:not(.student)[data-instructor-tab="anesthesia"] .monitor{
+ height:calc(100dvh - var(--instructor-header-height,80px) - 20px)!important;
+ max-height:calc(100dvh - var(--instructor-header-height,80px) - 20px)!important;
+ min-height:0!important;
+ overflow-y:auto!important;
+ overflow-x:hidden!important;
+ overscroll-behavior-y:contain;
+ -webkit-overflow-scrolling:touch;
+ overflow-anchor:none;
+ scroll-behavior:auto;
+}
+body:not(.student)[data-instructor-tab="anesthesia"] .instructor-fixed-monitor,
+body:not(.student)[data-instructor-tab="anesthesia"] .instructor-monitor-scroll{
+ display:contents!important;
+ overflow:visible!important;
+ max-height:none!important;
+}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram{
+ flex:0 0 auto!important;
+ min-height:0!important;
+ height:auto!important;
+ overflow:visible!important;
+ overflow-anchor:none;
+}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram .card{
+ flex:0 0 auto!important;
+ overflow:visible!important;
+}
+body:not(.student)[data-instructor-tab="anesthesia"] #mainAnesthesiaBelowPram canvas{
+ contain:layout paint;
+}
+</style><style id="tiva-actions-visibility-v14">
+body:not(.student)[data-propofol-mode="inhaled"] #propTIVAExtra{display:none!important}
+body:not(.student)[data-propofol-mode="tiva"] #propTIVAExtra{display:block!important}
+body:not(.student)[data-propofol-mode="inhaled"] #propofolTCIControl > .cols,
+body:not(.student)[data-propofol-mode="inhaled"] #propofolTCIControl > .row{display:none!important}
+body:not(.student)[data-propofol-mode="tiva"] #propofolTCIControl > .cols,
+body:not(.student)[data-propofol-mode="tiva"] #propofolTCIControl > .row{display:flex!important}
+</style><script defer src="./teaching-lens-interventistica-mac-v62.js?v=62"></script>
+<style id="interventistica-test-style">
+body:not(.student)[data-instructor-tab="interventistica"] #instructorMonitorScroll{display:block!important;overflow:auto!important}
+body:not(.student):not([data-instructor-tab="interventistica"]) #interventisticaModule{display:none!important}
+#interventisticaModule{padding:12px;background:#10232e;color:#dcecf4}
+#interventisticaModule .iv-row{display:flex;flex-wrap:wrap;gap:9px;align-items:center;margin:8px 0}
+#interventisticaModule button,#interventisticaModule select{background:#183544;color:white;border:1px solid #426479;border-radius:6px;padding:8px}
+#interventisticaModule .iv-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+#interventisticaModule .iv-card{border:1px solid #2c4c5d;border-radius:9px;padding:10px;background:#081923}
+#interventisticaModule canvas{width:100%;height:300px;background:#081923;border:1px solid #244351;border-radius:8px}
+#interventisticaModule #ivCatheter{height:380px}
+#interventisticaModule .iv-note{font-size:11px;color:#a7c4d1;line-height:1.45}
+/* Interventistica: le onde ECG, SpO2, EtCO2, IBP e PRAM scorrono
+   insieme al cateterismo e ai loop, senza cambiare le altre schede. */
+body:not(.student)[data-instructor-tab="interventistica"] section.monitor{
+ display:flex!important;flex-direction:column!important;gap:8px!important;
+ height:calc(100dvh - var(--instructor-header-height,80px) - 20px)!important;
+ max-height:calc(100dvh - var(--instructor-header-height,80px) - 20px)!important;
+ min-height:0!important;overflow-y:auto!important;overflow-x:hidden!important;
+ -webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;
+}
+body:not(.student)[data-instructor-tab="interventistica"] .instructor-fixed-monitor,
+body:not(.student)[data-instructor-tab="interventistica"] .instructor-monitor-scroll{
+ display:contents!important;max-height:none!important;overflow:visible!important;
+}
+body:not(.student)[data-instructor-tab="interventistica"] section.monitor .wave,
+body:not(.student)[data-instructor-tab="interventistica"] section.monitor .hemo-wrap,
+body:not(.student)[data-instructor-tab="interventistica"] #interventisticaModule{
+ flex:0 0 auto!important;
+}
+#interventisticaModule{padding-bottom:45px}
+@media (pointer:coarse), (max-width:1100px){
+ /* Stessi pulsanti, dimensioni e disposizione della versione Mac;
+    soltanto la posizione viene portata in alto su iPad. */
+ #teachingLensToolbar{top:12px!important;bottom:auto!important;right:12px!important;
+  flex-wrap:nowrap!important;max-width:none!important;gap:7px!important}
+}
+/* V29 iPad: un solo contenitore scorrevole per onde, PRAM e loop. */
+body:not(.student)[data-instructor-tab="interventistica"] section.monitor{
+ display:block!important;overflow-y:auto!important;overflow-x:hidden!important;
+ height:calc(100dvh - var(--instructor-header-height,80px) - 16px)!important;
+ max-height:calc(100dvh - var(--instructor-header-height,80px) - 16px)!important;
+ min-height:240px!important;touch-action:pan-y!important;
+ -webkit-overflow-scrolling:touch!important;overscroll-behavior-y:contain;
+}
+body:not(.student)[data-instructor-tab="interventistica"] section.monitor .instructor-fixed-monitor,
+body:not(.student)[data-instructor-tab="interventistica"] section.monitor .instructor-monitor-scroll{
+ display:block!important;position:static!important;height:auto!important;
+ max-height:none!important;overflow:visible!important;
+}
+body:not(.student)[data-instructor-tab="interventistica"] section.monitor .wave,
+body:not(.student)[data-instructor-tab="interventistica"] section.monitor .hemo-wrap,
+body:not(.student)[data-instructor-tab="interventistica"] #interventisticaModule{
+ display:block;position:relative!important;flex:none!important;margin-bottom:6px;
+}
+body:not(.student)[data-instructor-tab="interventistica"] #interventisticaModule{margin-bottom:60px!important}
+</style>
+<script id="interventistica-test-script">
+window.addEventListener('DOMContentLoaded',()=>{
+if(document.body.classList.contains('student'))return;
+const nav=document.querySelector('.instructor-tab-nav'),scroll=document.getElementById('instructorMonitorScroll');if(!nav||!scroll)return;
+const btn=document.createElement('button');btn.type='button';btn.textContent='Interventistica';btn.id='instructor-tab-interventistica';btn.setAttribute('role','tab');nav.append(btn);
+const panel=document.createElement('div');panel.className='instructor-tab-panel';panel.id='instructor-panel-interventistica';panel.hidden=true;document.querySelector('aside.controls')?.append(panel);
+panel.innerHTML='<p style="font-size:12px;color:#a7c4d1">Procedure · PDA con ACDO / stenosi polmonare con valvuloplastica. Monitor nativo ECG, IBP, EtCO₂ e SpO₂ sempre visibile.</p>';
+const module=document.createElement('section');module.id='interventisticaModule';
+module.innerHTML='<h2>Interventistica · cateterismo e loop pressione-volume</h2><div class="iv-row"><label>Scenario <select id="ivScenario"><option value="pda">PDA aperto</option><option value="ps">Stenosi polmonare</option><option value="ct">Cardio TC</option></select></label><button id="ivAction">Occludi PDA (ACDO)</button><button id="ivReset">Ripristina</button><strong id="ivStatus">PDA aperto</strong></div><p class="iv-note">Le onde native del monitor rimangono sopra. Le procedure influenzano il motore emodinamico sperimentale; il dP/dt LV è una stima didattica distinta dal dP/dt arterioso PRAM.</p><div class="iv-card"><h3>Pressioni intracardiache e arteriose · scala comune</h3><div class="iv-row"><label><input type="checkbox" class="ivWave" value="0" checked> LV</label><label><input type="checkbox" class="ivWave" value="1" checked> Ao</label><label><input type="checkbox" class="ivWave" value="2" checked> RV</label><label><input type="checkbox" class="ivWave" value="3" checked> AP</label><span id="ivValues"></span><span style="margin-left:auto;border-left:1px solid #355366;padding-left:12px;white-space:nowrap;font-size:12px"><strong>dP/dt max LV (stima): <span id="ivDpdt" style="color:#f3c969">—</span> mmHg/ms</strong><span id="ivDpdtDelta" style="display:block;color:#a9c5d1;font-size:10px">Distinto dal PRAM</span></span></div><canvas id="ivCatheter"></canvas></div><div class="iv-grid"><div class="iv-card"><h3>Ventricolo sinistro · loop P/V</h3><canvas id="ivLV"></canvas><div class="iv-pv-legend"><span style="color:#3dd5bb">● Riempimento</span><span style="color:#f3c969">● Contrazione</span><span style="color:#60b8ff">● Eiezione</span><span style="color:#d19afa">● Rilasciamento</span><span style="color:#ff5757">– – Ea</span><span style="color:#ffad70">– – ESPVR</span></div><p class="iv-note">Grafica identica al loop di Emodinamica, riprodotta dal tracciato nativo.</p></div><div class="iv-card"><h3>Ventricolo destro · loop P/V</h3><canvas id="ivRV"></canvas><div class="iv-pv-legend"><span style="color:#3dd5bb">● Riempimento</span><span style="color:#f3c969">● Contrazione</span><span style="color:#60b8ff">● Eiezione</span><span style="color:#d19afa">● Rilasciamento</span><span style="color:#ff5757">– – Ea</span><span style="color:#ffad70">– – ESPVR</span></div><p class="iv-note">Stessa grafica di Emodinamica: riempimento verde, contrazione gialla, eiezione azzurra, rilasciamento viola; ESPVR arancio, Ea rossa.</p></div></div>';
+scroll.append(module);
+const bpvOutcome=document.createElement('fieldset');
+bpvOutcome.id='ivBpvOutcome';
+bpvOutcome.style.cssText='display:none;border:1px solid #426479;border-radius:8px;padding:12px;margin:12px 0;color:#e4f2f8;min-width:0';
+bpvOutcome.innerHTML='<legend style="font-size:14px;font-weight:700;padding:0 6px;color:#e4f2f8">Esito emodinamico della BPV</legend>'+[
+['effective','BPV efficace, recupero emodinamico'],
+['limited','BPV efficace, recupero della portata limitato'],
+['infundibular','Ostruzione infundibolare dinamica residua']
+].map((v,i)=>'<label style="display:flex!important;align-items:center!important;gap:9px!important;margin:9px 0!important;font-size:13px!important;color:#e4f2f8!important;cursor:pointer"><input type="radio" name="ivBpvOutcome" value="'+v[0]+'" '+(i===0?'checked':'')+' style="appearance:auto!important;-webkit-appearance:radio!important;display:inline-block!important;width:17px!important;height:17px!important;flex:0 0 17px!important;margin:0!important;opacity:1!important">'+v[1]+'</label>').join('');
+module.querySelector('.iv-row')?.insertAdjacentElement('afterend',bpvOutcome);
+const bpvOptions=document.createElement('div');
+bpvOptions.id='ivRbbbOption';
+bpvOptions.style.cssText='display:none;align-items:center;flex-wrap:wrap;gap:10px;margin:12px 0;padding:10px 12px;border:1px solid #426479;border-radius:8px;background:#102734;color:#e4f2f8;max-width:100%;box-sizing:border-box;';
+bpvOptions.innerHTML='<label for="ivPostRbbb" style="display:inline-flex!important;align-items:center!important;gap:9px!important;white-space:normal!important;width:auto!important;max-width:100%!important;position:static!important;transform:none!important;margin:0!important;font-size:13px!important;color:#e4f2f8!important;cursor:pointer"><input type="checkbox" id="ivPostRbbb" checked style="appearance:auto!important;-webkit-appearance:checkbox!important;display:inline-block!important;width:17px!important;height:17px!important;flex:0 0 17px!important;margin:0!important;position:static!important;opacity:1!important"> <span style="display:inline!important;color:#e4f2f8!important">BBD postprocedurale (blocco di branca destra)</span></label><span style="font-size:11px;color:#a7c4d1">Selezionato: compare dopo lo sgonfiaggio. Deselezionato: ECG senza BBD.</span>';
+bpvOutcome.insertAdjacentElement('afterend',bpvOptions);
+document.dispatchEvent(new Event('sim:interventistica-ready'));
+let scenario='pda',after=false,balloonStart=null;window.simInterventionState={active:true,kind:'pda',after:false,inflating:false};
+const $=id=>document.getElementById(id),clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const nativeTabs=[...nav.querySelectorAll('button')].filter(x=>x!==btn);
+// La capnografia resta gestita dal motore nativo: non forzare la visibilita' su iPad.
+btn.onclick=()=>{nativeTabs.forEach(b=>{b.setAttribute('aria-selected','false');b.tabIndex=-1});document.querySelectorAll('.instructor-tab-panel').forEach(p=>p.hidden=true);panel.hidden=false;btn.setAttribute('aria-selected','true');btn.tabIndex=0;document.body.dataset.instructorTab='interventistica';scroll.scrollTop=0;document.querySelector('section.monitor')?.scrollTo({top:0,behavior:'instant'})};
+nativeTabs.forEach(b=>b.addEventListener('click',()=>{btn.setAttribute('aria-selected','false');panel.hidden=true}));
+function setState(){
+ scenario=$('ivScenario').value;after=false;balloonStart=null;
+ window.simInterventionState={active:true,kind:scenario,after:false,inflating:false,obstruction:0,rbbb:false,outcome:document.querySelector('input[name="ivBpvOutcome"]:checked')?.value||'effective'};
+ $('ivRbbbOption').style.display=scenario==='ps'?'flex':'none';
+ $('ivBpvOutcome').style.display=scenario==='ps'?'block':'none';
+ window.simInterventionRecalculate?.();
+ $('ivAction').disabled=false;
+ $('ivAction').textContent=scenario==='pda'?'Occludi PDA (ACDO)':'Esegui valvuloplastica';
+ $('ivStatus').textContent=scenario==='pda'?'PDA aperto · runoff diastolico':scenario==='ps'?'Stenosi polmonare · gradiente RV–AP elevato':'Cardio TC';
+}
+$('ivScenario').onchange=setState;$('ivReset').onclick=setState;
+document.querySelectorAll('input[name="ivBpvOutcome"]').forEach(el=>el.addEventListener('change',()=>{if(window.simInterventionState){window.simInterventionState.outcome=el.value;window.simInterventionRecalculate?.();}}));
+$('ivPostRbbb').onchange=()=>{if(window.simInterventionState?.kind==='ps')window.simInterventionState.rbbb=!!(after&&$('ivPostRbbb').checked);};
+$('ivAction').onclick=()=>{
+ if(scenario==='pda'){
+  after=true;window.simInterventionState.hrBefore=Number($('hr')?.value)||80;
+  window.simInterventionState.after=true;window.simInterventionRecalculate?.();
+  $('ivStatus').textContent='PDA occluso · recupero DAP e risposta emodinamica';
+ }else if(scenario==='ps'){
+  balloonStart=performance.now();
+  Object.assign(window.simInterventionState,{inflating:true,obstruction:0,rbbb:false});
+  window.simInterventionRecalculate?.();
+  $('ivStatus').textContent='Gonfiaggio pallone · riduzione progressiva del flusso polmonare';
+ }
+ $('ivAction').disabled=true;
+};
+function fit(c){const d=Math.min(2,devicePixelRatio||1),w=c.clientWidth,h=c.clientHeight;if(c.width!==Math.round(w*d)||c.height!==Math.round(h*d)){c.width=Math.round(w*d);c.height=Math.round(h*d)}const g=c.getContext('2d');g.setTransform(d,0,0,d,0,0);return [g,w,h]}
+function pressureValues(){
+ const cv=window.simCardiovascularState||{};
+ const sap=Number.isFinite(cv.sap)?cv.sap:(Number($('sap')?.value)||125);
+ const dap=Number.isFinite(cv.dap)?cv.dap:(Number($('dap')?.value)||75);
+ // Demonstration catheter values; systemic pressures are supplied by the shared motor.
+ // Pulmonary stenosis: high RV-PA gradient before, near-normal after successful dilation.
+ const stenosis=scenario==='ps';
+ const outcome=window.simInterventionState?.outcome||'effective';
+ const rv=stenosis?(after?(outcome==='infundibular'?78:outcome==='limited'?42:34):105):32;
+ const pa=stenosis?(after?(outcome==='infundibular'?28:outcome==='limited'?30:31):27):31;
+ const rvd=stenosis?(after?(outcome==='infundibular'?11:6):11):6;
+ const pad=stenosis?(after?(outcome==='infundibular'?12:13):12):15;
+ const edp=scenario==='pda'?(after?9:14):9;
+ return {sap,dap,rv,pa,rvd,pad,edp,cv};
+}
+function wave(p,phase,i){
+ const c=((phase%1)+1)%1;
+ const sys=i===0?p.sap+5:i===1?p.sap:i===2?p.rv:p.pa;
+ const dia=i===0?p.edp:i===1?p.dap:i===2?p.rvd:p.pad;
+ const sat=x=>Math.max(0,Math.min(1,x));
+ const smooth=x=>{x=sat(x);return x*x*(3-2*x)};
+ const between=(x,a,b,y0,y1,fn=smooth)=>y0+(y1-y0)*fn((x-a)/(b-a));
+ if(i===0){
+  // LV catheter waveform, qualitatively traced from supplied clinical screenshots:
+  // steep upstroke, asymmetric notched peak, fast relaxation, low filling pressure.
+  const base=Math.max(0,dia-13),amp=sys-base;
+  if(c<.075)return base+Math.max(0,dia-base)*.16*Math.exp(-Math.pow((c-.035)/.024,2));
+  if(c<.154)return between(c,.075,.154,base,sys*.965,x=>Math.pow(sat(x),1.8));
+  if(c<.183)return between(c,.154,.183,sys*.965,sys);
+  if(c<.207)return between(c,.183,.207,sys,sys*.91);
+  if(c<.236)return between(c,.207,.236,sys*.91,sys*.955);
+  if(c<.345)return between(c,.236,.345,sys*.955,sys*.89,x=>Math.pow(sat(x),.85));
+  if(c<.433)return between(c,.345,.433,sys*.89,base,x=>Math.pow(sat(x),1.05));
+  if(c<.68)return base;
+  if(c<.78)return between(c,.68,.78,base,base+(dia-base)*.25);
+  if(c<.85)return between(c,.78,.85,base+(dia-base)*.25,base+(dia-base)*.17);
+  if(c<.945)return between(c,.85,.945,base+(dia-base)*.17,dia);
+  return between(c,.945,1,dia,base);
+ }
+ if(i===2){
+  // RV: rounded low-pressure systolic crest, rapid isovolumic relaxation.
+  // Same physiology for stenosis and post-dilation; amplitude follows RV pressure.
+  const base=Math.max(1,dia-4),peak=sys;
+  if(c<.075)return base;
+  if(c<.175)return between(c,.075,.175,base,peak*.93,x=>Math.pow(sat(x),1.5));
+  if(c<.245)return between(c,.175,.245,peak*.93,peak,smooth);
+  if(c<.345)return between(c,.245,.345,peak,peak*.91,smooth);
+  if(c<.445)return between(c,.345,.445,peak*.91,peak*.72,smooth);
+  if(c<.535)return between(c,.445,.535,peak*.72,base,x=>1-Math.pow(1-sat(x),2.1));
+  if(c<.80)return base;
+  if(c<.93)return between(c,.80,.93,base,dia,smooth);
+  return between(c,.93,1,dia,base,smooth);
+ }
+ // Central aortic pressure: early, clearly visible dicrotic notch at
+ // aortic valve closure (LV relaxation onset); peripheral IBP is unchanged.
+ if(i===1){
+  const open=.145,close=.405,notchBottom=dia+(sys-dia)*.57;
+  const rebound=dia+(sys-dia)*.65;
+  if(c<open)return dia;
+  // Broad, rounded central-aortic systolic crest, with continuous slope.
+  // Smoothstep gives a zero slope at the summit instead of a sharp vertex.
+  if(c<.265)return between(c,open,.265,dia,sys,smooth);
+  if(c<.315)return between(c,.265,.315,sys,sys*.985,smooth);
+  if(c<close)return between(c,.315,close,sys*.985,dia+(sys-dia)*.69,smooth);
+  if(c<close+.018)return between(c,close,close+.018,dia+(sys-dia)*.69,notchBottom);
+  if(c<close+.050)return between(c,close+.018,close+.050,notchBottom,rebound);
+  const x=(c-close-.050)/(1-close-.050);
+  return dia+(rebound-dia)*Math.exp(-3.4*x);
+ }
+ // Pulmonary artery: delayed onset after RV upstroke, smooth crest,
+ // pulmonic valve closure notch and persistent diastolic pressure.
+ const open=.175,close=.445,amp=sys-dia;
+ const notch=dia+amp*.52,rebound=dia+amp*.61;
+ if(c<open)return dia;
+ if(c<.285)return between(c,open,.285,dia,sys,smooth);
+ if(c<.345)return between(c,.285,.345,sys,sys*.965,smooth);
+ if(c<close)return between(c,.345,close,sys*.965,dia+amp*.67,smooth);
+ if(c<close+.019)return between(c,close,close+.019,dia+amp*.67,notch,smooth);
+ if(c<close+.052)return between(c,close+.019,close+.052,notch,rebound,smooth);
+ const x=(c-close-.052)/(1-close-.052);
+ return dia+(rebound-dia)*Math.exp(-3.2*x);
+}
+function catheter(p,t){const [g,w,h]=fit($('ivCatheter')),max=160,top=18,bottom=h-25,hr=clamp(Number(window.simCardiovascularState?.hr)||Number($('hr')?.value)||90,35,200),period=60/hr,rhythm=$('rhythm')?.value||'',qrsOffset=rhythm==='Blocco AV I grado'?Math.min(.405,period*.56):rhythm.startsWith('Blocco AV II grado')?period*.28+Math.min(.16,period*.14):rhythm.startsWith('Blocco AV III grado')?period*.21:0,y=v=>bottom-(v/max)*(bottom-top),colors=['#f3bd62','#f4717a','#6ebded','#70d9ac'];g.clearRect(0,0,w,h);
+for(let v=0;v<=160;v+=20){g.strokeStyle='#263e4a';g.beginPath();g.moveTo(0,y(v));g.lineTo(w,y(v));g.stroke();g.fillStyle='#9cb6c4';g.font='11px system-ui';g.fillText(v,3,y(v)-3)}
+document.querySelectorAll('.ivWave:checked').forEach(input=>{const i=Number(input.value);g.strokeStyle=colors[i];g.lineWidth=2;g.beginPath();for(let x=0;x<w;x+=2){const c=(t+x/90-qrsOffset-.055)/period,v=wave(p,c,i);if(!x)g.moveTo(x,y(v));else g.lineTo(x,y(v))}g.stroke()});
+$('ivValues').textContent='LV '+Math.round(p.sap+5)+'/'+p.edp+' · Ao '+Math.round(p.sap)+'/'+Math.round(p.dap)+' · RV '+p.rv+'/'+p.rvd+' · AP '+p.pa+'/'+p.pad+' · gradiente '+(p.rv-p.pa)+' mmHg'}
+function rvLoop(p,t,canvasId='ivRV'){const [g,w,h]=fit($(canvasId)),cv=p.cv||{},maxP=150,maxV=150,L=43,R=w-14,T=14,B=h-33,x=v=>L+v/maxV*(R-L),y=v=>B-v/maxP*(B-T);
+const preload=clamp((Number(cv.preload)||100)/100,.45,1.6),contract=clamp((Number(cv.contractility)||100)/100,.35,1.8),tone=clamp((Number(cv.tone)||100)/100,.45,1.8);
+const vent=typeof window.simVentCalc==='function'?window.simVentCalc():null,controlled=Boolean(vent?.controlled||window.simAirwayIntubated===true||document.body.dataset.respIntubated==='true'),rr=clamp(Number(vent?.rate)||Number($('rr')?.value)||12,4,40),peep=clamp(Number(vent?.totalPeep)||0,0,25),transmitted=clamp(Number(vent?.transmittedPressure)||0,0,18);
+const breath=controlled?Math.sin(2*Math.PI*t*rr/60):0,pleural=controlled?transmitted+Math.max(0,peep*.15)*breath:0;
+const baseSv=clamp(Number(cv.sv)||36,5,140),rvSv=clamp(baseSv*(1-.018*pleural)*(1-.14*Math.max(0,tone-1)),8,105);
+const respiratoryShift=controlled?breath*clamp(2+peep*.25,2,7):0;const edv=clamp(70+25*preload-pleural*.65+respiratoryShift,40,145),esv=clamp(edv-rvSv,8,edv-6),edp=clamp(p.rvd+pleural*.22,2,30);
+const peak=clamp(p.rv*(1+.08*(contract-1))+.22*pleural,20,140),pes=peak*.75;
+g.clearRect(0,0,w,h);g.font='10px system-ui';
+for(let i=0;i<=4;i++){g.strokeStyle='#1d3846';g.beginPath();g.moveTo(x(i*maxV/4),T);g.lineTo(x(i*maxV/4),B);g.moveTo(L,y(i*maxP/4));g.lineTo(R,y(i*maxP/4));g.stroke();g.fillStyle='#93adbb';g.fillText(Math.round(i*maxP/4),5,y(i*maxP/4));g.fillText(Math.round(i*maxV/4),x(i*maxV/4)-7,B+14)}
+g.fillStyle='#a9c5d1';g.fillText('Volume ventricolare (mL)',w/2-55,h-4);g.save();g.translate(12,h/2);g.rotate(-Math.PI/2);g.fillText('Pressione (mmHg)',0,0);g.restore();
+const line=(pts,color,dash=[])=>{g.strokeStyle=color;g.lineWidth=dash.length?1.7:3;g.setLineDash(dash);g.beginPath();pts.forEach(([v,pr],i)=>i?g.lineTo(x(v),y(pr)):g.moveTo(x(v),y(pr)));g.stroke();g.setLineDash([])};
+const pts=(f,n=40)=>Array.from({length:n+1},(_,i)=>f(i/n));
+line([[Math.max(0,esv-pes/(2.2*contract)),0],[esv+30,Math.min(maxP,pes+70*contract)]],'#ffad70',[3,5]);
+line([[edv,0],[esv,pes]],'#ff5757',[7,5]);
+line(pts(u=>[esv+(edv-esv)*u,3+(edp-3)*u*u]),'#3dd5bb');
+line(pts(u=>[edv,edp+(peak*.78-edp)*(.5-.5*Math.cos(Math.PI*u))]),'#f3c969');
+line(pts(u=>[edv-(edv-esv)*u,peak*.78+(pes-peak*.78)*u+(peak-Math.max(pes,peak*.78))*Math.sin(Math.PI*u)]),'#60b8ff');
+const isoR=pts(u=>[esv,pes+(3-pes)*(.5-.5*Math.cos(Math.PI*u))]);
+line(isoR,'#d19afa');
+const segments=[pts(u=>[esv+(edv-esv)*u,3+(edp-3)*u*u]),pts(u=>[edv,edp+(peak*.78-edp)*(.5-.5*Math.cos(Math.PI*u))]),pts(u=>[edv-(edv-esv)*u,peak*.78+(pes-peak*.78)*u+(peak-Math.max(pes,peak*.78))*Math.sin(Math.PI*u)]),isoR];
+window.simPVCurrentRV=segments;
+let shared=null;try{shared=JSON.parse(localStorage.getItem('sim_pv_geometric_ref_v83')||'null')}catch(_){}
+if(shared?.rv){g.save();g.beginPath();g.strokeStyle='rgba(255,255,255,.74)';g.lineWidth=1.3;g.lineCap='round';g.setLineDash([.7,5]);shared.rv.flat().forEach(([v,pr],i)=>i?g.lineTo(x(v),y(pr)):g.moveTo(x(v),y(pr)));g.closePath();g.stroke();g.restore()}
+
+}
+window.iv83DrawRV=()=>{const c=document.getElementById('iv83HemoRV');if(c?.getBoundingClientRect().width>50&&c?.getBoundingClientRect().height>50)rvLoop(pressureValues(),performance.now()/1000,'iv83HemoRV')};
+function render(){const active=document.body.dataset.instructorTab==='interventistica';if(balloonStart!==null){
+ const elapsed=(performance.now()-balloonStart)/1000;
+ const ix=window.simInterventionState;
+ // 1 s inflation ramp, 5 s plateau, 1 s release.
+ ix.obstruction=elapsed<1?Math.max(0,elapsed):elapsed<6?1:Math.max(0,7-elapsed);
+ window.simInterventionRecalculate?.();
+}
+if(balloonStart!==null&&performance.now()-balloonStart>7000){balloonStart=null;after=true;window.simInterventionState.inflating=false;window.simInterventionState.obstruction=0;window.simInterventionState.after=true;window.simInterventionState.outcome=document.querySelector('input[name="ivBpvOutcome"]:checked')?.value||'effective';window.simInterventionState.rbbb=$('ivPostRbbb').checked;window.simInterventionRecalculate?.();$('ivStatus').textContent='Dopo valvuloplastica · '+(window.simInterventionState.outcome==='infundibular'?'ostruzione infundibolare residua':window.simInterventionState.outcome==='limited'?'recupero della portata limitato':'recupero emodinamico')}
+const p=pressureValues();
+// Pausable monotonic clock: RV respiratory motion must not depend on the
+// selected instructor tab or on an occasionally stale waveform timestamp.
+const nowRV=performance.now();
+window.__iv92RvClock ||= {t:Number(window.simWaveTimeSeconds)||0,last:nowRV};
+const rvClock=window.__iv92RvClock;
+if(!window.simIsPaused?.())rvClock.t+=Math.min(.12,Math.max(0,(nowRV-rvClock.last)/1000));
+rvClock.last=nowRV;
+const t=rvClock.t;
+if(active){catheter(p,t);rvLoop(p,t)}
+// Render the RV from the same physiological engine on a dedicated offscreen
+// canvas, even when the instructor is on another tab. Never read a hidden
+// or stale haemodynamics canvas for the student monitor.
+let rvFeed=document.getElementById('iv90RvFeed');
+if(!rvFeed){rvFeed=document.createElement('canvas');rvFeed.id='iv90RvFeed';rvFeed.style.cssText='position:fixed;left:-9999px;top:0;width:700px;height:270px;pointer-events:none;visibility:hidden';document.body.appendChild(rvFeed)}
+if(!window.simIsPaused?.()||!window.__iv90RvReady){rvLoop(p,t,'iv90RvFeed');window.__iv90RvReady=true}
+if(!window.__ivLastStudentSend||performance.now()-window.__ivLastStudentSend>350){
+ window.__ivLastStudentSend=performance.now();
+ try{
+ const cv=window.simCardiovascularState||{};
+ const ix=window.simInterventionState||{};
+ const copyCanvas=(id,maxWidth=950)=>{const src=$(id);if(!src||!src.width||!src.height)return null;const scale=Math.min(1,maxWidth/src.width),tmp=document.createElement('canvas');tmp.width=Math.round(src.width*scale);tmp.height=Math.round(src.height*scale);tmp.getContext('2d').drawImage(src,0,0,tmp.width,tmp.height);return tmp.toDataURL('image/jpeg',.84)};
+ const snapshot={time:Date.now(),simTime:t,paused:typeof window.simIsPaused==='function'&&window.simIsPaused(),kind:scenario,after, inflating:!!ix.inflating,
+ visibleWaves:[...document.querySelectorAll('.ivWave:checked')].map(e=>Number(e.value)),
+ qrsOffset:0,
+ airway:{intubated:Boolean(window.simAirwayIntubated===true||document.body.dataset.respIntubated==='true'||window.simVentCalc?.()?.controlled),controlled:Boolean(window.simVentCalc?.()?.controlled),mode:document.getElementById('ventMode')?.value||'SPONT'},
+ images:{pressure:active?copyCanvas('ivCatheter',1150):null,lv:copyCanvas('lvPvCanvas',850),rv:copyCanvas('iv90RvFeed',850)},
+ reference:(()=>{try{return JSON.parse(localStorage.getItem('sim_pv_geometric_ref_v83')||'null')}catch(_){return null}})(),
+ pvAxes:{lv:{maxV:130,maxP:Math.max(150,Math.ceil((Math.max(Number(cv.sap)||100,Number(cv.lvPeak)||0)+20)/25)*25)},rv:{maxV:150,maxP:150}},
+ p:{sap:p.sap,dap:p.dap,rv:p.rv,pa:p.pa,rvd:p.rvd,pad:p.pad,edp:p.edp},
+ hr:Number(cv.hr)||Number($('hr')?.value)||80,
+ co:Number(cv.co)||Number($('co')?.value)||0,
+ etco2:Number($('etco2')?.value)||0,
+ sv:Number(cv.sv)||Number($('sv')?.value)||0,
+ lv:[...Array(250)].map((_,i)=>wave(p,i/250*3,0)),
+ ao:[...Array(250)].map((_,i)=>wave(p,i/250*3,1)),
+ rv:[...Array(250)].map((_,i)=>wave(p,i/250*3,2)),
+ ap:[...Array(250)].map((_,i)=>wave(p,i/250*3,3)),
+ loops:{lv:{edv:Number(cv.lvEdv)||125,esv:Number(cv.lvEsv)||65},rv:{edv:130,esv:65}}
+ };
+ localStorage.setItem('simStudentInterventionV57',JSON.stringify(snapshot));
+ }catch(err){if(!window.__ivStudentWarned){console.warn('Sincronizzazione interventistica:',err);window.__ivStudentWarned=true;}}
+}
+// dP/dt max LV indipendente dal dP/dt periferico PRAM.
+ // Stima didattica della salita pressoria isovolumetrica, non una misura validata.
+ const cv=window.simCardiovascularState||{},contract=clamp((Number(cv.contractility)||100)/100,.35,1.8);
+ const lvSys=Math.max(30,p.sap+5),lvEd=Math.max(2,p.edp);
+ const pressureFactor=clamp((lvSys-lvEd)/110,.55,1.5);
+ const lvDpdt=clamp(2.6*contract*pressureFactor*(scenario==='pda'&&after?1.16:1),.45,6.5);
+ $('ivDpdt').textContent=lvDpdt.toFixed(3);
+ $('ivDpdtDelta').textContent=scenario==='pda'&&after?'Stima LV post-occlusione · risposta Anrep (+16% illustrativo)':'Stima LV da pressione e contrattilità · non PRAM';
+const original=$('lvPvCanvas'),dest=$('ivLV');if(original&&original.width>0){const [g,w,h]=fit(dest);g.clearRect(0,0,w,h);g.drawImage(original,0,0,w,h)}
+requestAnimationFrame(render)}requestAnimationFrame(render);
+});
+</script><script id="ipad-interventistica-lens-v29">
+window.addEventListener('DOMContentLoaded',()=>{
+ if(document.body.classList.contains('student'))return;
+ const apply=()=>{
+  const toolbar=document.getElementById('teachingLensToolbar');
+  if(!toolbar)return;
+  // Medesima toolbar Mac; su iPad agganciata in alto, senza dipendere da media query.
+  const ipad=window.matchMedia('(pointer:coarse)').matches;
+  if(ipad){
+   toolbar.style.setProperty('top','max(8px, env(safe-area-inset-top))','important');
+   toolbar.style.setProperty('bottom','auto','important');
+   toolbar.style.setProperty('right','12px','important');
+   toolbar.style.setProperty('flex-wrap','nowrap','important');
+  }
+ };
+ apply();window.addEventListener('resize',apply);
+});
+</script><style id="interventistica-ipad-v30">
+/* iPad only. Mac keeps its existing monitor and lens layout. */
+html.iv-ipad body:not(.student)[data-instructor-tab="interventistica"] section.monitor{
+ display:block!important;position:relative!important;
+ height:calc(100dvh - 105px)!important;max-height:calc(100dvh - 105px)!important;
+ min-height:250px!important;overflow-y:scroll!important;overflow-x:hidden!important;
+ -webkit-overflow-scrolling:touch!important;overscroll-behavior:contain!important;
+ overflow-anchor:none!important;scroll-behavior:auto!important;
+}
+html.iv-ipad body:not(.student)[data-instructor-tab="interventistica"] section.monitor>.instructor-fixed-monitor,
+html.iv-ipad body:not(.student)[data-instructor-tab="interventistica"] section.monitor>.instructor-monitor-scroll{
+ display:block!important;position:static!important;transform:none!important;
+ height:auto!important;min-height:0!important;max-height:none!important;
+ overflow:visible!important;overflow-anchor:none!important;
+}
+html.iv-ipad body:not(.student)[data-instructor-tab="interventistica"] #instructorMonitorScroll{
+ display:block!important;overflow:visible!important;height:auto!important;
+ max-height:none!important;min-height:0!important;overflow-anchor:none!important;
+}
+html.iv-ipad body:not(.student)[data-instructor-tab="interventistica"] #interventisticaModule{
+ display:block!important;position:static!important;min-height:0!important;
+ padding-bottom:40px!important;overflow-anchor:none!important;
+}
+html.iv-ipad #teachingLensToolbar{
+ position:fixed!important;top:174px!important;bottom:auto!important;
+ right:14px!important;left:auto!important;display:flex!important;
+ flex-wrap:nowrap!important;max-width:none!important;white-space:nowrap!important;
+ z-index:99990!important;
+}
+</style><script id="interventistica-ipad-v30">
+(()=>{
+ const ipad=/iPad/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ if(!ipad)return;
+ document.documentElement.classList.add('iv-ipad');
+ const placeLens=()=>{
+  const el=document.getElementById('teachingLensToolbar');
+  if(!el)return;
+  // Native lens is created by a deferred script; override its injected CSS
+  // on the actual element instead of relying on stylesheet precedence.
+  el.style.setProperty('top','174px','important');
+  el.style.setProperty('bottom','auto','important');
+  el.style.setProperty('right','14px','important');
+  el.style.setProperty('flex-wrap','nowrap','important');
+  el.style.setProperty('white-space','nowrap','important');
+ };
+ document.addEventListener('DOMContentLoaded',()=>{
+  placeLens();
+  const observer=new MutationObserver(()=>{if(document.getElementById('teachingLensToolbar')){placeLens();observer.disconnect()}});
+  observer.observe(document.body,{childList:true,subtree:true});
+  // Disable browser scroll anchoring of dynamically refreshed monitor values.
+  document.querySelector('section.monitor')?.style.setProperty('overflow-anchor','none','important');
+ });
+})();
+</script><style id="iv31-layout">
+#interventisticaModule .iv-pv-legend{display:flex;flex-wrap:wrap;gap:5px 10px;font-size:10px;margin:8px 0 5px}
+body:not(.student) header #teachingLensToolbar{
+ position:static!important;top:auto!important;bottom:auto!important;left:auto!important;right:auto!important;
+ display:inline-flex!important;flex-wrap:nowrap!important;align-items:center!important;
+ width:auto!important;max-width:none!important;margin:0 0 0 5px!important;
+ padding:0!important;border:0!important;background:transparent!important;box-shadow:none!important;
+ gap:5px!important;z-index:auto!important;font-size:11px!important;
+}
+body:not(.student) header #teachingLensToolbar button,
+body:not(.student) header #teachingLensToolbar select{padding:5px!important;font-size:11px!important}
+html.iv-ipad body:not(.student) header>.row{display:flex!important;align-items:center!important;flex-wrap:wrap!important;gap:5px!important}
+</style>
+<script id="iv31-lens-header">
+(()=>{
+ const ipad=/iPad/i.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+ /* Mac test: place the same toolbar beside Schermo intero. iPad unchanged. */
+ const relocate=()=>{
+  const bar=document.getElementById('teachingLensToolbar'),full=document.getElementById('fullBtn');
+  if(!bar||!full)return false;
+  if(bar.previousElementSibling!==full)full.insertAdjacentElement('afterend',bar);
+  for(const prop of ['top','bottom','left','right'])bar.style.removeProperty(prop);
+  bar.style.setProperty('position','static','important');
+  bar.style.setProperty('flex-wrap','nowrap','important');
+  return true;
+ };
+ document.addEventListener('DOMContentLoaded',()=>{
+  if(relocate())return;
+  const ob=new MutationObserver(()=>{if(relocate())ob.disconnect()});
+  ob.observe(document.body,{childList:true,subtree:true});
+ });
+})();
+</script><script defer src="./cardio-ct-v47-test.js?v=47"></script><script id="student-interventistica-render-v57">
+window.addEventListener('DOMContentLoaded',()=>{
+ if(!document.body.classList.contains('student'))return;
+ const moveLast=()=>{const nav=document.querySelector('.student-tabs-nav'),tab=document.getElementById('student-tab-interventistica');if(nav&&tab&&nav.lastElementChild!==tab)nav.appendChild(tab)};
+ moveLast();setTimeout(moveLast,400);setTimeout(moveLast,1500);
+ const $=id=>document.getElementById(id);
+ let baseline=null,previousKind=null,currentPressure=null,scrollStart=performance.now();
+ const fmt=v=>Number.isFinite(Number(v))?Number(v).toFixed(1):'—';
+ function drawWave(id,lines,max=160){
+  const c=$(id);if(!c)return;
+  const rect=c.getBoundingClientRect(),w=Math.max(320,Math.round(rect.width)),h=c.height;
+  if(c.width!==w)c.width=w;
+  const g=c.getContext('2d');g.clearRect(0,0,w,h);
+  for(let v=0;v<=max;v+=20){const y=h-16-(h-30)*v/max;g.strokeStyle='#284451';g.beginPath();g.moveTo(28,y);g.lineTo(w,y);g.stroke();g.fillStyle='#91aebd';g.font='10px sans-serif';g.fillText(v,3,y-3)}
+  for(const [samples,color] of lines){g.strokeStyle=color;g.lineWidth=2;g.beginPath();samples.forEach((v,i)=>{const x=28+i/(samples.length-1)*(w-35),y=h-16-(h-30)*v/max;i?g.lineTo(x,y):g.moveTo(x,y)});g.stroke()}
+ }
+ function drawLoop(id,edv,esv,peak){
+  const c=$(id);if(!c)return;const w=Math.max(250,Math.round(c.getBoundingClientRect().width)),h=c.height;if(c.width!==w)c.width=w;
+  const g=c.getContext('2d');g.clearRect(0,0,w,h);
+  const x=v=>35+(w-48)*v/160,y=v=>h-22-(h-38)*v/160;
+  g.strokeStyle='#476575';g.beginPath();g.moveTo(35,10);g.lineTo(35,h-22);g.lineTo(w-10,h-22);g.stroke();
+  const low=8;g.strokeStyle=id==='ivStudentRV'?'#70d9ac':'#6ebded';g.lineWidth=2.5;g.beginPath();
+  g.moveTo(x(edv),y(low));g.lineTo(x(edv),y(peak*.85));g.quadraticCurveTo(x((edv+esv)/2),y(peak*1.18),x(esv),y(peak));g.lineTo(x(esv),y(low));g.quadraticCurveTo(x((edv+esv)/2),y(3),x(edv),y(low));g.stroke();
+  g.fillStyle='#a6c0cc';g.font='11px sans-serif';g.fillText('Volume (mL)',w/2-30,h-5);
+ }
+ function animatePressure(now){
+  if(currentPressure?.p){
+   const d=currentPressure, c=$('ivStudentPressure'),rect=c?.getBoundingClientRect();
+   if(c&&rect?.width>0){
+    const w=Math.max(320,Math.round(rect.width)),h=270;
+    if(c.width!==w)c.width=w;if(c.height!==h)c.height=h;
+    const g=c.getContext('2d'),max=160,left=30,bottom=h-18,top=12;
+    g.clearRect(0,0,w,h);
+    for(let v=0;v<=max;v+=20){const y=bottom-(bottom-top)*v/max;g.strokeStyle='#284451';g.lineWidth=1;g.beginPath();g.moveTo(left,y);g.lineTo(w-5,y);g.stroke();g.fillStyle='#91aebd';g.font='10px sans-serif';g.fillText(v,2,y-3)}
+    const channels=[[d.lv,'#f3bd62'],[d.ao,'#f4717a'],[d.rv,'#6ebded'],[d.ap,'#70d9ac']];
+    const active=Array.isArray(d.visibleWaves)?d.visibleWaves:[0,1,2,3];
+    const elapsed=d.paused?0:Math.max(0,(Date.now()-d.time)/1000);const period=60/Math.max(35,Math.min(200,Number(d.hr)||80));const offset=((Number(d.simTime)||0)+elapsed)*90;
+    for(let k=0;k<4;k++){if(!active.includes(k))continue;const [samples,color]=channels[k];if(!samples?.length)continue;
+     g.strokeStyle=color;g.lineWidth=2;g.beginPath();
+     for(let x=left;x<w-5;x++){const phase=(((offset+x)/90-(Number(d.qrsOffset)||0)-.055)/period);const fraction=((phase%1)+1)%1;const i=Math.floor(fraction*samples.length/3)%samples.length;
+      const value=samples[i],y=bottom-(bottom-top)*Math.max(0,Math.min(max,value))/max;
+      if(x===left)g.moveTo(x,y);else g.lineTo(x,y);
+     }g.stroke();
+    }
+   }
+  }
+  requestAnimationFrame(animatePressure);
+ }
+ requestAnimationFrame(animatePressure);
+ function update(d){
+  if(!d||!d.p)return;
+  window.__ivStudentAirway=d.airway||null;
+  if(previousKind!==d.kind){baseline=null;previousKind=d.kind}
+  if(!baseline&&!d.after&&!d.inflating)baseline={...d};
+  $('ivStudentPhase').textContent=d.kind==='ps'?'Valvuloplastica polmonare · '+(d.inflating?'gonfiaggio pallone':d.after?'postprocedura':'preprocedura'):d.kind==='pda'?'PDA · '+(d.after?'post-occlusione':'pre-occlusione'):'Interventistica';
+  const p=d.p;
+  $('ivStudentMetrics').innerHTML=[['VD',fmt(p.rv)+'/'+fmt(p.rvd),'mmHg'],['AP',fmt(p.pa)+'/'+fmt(p.pad),'mmHg'],['Gradiente',fmt(p.rv-p.pa),'mmHg'],['CO',fmt(d.co),'L/min'],['EtCO₂',fmt(d.etco2),'mmHg']].map(x=>'<div><small>'+x[0]+'</small><b>'+x[1]+'</b><small>'+x[2]+'</small></div>').join('');
+  // Exact instructor canvas images; no independently generated pressure/loop shapes.
+  // Pressure samples use the same physiological wave function as the instructor.
+  // Continuous scrolling is independent of the instructor's paused animation.
+  currentPressure=d;
+  // Decode one image at a time per loop, rejecting late frames. A paused
+  // simulation retains the last displayed frame rather than repainting.
+  window.__ivLoopImageState ||= {};
+  for(const [id,src] of [['ivStudentLV',d.images?.lv],['ivStudentRV',d.images?.rv]]){
+   if(!src)continue;
+   const canvas=$(id);if(!canvas)continue;
+   const state=window.__ivLoopImageState[id] ||= {last:null,seq:0,paused:false};
+   if(d.paused&&state.last!==null){state.paused=true;continue}
+   if(src===state.last)continue;
+   state.last=src;state.paused=Boolean(d.paused);
+   const seq=++state.seq,img=new Image();
+   img.onload=()=>{
+    if(!canvas.isConnected||seq!==state.seq)return;
+    if(canvas.width!==img.naturalWidth)canvas.width=img.naturalWidth;
+    if(canvas.height!==img.naturalHeight)canvas.height=img.naturalHeight;
+    const ctx=canvas.getContext('2d');ctx.drawImage(img,0,0);
+    // The instructor's source canvas already contains the exact stored
+    // reference, with its own axes. Do not redraw it in a different scale.
+
+   };
+   img.src=src;
+  }
+  const pre=baseline;
+  $('ivStudentComparison').textContent=pre?'Pre → attuale: gradiente '+fmt(pre.p.rv-pre.p.pa)+' → '+fmt(p.rv-p.pa)+' mmHg · CO '+fmt(pre.co)+' → '+fmt(d.co)+' L/min · EtCO₂ '+fmt(pre.etco2)+' → '+fmt(d.etco2)+' mmHg':'Rilevazione del riferimento iniziale in corso';
+ }
+ // Move the ORIGINAL P/V canvases beside the native ECG/IBP wave stack.
+ const fixed=document.querySelector('.student-fixed-monitor');
+ const loops=document.querySelector('.iv-student-loops');
+ const pressure=document.querySelector('.iv-student-pressure');
+ if(fixed&&loops&&pressure){const right=document.createElement('div');right.id='ivTopRight';right.append(loops,pressure);fixed.appendChild(right);loops.id='ivTopLoops';}
+ const syncPosition=()=>{
+  const active=document.getElementById('student-tab-interventistica')?.getAttribute('aria-selected')==='true';
+  if(fixed)fixed.classList.toggle('iv-intervention-active',active);
+ };
+ document.querySelectorAll('.student-tabs-nav button').forEach(b=>b.addEventListener('click',()=>requestAnimationFrame(syncPosition)));
+ syncPosition();
+ // Keep airway/ventilation state consistent with instructor snapshots, not a local default.
+ let lastAirwayState=null;
+ const syncAirway=()=>{
+  const a=window.__ivStudentAirway;if(!a)return;
+  const intubated=Boolean(a.intubated||a.controlled);
+  if(lastAirwayState===intubated)return;
+  lastAirwayState=intubated;
+  document.body.dataset.respIntubated=String(intubated);
+  const notice=document.getElementById('awakeCapnoNotice');
+  const cap=document.querySelector('.wave[data-key="capno"]');
+  if(notice)notice.style.setProperty('display',intubated?'none':'flex','important');
+  if(cap)cap.style.setProperty('display',intubated?'':'none','important');
+ };
+ const fitStudent=()=>document.body.classList.toggle('iv-compact',window.innerWidth<1050);
+ window.addEventListener('resize',fitStudent);fitStudent();
+ syncAirway();
+ window.addEventListener('storage',e=>{if(e.key==='simStudentInterventionV57'&&e.newValue)try{update(JSON.parse(e.newValue));syncAirway()}catch(err){console.warn(err)}});
+ try{const raw=localStorage.getItem('simStudentInterventionV57');if(raw){update(JSON.parse(raw));syncAirway()}}catch(err){console.warn(err)}
+});
+</script><style id="iv83-ui">
+#iv83HemoCard{display:none;margin:8px 0;padding:12px}
+body:not(.student)[data-instructor-tab="therapy"] #iv83HemoCard,body:not(.student)[data-instructor-tab="hemodynamics"] #iv83HemoCard,body:not(.student)[data-instructor-tab="hemo"] #iv83HemoCard{display:block}
+#iv83HemoRV{display:block;width:100%;height:300px;background:#081c26;border:1px solid #294653;border-radius:7px}
+.iv83-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:8px 0}
+.iv83-actions button{font-size:12px;padding:7px 10px}
+#lvPvSave,#lvPvClear{display:none!important}
+</style>
+<script id="iv83-geometry-controls">
+window.addEventListener('DOMContentLoaded',()=>{
+ if(document.body.classList.contains('student'))return;
+ const $=id=>document.getElementById(id),lv=$('lvPvTeaching'),loops=$('interventisticaModule')?.querySelector('.iv-grid');
+ if(!lv||!loops)return;
+ const card=document.createElement('section');card.id='iv83HemoCard';card.className='card';
+ card.innerHTML='<h3>Ventricolo destro — loop pressione/volume</h3><canvas id="iv83HemoRV"></canvas>';
+ lv.insertAdjacentElement('afterend',card);
+ const KEY='sim_pv_geometric_ref_v83';
+ function state(){try{return JSON.parse(localStorage.getItem(KEY)||'null')||{}}catch(_){return {}}}
+ function save(){
+  window.iv83DrawRV?.();
+  const lvSegments=window.simPVGetLV?.(),rvSegments=window.simPVCurrentRV;
+  if(!lvSegments||!rvSegments)return;
+  const data={lv:lvSegments,rv:JSON.parse(JSON.stringify(rvSegments))};
+  localStorage.setItem(KEY,JSON.stringify(data));window.simPVSetLVReference?.(data.lv);
+  status();
+ }
+ function clear(){localStorage.removeItem(KEY);window.simPVSetLVReference?.(null);status()}
+ function status(){for(const id of ['iv83StatusH','iv83StatusI']){const el=$(id);if(el)el.textContent=state().lv&&state().rv?'Riferimento VS + VD attivo':'Nessun riferimento'}}
+ function buttons(before,id){
+  const bar=document.createElement('div');bar.className='iv83-actions';
+  const a=document.createElement('button'),b=document.createElement('button'),label=document.createElement('span');
+  a.type=b.type='button';a.textContent='Memorizza riferimento VS + VD';b.textContent='Rimuovi riferimento VS + VD';label.id=id;
+  a.onclick=save;b.onclick=clear;bar.append(a,b,label);before.before(bar);
+ }
+ buttons(loops,'iv83StatusI');buttons(lv.querySelector('.lv-pv-layout')||lv,'iv83StatusH');
+ const existing=state();if(existing.lv)window.simPVSetLVReference?.(existing.lv);status();
+ let last=0;function frame(t){
+  if(t-last>100){const c=$('iv83HemoRV');if(c&&c.getBoundingClientRect().width>50&&c.getBoundingClientRect().height>50){try{window.iv83DrawRV?.()}catch(err){if(!window.__rvDrawErrorLogged){console.error('RV draw',err);window.__rvDrawErrorLogged=true}}}last=t}
+  requestAnimationFrame(frame);
+ }requestAnimationFrame(frame);
+});
+</script></body>
+</html>
