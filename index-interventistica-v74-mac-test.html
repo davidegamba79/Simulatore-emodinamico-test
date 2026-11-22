@@ -2152,7 +2152,7 @@ window.addEventListener('DOMContentLoaded',()=>{
   target.prepend(actions);
   $('iv74Save').onclick=()=>{
    const lv=capture('ivLV')||capture('lvPvCanvas'),rv=capture('ivRV');
-   if(!lv||!rv){$('iv74Status').textContent='Attendere la visualizzazione di entrambi i loop';return}
+   if(!lv||!rv){$('iv74Status').textContent='Aprire Interventistica per acquisire entrambi i loop';return}
    localStorage.setItem(KEY,JSON.stringify({lv,rv,at:Date.now()}));refresh();
   };
   $('iv74Clear').onclick=()=>{localStorage.removeItem(KEY);refresh()};
@@ -2169,7 +2169,9 @@ window.addEventListener('DOMContentLoaded',()=>{
   if(dst.width!==src.width||dst.height!==src.height){dst.width=src.width;dst.height=src.height}
   dst.getContext('2d').drawImage(src,0,0,dst.width,dst.height);
  }
+ let previousRef='__initial__';
  function refresh(){
+  const raw=localStorage.getItem(KEY)||'';if(raw===previousRef)return;previousRef=raw;
   const r=reference();
   for(const [id,key] of [['ivLV','lv'],['ivRV','rv'],['iv74HemoRVCanvas','rv'],['studentPvCanvas','lv'],['ivStudentLV','lv'],['ivStudentRV','rv']])drawReference(id,r?.[key]);
   const status=$('iv74Status');if(status)status.textContent=r?'Riferimento VS + VD memorizzato':'Nessun riferimento';
